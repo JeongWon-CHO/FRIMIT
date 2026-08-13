@@ -1,0 +1,36 @@
+-- Merging decision tree log ---
+manifest
+ADDED from /Users/woo/GIT/frimit/modules/screen-time/android/src/main/AndroidManifest.xml:1:1-17:12
+INJECTED from /Users/woo/GIT/frimit/modules/screen-time/android/src/main/AndroidManifest.xml:1:1-17:12
+	package
+		INJECTED from /Users/woo/GIT/frimit/modules/screen-time/android/src/main/AndroidManifest.xml
+	xmlns:tools
+		ADDED from /Users/woo/GIT/frimit/modules/screen-time/android/src/main/AndroidManifest.xml:2:3-49
+	xmlns:android
+		ADDED from /Users/woo/GIT/frimit/modules/screen-time/android/src/main/AndroidManifest.xml:1:11-69
+uses-permission#android.permission.PACKAGE_USAGE_STATS
+ADDED from /Users/woo/GIT/frimit/modules/screen-time/android/src/main/AndroidManifest.xml:5:3-7:43
+	tools:ignore
+		ADDED from /Users/woo/GIT/frimit/modules/screen-time/android/src/main/AndroidManifest.xml:7:5-40
+	android:name
+		ADDED from /Users/woo/GIT/frimit/modules/screen-time/android/src/main/AndroidManifest.xml:6:5-58
+queries
+ADDED from /Users/woo/GIT/frimit/modules/screen-time/android/src/main/AndroidManifest.xml:11:3-16:13
+intent#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
+ADDED from /Users/woo/GIT/frimit/modules/screen-time/android/src/main/AndroidManifest.xml:12:5-15:14
+action#android.intent.action.MAIN
+ADDED from /Users/woo/GIT/frimit/modules/screen-time/android/src/main/AndroidManifest.xml:13:7-59
+	android:name
+		ADDED from /Users/woo/GIT/frimit/modules/screen-time/android/src/main/AndroidManifest.xml:13:15-56
+category#android.intent.category.LAUNCHER
+ADDED from /Users/woo/GIT/frimit/modules/screen-time/android/src/main/AndroidManifest.xml:14:7-67
+	android:name
+		ADDED from /Users/woo/GIT/frimit/modules/screen-time/android/src/main/AndroidManifest.xml:14:17-64
+uses-sdk
+INJECTED from /Users/woo/GIT/frimit/modules/screen-time/android/src/main/AndroidManifest.xml reason: use-sdk injection requested
+INJECTED from /Users/woo/GIT/frimit/modules/screen-time/android/src/main/AndroidManifest.xml
+INJECTED from /Users/woo/GIT/frimit/modules/screen-time/android/src/main/AndroidManifest.xml
+	android:targetSdkVersion
+		INJECTED from /Users/woo/GIT/frimit/modules/screen-time/android/src/main/AndroidManifest.xml
+	android:minSdkVersion
+		INJECTED from /Users/woo/GIT/frimit/modules/screen-time/android/src/main/AndroidManifest.xml
