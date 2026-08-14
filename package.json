@@ -4,6 +4,8 @@
   "version": "0.1.0",
   "dependencies": {
     "@expo/ui": "~57.0.10",
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "@supabase/supabase-js": "^2.112.3",
     "expo": "~57.0.12",
     "expo-constants": "~57.0.10",
     "expo-device": "~57.0.1",
@@ -43,7 +45,7 @@
     "verify:prebuild": "bash scripts/verify-prebuild.sh",
     "db:push": "supabase db push",
     "db:diff": "supabase db diff",
-    "db:verify": "bash scripts/verify-group-rpc.sh"
+    "db:verify": "bash scripts/verify-db.sh"
   },
   "private": true
 }
