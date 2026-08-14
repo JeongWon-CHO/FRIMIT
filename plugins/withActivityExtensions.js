@@ -12,7 +12,10 @@ const { withDangerousMod, withXcodeProject } = require('expo/config-plugins');
  *
  * 만드는 타깃:
  * - `<앱>ActivityMonitor` : 백그라운드 임계값 감시 (전략 B)
- * - `<앱>ActivityReport`  : 앱이 열려 있을 때 정밀 합계 계산 (전략 A)
+ *
+ * 한때 `<앱>ActivityReport`(전략 A, 앱이 열려 있을 때 정밀 합계 계산)도 함께
+ * 만들었지만 실기기 3차 측정까지 한 번도 실행되지 않아 2026-08-13에 폐기했다.
+ * 경위는 docs/spike-protocol.md의 측정 기록에 남아 있다.
  */
 
 const SHARED_SOURCE = 'FrimitSharedStore.swift';
@@ -20,16 +23,19 @@ const SHARED_SOURCE = 'FrimitSharedStore.swift';
 /**
  * 공유 소스는 타깃마다 **다른 파일명으로** 복사한다.
  *
- * 같은 이름의 파일을 두 타깃의 Sources 빌드 페이즈에 넣으면 xcodeproj가 파일 참조의
+ * 같은 이름의 파일을 여러 타깃의 Sources 빌드 페이즈에 넣으면 xcodeproj가 파일 참조의
  * 부모 그룹을 찾지 못해 `Consistency issue: no parent for object` 로 pod install이
  * 통째로 깨진다. Swift는 파일명과 타입명이 일치할 필요가 없으므로, 내용은 그대로 두고
  * 이름만 타깃별로 달리한다.
+ *
+ * 지금은 extension 타깃이 하나뿐이라 충돌할 상대가 없지만, 규약은 그대로 둔다.
+ * 타깃이 다시 늘어날 때 같은 곳에서 또 깨지지 않게 하기 위해서다.
  */
 function sharedSourceNameFor(target) {
   return `${target.name}SharedStore.swift`;
 }
 
-/** @type {{ name: string, dir: string, sources: string[], extensionPointIdentifier: string, principalClass?: string }[]} */
+/** @type {{ name: string, dir: string, sources: string[], extensionPointIdentifier: string, principalClass: string }[]} */
 const EXTENSIONS = [
   {
     name: 'FrimitActivityMonitor',
@@ -38,14 +44,10 @@ const EXTENSIONS = [
     extensionPointIdentifier: 'com.apple.deviceactivity.monitor-extension',
     principalClass: 'FrimitActivityMonitor',
   },
-  {
-    name: 'FrimitActivityReport',
-    dir: 'report',
-    sources: ['FrimitActivityReport.swift', 'TotalActivityReport.swift'],
-    extensionPointIdentifier: 'com.apple.deviceactivityui.report-extension',
-    // SwiftUI `@main` 기반이라 principal class를 지정하지 않는다.
-  },
 ];
+
+/** 더 이상 만들지 않는 타깃. 이미 생성된 프로젝트에서 지우기 위해 이름만 남긴다. */
+const RETIRED_EXTENSIONS = ['FrimitActivityReport'];
 
 function templateDir(target) {
   return path.join(__dirname, 'extensions', target.dir);
@@ -56,10 +58,6 @@ function sharedDir() {
 }
 
 function infoPlistContent(target, { version, buildNumber }) {
-  const principal = target.principalClass
-    ? `\n      <key>NSExtensionPrincipalClass</key>\n      <string>$(PRODUCT_MODULE_NAME).${target.principalClass}</string>`
-    : '';
-
   return `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -85,7 +83,9 @@ function infoPlistContent(target, { version, buildNumber }) {
   <key>NSExtension</key>
   <dict>
     <key>NSExtensionPointIdentifier</key>
-    <string>${target.extensionPointIdentifier}</string>${principal}
+    <string>${target.extensionPointIdentifier}</string>
+    <key>NSExtensionPrincipalClass</key>
+    <string>$(PRODUCT_MODULE_NAME).${target.principalClass}</string>
   </dict>
 </dict>
 </plist>
@@ -119,6 +119,12 @@ const withExtensionFiles = (config, { appGroup }) =>
       const iosRoot = cfg.modRequest.platformProjectRoot;
       const version = cfg.version ?? '1.0.0';
       const buildNumber = cfg.ios?.buildNumber ?? '1';
+
+      // 폐기한 타깃의 소스가 남아 있으면 지운다. clean이 아닌 prebuild에서도
+      // 파일만큼은 확실히 사라지게 한다.
+      for (const name of RETIRED_EXTENSIONS) {
+        fs.rmSync(path.join(iosRoot, name), { recursive: true, force: true });
+      }
 
       for (const target of EXTENSIONS) {
         const outDir = path.join(iosRoot, target.name);
@@ -196,6 +202,18 @@ const withExtensionTargets = (config, { appleTeamId }) =>
     const mainTargetUuid = project.getFirstTarget().uuid;
     if (appleTeamId) {
       applyBuildSettings(project, mainTargetUuid, { DEVELOPMENT_TEAM: appleTeamId });
+    }
+
+    // 폐기한 타깃은 pbxproj에서 안전하게 떼어낼 방법이 없다(`xcode` 패키지에
+    // removeTarget이 없다). 소스는 이미 지웠으니 그대로 두면 빌드가 깨지므로,
+    // 남아 있다면 clean prebuild가 필요하다고 알려 준다.
+    for (const name of RETIRED_EXTENSIONS) {
+      if (targetExists(project, name)) {
+        console.warn(
+          `[withFrimitScreenTime] 폐기된 ${name} 타깃이 ios/ 프로젝트에 남아 있습니다. ` +
+            '`npx expo prebuild --platform ios --clean`으로 다시 생성하세요.'
+        );
+      }
     }
 
     for (const target of EXTENSIONS) {

@@ -109,17 +109,6 @@ public class FrimitScreenTimeModule: Module {
       FrimitStore.knownGroupIds().compactMap { self.snapshot(groupId: $0) }
     }
 
-    /// 앱이 열려 있는 동안 정밀 합계로 보정한다.
-    /// 임계값 기반 계단값보다 정확하지만, report extension이 화면에 붙어야만
-    /// 계산되므로 백그라운드에서는 쓸 수 없다.
-    AsyncFunction("refreshReportAsync") { (groupId: String) async throws -> [String: Any?]? in
-      guard let periodStartMs = FrimitUsageBridge.periodStartMs(groupId: groupId) else {
-        return nil
-      }
-      _ = try await FrimitReportProbe.refresh(groupId: groupId, periodStartMs: periodStartMs)
-      return self.snapshot(groupId: groupId)
-    }
-
     /// 스파이크 진단용. 동시 감시 한계(20개)에 얼마나 가까운지 확인한다.
     Function("getDiagnostics") { () -> [String: Any?] in
       [
@@ -130,17 +119,15 @@ public class FrimitScreenTimeModule: Module {
       ]
     }
 
-    /// 두 수집 경로가 각각 얼마를 보고하는지 나눠서 본다.
-    /// 스파이크에서 계단값과 정밀값의 차이를 재는 것이 목적이다.
-    Function("getUsageBreakdown") { (groupId: String) -> [String: Any?] in
+    /// 임계값 경로가 마지막으로 무엇을 언제 기록했는지 그대로 본다.
+    ///
+    /// `getSnapshotAsync`의 `collectedAt`은 "지금 읽은 시각"이라 extension이 실제로
+    /// 값을 갱신한 시각을 알 수 없다. 계단값이 멈춘 것인지 앱이 안 읽은 것인지를
+    /// 구분하려면 이 값이 필요하다.
+    Function("getUsageDetail") { (groupId: String) -> [String: Any?] in
       [
-        "thresholdSeconds": FrimitUsageBridge.thresholdSeconds(groupId: groupId),
-        "reportSeconds": FrimitUsageBridge.reportSeconds(groupId: groupId),
-        "adoptedSeconds": FrimitUsageBridge.cumulativeSeconds(groupId: groupId),
+        "thresholdSeconds": FrimitUsageBridge.cumulativeSeconds(groupId: groupId),
         "lastUpdatedAt": FrimitUsageBridge.lastUpdatedAt(groupId: groupId),
-        // 계측: report extension이 돌긴 했는지, 돌았다면 무엇을 계산했는지
-        "reportLastRunAt": FrimitUsageBridge.reportLastRunAt(),
-        "reportRawSeconds": FrimitUsageBridge.reportLastRawSeconds(),
       ]
     }
   }

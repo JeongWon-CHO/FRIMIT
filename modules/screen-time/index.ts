@@ -92,20 +92,10 @@ export const ScreenTime = {
     return Native.setSelection(groupId, packageNames);
   },
 
-  /**
-   * iOS 전용. 앱이 앞에 있는 동안 정밀 합계로 보정한다.
-   * 백그라운드 계단값보다 정확하지만 앱이 열려 있어야만 가능하다.
-   */
-  refreshReport: async (groupId: string): Promise<UsageSnapshot | null> => {
-    assertPlatform('ios', 'refreshReport');
-    const native = await Native.refreshReportAsync(groupId);
-    return native ? toSnapshot(native) : null;
-  },
-
-  /** iOS 전용. 계단값과 정밀값을 나눠서 본다 (스파이크 계측용) */
-  getUsageBreakdown: (groupId: string) => {
-    assertPlatform('ios', 'getUsageBreakdown');
-    return Native.getUsageBreakdown(groupId);
+  /** iOS 전용. 임계값 경로가 마지막으로 기록한 값과 시각 (스파이크 계측용) */
+  getUsageDetail: (groupId: string) => {
+    assertPlatform('ios', 'getUsageDetail');
+    return Native.getUsageDetail(groupId);
   },
 
   /** iOS 전용 진단값. 스파이크 화면에서 App Group 연결 상태를 눈으로 확인하는 용도 */

@@ -67,25 +67,12 @@ declare class FrimitScreenTimeModule extends NativeModule<FrimitScreenTimeModule
 
   getAllSnapshotsAsync(): Promise<NativeUsageSnapshot[]>;
 
-  /**
-   * iOS 전용. report extension을 잠깐 띄워 정밀 합계로 보정한 뒤 스냅샷을 돌려준다.
-   * 앱이 앞에 있을 때만 동작한다. 아직 추적을 시작하지 않았으면 null.
-   */
-  refreshReportAsync(groupId: string): Promise<NativeUsageSnapshot | null>;
-
-  /** iOS 전용. 두 수집 경로가 각각 보고한 값을 나눠서 본다 (스파이크 계측용) */
-  getUsageBreakdown(groupId: string): {
+  /** iOS 전용. 임계값 경로가 마지막으로 무엇을 언제 기록했는지 (스파이크 계측용) */
+  getUsageDetail(groupId: string): {
     /** 백그라운드 임계값 콜백으로 쌓인 계단값 */
     thresholdSeconds: number;
-    /** report extension이 계산한 정밀값 */
-    reportSeconds: number;
-    /** 실제로 채택된 값 (둘 중 큰 쪽) */
-    adoptedSeconds: number;
+    /** extension이 그 값을 기록한 시각 (epoch ms). 한 번도 없으면 null */
     lastUpdatedAt: number | null;
-    /** report extension이 마지막으로 실행된 시각. null이면 한 번도 안 돌았다는 뜻 */
-    reportLastRunAt: number | null;
-    /** 그때 계산한 원시값 (0이어도 그대로). 실행됐는데 0이면 필터 문제다 */
-    reportRawSeconds: number;
   };
 
   /** 스파이크 진단용. iOS 전용이며 App Group 연결과 동시 감시 개수를 확인한다 */

@@ -22,13 +22,11 @@ enum FrimitSharedStore {
   // MARK: - Keys
 
   /// Monitor extension이 임계값 콜백으로 알아낸 "적어도 이만큼은 썼다"는 값(초).
+  ///
+  /// iOS의 누적 사용량은 전부 이 값에서 나온다. 정밀 합계를 계산하던 Report
+  /// extension(전략 A)은 실기기에서 끝내 실행되지 않아 2026-08-13에 폐기했다.
   static func thresholdSecondsKey(_ groupId: String) -> String {
     "frimit.usage.threshold.\(groupId)"
-  }
-
-  /// Report extension이 계산한 정밀 합계(초).
-  static func reportSecondsKey(_ groupId: String) -> String {
-    "frimit.usage.report.\(groupId)"
   }
 
   /// 위 값이 마지막으로 갱신된 시각 (epoch ms).
@@ -39,49 +37,6 @@ enum FrimitSharedStore {
   /// 현재 집계 구간의 시작 (epoch ms). 구간이 바뀌면 누적값을 0으로 되돌린다.
   static func periodStartKey(_ groupId: String) -> String {
     "frimit.usage.periodStart.\(groupId)"
-  }
-
-  /// 지금 Report extension이 어느 그룹을 계산 중인지.
-  ///
-  /// report extension은 호스트가 넘긴 필터만 받고 "어느 그룹인지"는 모른다.
-  /// 호스트가 뷰를 띄우기 직전에 여기 적어 두고, extension이 되읽는다.
-  /// 한 번에 하나의 report만 렌더링하므로 단일 값으로 충분하다.
-  static let pendingReportGroupIdKey = "frimit.usage.pendingReportGroup"
-
-  static func pendingReportGroupId() -> String? {
-    defaults.string(forKey: pendingReportGroupIdKey)
-  }
-
-  static func setPendingReportGroupId(_ groupId: String?) {
-    if let groupId {
-      defaults.set(groupId, forKey: pendingReportGroupIdKey)
-    } else {
-      defaults.removeObject(forKey: pendingReportGroupIdKey)
-    }
-  }
-
-  /// Report extension이 **실행됐다는 사실 자체**를 남기는 키.
-  ///
-  /// 계측을 위해 존재한다. 정밀값이 0으로 나올 때 "extension이 아예 안 돌았다"와
-  /// "돌았는데 0을 계산했다"를 구분할 방법이 없으면 원인을 좁힐 수 없다.
-  static let reportRunAtKey = "frimit.usage.reportRunAt"
-  static let reportRawSecondsKey = "frimit.usage.reportRawSeconds"
-
-  /// Report extension이 계산한 정밀 합계를 기록한다.
-  ///
-  /// 채택되는 값은 뒷걸음질치지 않지만, 실행 흔적과 원시값은 **0이어도 무조건** 남긴다.
-  static func recordReportSeconds(groupId: String, seconds: Int) {
-    let now = Date().timeIntervalSince1970 * 1000
-
-    // 계측: 실행 사실과 방금 계산한 값을 그대로 남긴다.
-    defaults.set(now, forKey: reportRunAtKey)
-    defaults.set(seconds, forKey: reportRawSecondsKey)
-
-    let current = defaults.integer(forKey: reportSecondsKey(groupId))
-    guard seconds > current else { return }
-
-    defaults.set(seconds, forKey: reportSecondsKey(groupId))
-    defaults.set(now, forKey: updatedAtKey(groupId))
   }
 
   // MARK: - DeviceActivity 이름 규약
@@ -127,7 +82,6 @@ enum FrimitSharedStore {
   /// 새 집계 구간(다음 오전 6시)이 시작될 때 누적값을 되돌린다.
   static func resetInterval(groupId: String, periodStartMs: Double) {
     defaults.set(0, forKey: thresholdSecondsKey(groupId))
-    defaults.set(0, forKey: reportSecondsKey(groupId))
     defaults.set(periodStartMs, forKey: periodStartKey(groupId))
     defaults.set(Date().timeIntervalSince1970 * 1000, forKey: updatedAtKey(groupId))
   }

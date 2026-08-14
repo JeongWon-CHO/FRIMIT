@@ -142,7 +142,7 @@ Expo SDK 57의 기본 지원 범위에 맞춰 iOS 16.4+, Android 7+를 최소 �
 ### 네이티브 사용량 모듈
 
 - iOS:
-  - Family Controls, Device Activity Monitor/Report extension, App Group을 Swift로 구현한다.
+  - Family Controls, DeviceActivityMonitor extension, App Group을 Swift로 구현한다.
   - 시스템 `FamilyActivityPicker`로 앱·카테고리를 선택한다.
   - config plugin이 extension target, entitlement, App Group 설정을 clean prebuild마다 재생성한다.
   - 기기 내 합계만 App Group을 통해 호스트 앱에 전달한다.
@@ -154,12 +154,12 @@ Expo SDK 57의 기본 지원 범위에 맞춰 iOS 16.4+, Android 7+를 최소 �
 
 #### iOS 사용량 정확도에 대한 정정
 
-iOS에는 "지금까지 몇 초 썼는가"를 직접 묻는 API가 없다. Screen Time 데이터는 report extension 안에서만 읽히고 호스트 앱은 접근할 수 없으며, `DeviceActivityMonitor`는 미리 등록한 임계값을 넘었을 때만 콜백을 준다. 따라서 iOS의 누적 사용량은 다음 두 경로를 합쳐서 만든다.
+iOS에는 "지금까지 몇 초 썼는가"를 직접 묻는 API가 없다. Screen Time 데이터는 report extension 안에서만 읽히고 호스트 앱은 접근할 수 없으며, `DeviceActivityMonitor`는 미리 등록한 임계값을 넘었을 때만 콜백을 준다. 처음에는 두 경로를 합쳐 쓰려 했으나, 실기기 스파이크 결과 **임계값 경로 하나만 남겼다**.
 
-- 백그라운드: 5분·15분·30분 간격의 임계값 이벤트를 그룹당 하나의 `DeviceActivityName`에 등록하고, 발화한 이벤트 이름에서 분을 되읽어 계단식으로 누적한다. 동시 감시는 시스템 한계상 20개이며 사용자당 5개 그룹이므로 여유가 있다.
-- 앱 사용 중: report extension이 계산한 정밀 합계를 App Group으로 넘겨받아 보정한다. 이 경로는 Apple의 프라이버시 설계를 우회하는 성격이 있어 심사 리스크가 있으므로, 백그라운드 경로와 분리해 두고 문제가 되면 떼어낼 수 있게 구현한다.
+- 백그라운드(채택): 임계값 이벤트를 그룹당 하나의 `DeviceActivityName`에 등록하고, 발화한 이벤트 이름에서 분을 되읽어 계단식으로 누적한다. 첫 10분은 1분, 이후 5·15·30분으로 성기게 깐다(그룹당 60개). 동시 감시는 시스템 한계상 20개이며 사용자당 5개 그룹이므로 여유가 있다.
+- 앱 사용 중 정밀 보정(폐기, 2026-08-13): report extension을 숨김 뷰로 띄워 정밀 합계를 받아오려 했으나, 실기기 3차 측정까지 extension이 **한 번도 실행되지 않았다**. 뷰 크기·투명도, 뷰 컨트롤러 계층 구성까지 바꿔 봤지만 결과가 같았다. 심사 리스크도 함께 지고 있었으므로 타깃째 제거했다. 경위는 `docs/spike-protocol.md`의 측정 기록에 남아 있다.
 
-두 값 중 큰 쪽을 채택하며, 누적값이 줄어들지 않는다는 규칙은 기기·서버 양쪽에 동일하게 적용한다. Android는 `queryEvents`로 임의 구간을 직접 계산할 수 있어 이 제약이 없다.
+따라서 iOS의 누적 사용량 해상도는 임계값 사다리 간격이 그대로 결정한다(초반 1분). 누적값이 줄어들지 않는다는 규칙은 기기·서버 양쪽에 동일하게 적용한다. Android는 `queryEvents`로 임의 구간을 직접 계산할 수 있어 이 제약이 없다.
 
 ### 백엔드와 운영
 

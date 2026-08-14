@@ -12,10 +12,6 @@ enum FrimitUsageBridge {
     "frimit.usage.threshold.\(groupId)"
   }
 
-  private static func reportSecondsKey(_ groupId: String) -> String {
-    "frimit.usage.report.\(groupId)"
-  }
-
   private static func updatedAtKey(_ groupId: String) -> String {
     "frimit.usage.updatedAt.\(groupId)"
   }
@@ -34,41 +30,10 @@ enum FrimitUsageBridge {
 
   /// 지금까지 확인된 누적 사용 초.
   ///
-  /// Monitor가 준 계단값과 Report가 준 정밀값 중 **큰 쪽**을 채택한다.
-  /// 둘은 서로를 대체하는 게 아니라 보완한다 — Monitor는 백그라운드에서만 갱신되고
-  /// Report는 앱이 열려 있을 때만 갱신되므로, 어느 쪽이 최신인지는 상황에 따라 다르다.
-  /// 누적값이 줄어들지 않아야 한다는 규칙은 양쪽 모두에 적용된다.
+  /// 전부 Monitor extension이 임계값 콜백으로 쌓은 계단값이다. 정밀 합계를 계산하던
+  /// Report extension(전략 A)은 실기기에서 한 번도 실행되지 않아 폐기했다.
+  /// 계단 해상도는 `FrimitScheduler.thresholdMinutes`가 결정한다.
   static func cumulativeSeconds(groupId: String) -> Int {
-    let threshold = defaults.integer(forKey: thresholdSecondsKey(groupId))
-    let report = defaults.integer(forKey: reportSecondsKey(groupId))
-    return max(threshold, report)
-  }
-
-  /// Report extension이 마지막으로 적어 둔 정밀 합계. 갱신 여부 확인에 쓴다.
-  static func reportSeconds(groupId: String) -> Int {
-    defaults.integer(forKey: reportSecondsKey(groupId))
-  }
-
-  // MARK: - 계측
-  //
-  // 정밀값이 0으로 나올 때 원인을 좁히기 위한 값들.
-  // extension이 돌기만 하면 결과가 0이어도 흔적이 남는다.
-
-  private static let reportRunAtKey = "frimit.usage.reportRunAt"
-  private static let reportRawSecondsKey = "frimit.usage.reportRawSeconds"
-
-  /// Report extension이 마지막으로 실행된 시각 (epoch ms). 한 번도 안 돌았으면 nil.
-  static func reportLastRunAt() -> Double? {
-    defaults.double(forKey: reportRunAtKey).takeIfNonZero()
-  }
-
-  /// 그때 계산해 낸 값 (0이어도 그대로).
-  static func reportLastRawSeconds() -> Int {
-    defaults.integer(forKey: reportRawSecondsKey)
-  }
-
-  /// 임계값 기반 값만 따로. 스파이크에서 두 경로를 비교할 때 쓴다.
-  static func thresholdSeconds(groupId: String) -> Int {
     defaults.integer(forKey: thresholdSecondsKey(groupId))
   }
 
@@ -86,13 +51,11 @@ enum FrimitUsageBridge {
 
     // 구간이 바뀌면 누적값을 처음부터 다시 센다.
     defaults.set(0, forKey: thresholdSecondsKey(groupId))
-    defaults.set(0, forKey: reportSecondsKey(groupId))
     defaults.set(periodStartMs, forKey: periodStartKey(groupId))
   }
 
   static func clear(groupId: String) {
     defaults.removeObject(forKey: thresholdSecondsKey(groupId))
-    defaults.removeObject(forKey: reportSecondsKey(groupId))
     defaults.removeObject(forKey: updatedAtKey(groupId))
     defaults.removeObject(forKey: periodStartKey(groupId))
   }

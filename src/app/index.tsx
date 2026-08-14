@@ -147,28 +147,6 @@ export default function SpikeScreen() {
       setTracking(false);
     });
 
-  /** iOS 전용: report extension으로 정밀 보정하고 두 경로의 값을 비교한다. */
-  const onRefreshReport = () =>
-    run('정밀 보정', async () => {
-      const result = await ScreenTime.refreshReport(SPIKE_GROUP_ID);
-      const breakdown = ScreenTime.getUsageBreakdown(SPIKE_GROUP_ID);
-      append(
-        `계단 ${breakdown.thresholdSeconds}초 / 정밀 ${breakdown.reportSeconds}초 → 채택 ${breakdown.adoptedSeconds}초`
-      );
-
-      // 정밀값이 0일 때 "extension이 안 돌았다"와 "돌았는데 0"을 구분한다.
-      if (breakdown.reportLastRunAt === null) {
-        append('⚠️ report extension이 한 번도 실행되지 않음');
-      } else {
-        const ranAt = new Date(breakdown.reportLastRunAt).toLocaleTimeString('ko-KR', {
-          hour12: false,
-        });
-        append(`report 실행됨 ${ranAt} · 원시값 ${breakdown.reportRawSeconds}초`);
-      }
-
-      if (!result) append('아직 집계를 시작하지 않았습니다');
-    });
-
   const onDiagnostics = () =>
     run('진단', async () => {
       if (Platform.OS !== 'ios') {
@@ -178,6 +156,17 @@ export default function SpikeScreen() {
       const info = ScreenTime.getDiagnostics();
       append(`App Group: ${info.appGroupConfigured ? info.appGroupIdentifier : '연결 안 됨'}`);
       append(`감시 중 ${info.activeMonitorCount}개 / 임계값 ${info.thresholdEventCount}개`);
+
+      // 계단값이 멈춘 것인지, 화면이 안 읽은 것인지를 구분하려면
+      // extension이 마지막으로 기록한 시각까지 봐야 한다.
+      const detail = ScreenTime.getUsageDetail(SPIKE_GROUP_ID);
+      append(
+        `계단값 ${detail.thresholdSeconds}초 · 마지막 기록 ${
+          detail.lastUpdatedAt
+            ? new Date(detail.lastUpdatedAt).toLocaleTimeString('ko-KR', { hour12: false })
+            : '없음'
+        }`
+      );
     });
 
   const permissionTone =
@@ -230,14 +219,7 @@ export default function SpikeScreen() {
             <Action label="4. 새로고침" onPress={() => run('새로고침', refresh)} disabled={busy} />
             <Action label="집계 중지" onPress={onStopTracking} disabled={busy || !tracking} />
             {Platform.OS === 'ios' && (
-              <>
-                <Action
-                  label="정밀 보정 (report extension)"
-                  onPress={onRefreshReport}
-                  disabled={busy || !snapshot}
-                />
-                <Action label="진단 정보" onPress={onDiagnostics} disabled={busy} />
-              </>
+              <Action label="진단 정보" onPress={onDiagnostics} disabled={busy} />
             )}
           </Section>
 

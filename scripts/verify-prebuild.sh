@@ -13,7 +13,8 @@ cd "$(dirname "$0")/.."
 PBXPROJ="ios/Frimit.xcodeproj/project.pbxproj"
 ENTITLEMENTS="ios/Frimit/Frimit.entitlements"
 EXT_NAME="FrimitActivityMonitor"
-REPORT_NAME="FrimitActivityReport"
+# 폐기한 타깃. 되살아나지 않는지 함께 확인한다 (전략 A, 2026-08-13 폐기).
+RETIRED_NAME="FrimitActivityReport"
 
 fail() {
   echo "❌ $1" >&2
@@ -62,13 +63,10 @@ check() {
   grep -q "com.apple.deviceactivity.monitor-extension" "ios/${EXT_NAME}/Info.plist" \
     || fail "[$label] extension point identifier가 없습니다"
 
-  # Report extension
-  [ -f "ios/${REPORT_NAME}/${REPORT_NAME}.swift" ] || fail "[$label] report extension 소스 없음"
-  [ -f "ios/${REPORT_NAME}/${REPORT_NAME}SharedStore.swift" ] || fail "[$label] report 공유 저장소 소스 없음"
-  [ -f "ios/${REPORT_NAME}/${REPORT_NAME}.entitlements" ] || fail "[$label] report entitlement 없음"
-
-  grep -q "com.apple.deviceactivityui.report-extension" "ios/${REPORT_NAME}/Info.plist" \
-    || fail "[$label] report extension point identifier가 없습니다"
+  # 폐기한 Report extension이 파일로도 타깃으로도 남아 있지 않아야 한다
+  [ ! -d "ios/${RETIRED_NAME}" ] || fail "[$label] 폐기한 ${RETIRED_NAME} 디렉터리가 남아 있습니다"
+  ! grep -q "$RETIRED_NAME" "$PBXPROJ" \
+    || fail "[$label] 폐기한 ${RETIRED_NAME} 타깃이 pbxproj에 남아 있습니다"
 
   # 공유 소스는 타깃마다 다른 이름이어야 한다. 같은 이름이면 pod install이 깨진다.
   [ ! -f "ios/${EXT_NAME}/FrimitSharedStore.swift" ] \
