@@ -89,7 +89,10 @@ public class FrimitScreenTimeModule: Module {
       FrimitStore.clearSelection(groupId: groupId)
     }
 
-    AsyncFunction("startTrackingAsync") { (groupId: String, periodStartMs: Double, timeZoneIdentifier: String) in
+    // periodEndMs는 Android 전용이다. iOS는 `DeviceActivitySchedule`이 매일 반복되며
+    // 경계에서 `intervalDidStart`가 불려 구간이 스스로 넘어가므로, 끝을 따로 들고
+    // 있을 필요가 없다. 계약을 한 벌로 유지하려고 받기만 하고 버린다.
+    AsyncFunction("startTrackingAsync") { (groupId: String, periodStartMs: Double, _: Double, timeZoneIdentifier: String) in
       try FrimitScheduler.start(
         groupId: groupId,
         periodStartMs: periodStartMs,

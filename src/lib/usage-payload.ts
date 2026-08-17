@@ -50,6 +50,8 @@ export type UsageSyncSummary = {
   skipped: number;
   /** 거절된 건만 추린 것. 화면에 사유를 보여주거나 로그에 남길 때 쓴다. */
   rejections: { groupId: string; hint: string }[];
+  /** 올린 뒤에 새 구간으로 넘긴 그룹. 하루 경계를 지났다는 뜻이다. */
+  rolled: string[];
 };
 
 /**
@@ -106,7 +108,8 @@ export function toSnapshotRows(
 
 export function summarizeSyncResults(
   results: UsageSyncResult[],
-  skippedGroupIds: string[] = []
+  skippedGroupIds: string[] = [],
+  rolledGroupIds: string[] = []
 ): UsageSyncSummary {
   const summary: UsageSyncSummary = {
     total: results.length,
@@ -116,6 +119,7 @@ export function summarizeSyncResults(
     rejected: 0,
     skipped: skippedGroupIds.length,
     rejections: [],
+    rolled: rolledGroupIds,
   };
 
   for (const result of results) {
@@ -151,10 +155,16 @@ export function summarizeSyncResults(
  * 낮은 값이 채택되지 않는 것도 설계된 동작이라 따로 세되 문제로 보이지 않게 쓴다.
  */
 export function describeSyncSummary(summary: UsageSyncSummary): string {
+  // 구간 넘김은 올린 건수와 무관하게 일어난다. 하루 경계를 지났다는 사실은
+  // 올릴 것이 없던 날에도 알아야 하므로 빈 결과에도 붙인다.
+  const rolled = summary.rolled.length > 0 ? ` · 구간 넘김 ${summary.rolled.length}` : '';
+
   if (summary.total === 0) {
-    return summary.skipped > 0
-      ? `올릴 사용량이 없습니다 (서버에 없는 그룹 ${summary.skipped}개 건너뜀)`
-      : '올릴 사용량이 없습니다';
+    const none =
+      summary.skipped > 0
+        ? `올릴 사용량이 없습니다 (서버에 없는 그룹 ${summary.skipped}개 건너뜀)`
+        : '올릴 사용량이 없습니다';
+    return `${none}${rolled}`;
   }
 
   const parts = [`기록 ${summary.recorded}`];
@@ -166,5 +176,5 @@ export function describeSyncSummary(summary: UsageSyncSummary): string {
     parts.push(`거절 ${summary.rejected}(${reasons})`);
   }
 
-  return `${summary.total}건 중 ${parts.join(' · ')}`;
+  return `${summary.total}건 중 ${parts.join(' · ')}${rolled}`;
 }

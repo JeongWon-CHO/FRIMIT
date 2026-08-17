@@ -73,6 +73,24 @@ object FrimitUsage {
    * `queryUsageStats`의 버킷은 임의의 시작 시각에 맞춰 잘리지 않기 때문에
    * (오전 6시 경계를 정확히 맞춰야 하는 우리 요구와 안 맞는다) 이벤트 스트림을
    * 직접 훑어 구간을 계산한다.
+   *
+   *
+   * ## 열림/닫힘 짝짓기에서 조심할 것 셋
+   *
+   * 1. **닫힘 이벤트는 앱 하나를 닫을 때 두 번 온다.** `ACTIVITY_PAUSED` 다음에
+   *    `ACTIVITY_STOPPED`가 뒤따른다. 짝이 없는 닫힘을 무조건 "구간 시작부터
+   *    켜져 있었다"로 해석하면, 두 번째 이벤트가 매번 구간 전체를 한 번 더 더한다.
+   *    실기기 1차 측정(2026-08-14)에서 1분을 쓰고 22시간 38분이 찍힌 원인이다.
+   *    그래서 `startMs` 되돌림은 **이 구간에서 그 앱의 이벤트를 처음 볼 때만**
+   *    적용한다. 그 뒤의 짝 없는 닫힘은 중복이므로 버린다.
+   *
+   * 2. **열림 이벤트가 짝 없이 반복될 수 있다.** 이미 열려 있는 것으로 아는 앱에
+   *    다시 열림이 오면 시작 시각을 덮어쓰지 않는다. 덮어쓰면 그 사이 시간이 사라진다.
+   *
+   * 3. **포그라운드는 하나뿐이다.** 다른 앱이 올라오거나 화면이 꺼지면, 열려 있던
+   *    것은 그 시점에 끝난 것이다. 닫힘 이벤트가 유실돼도 여기서 끊기므로 하나의
+   *    구간이 endMs까지 무한정 자라지 않는다. 이 방어가 없으면 이벤트 하나를
+   *    놓칠 때마다 몇 시간짜리 유령 사용량이 생긴다.
    */
   fun foregroundSeconds(
     context: Context,
@@ -87,35 +105,70 @@ object FrimitUsage {
 
     val events = manager.queryEvents(startMs, endMs)
     val openedAt = HashMap<String, Long>()
+    // 이 구간에서 이벤트를 한 번이라도 본 패키지. "구간 시작 이전부터 켜져 있었다"는
+    // 되돌림을 첫 이벤트에만 허용하기 위해 필요하다.
+    val seen = HashSet<String>()
     var totalMs = 0L
     val event = UsageEvents.Event()
 
+    /** `keep`을 뺀 나머지 열린 구간을 `at`에서 닫는다. */
+    fun closeOthers(keep: String?, at: Long) {
+      val entries = openedAt.entries.iterator()
+      while (entries.hasNext()) {
+        val entry = entries.next()
+        if (entry.key == keep) continue
+        if (at > entry.value) totalMs += at - entry.value
+        entries.remove()
+      }
+    }
+
     while (events.hasNextEvent()) {
       events.getNextEvent(event)
+
+      // 화면이 꺼지거나 잠금 화면이 올라오면 무엇을 보고 있었든 거기서 끝난다.
+      // 기기에 따라 이때 ACTIVITY_PAUSED를 주지 않는 경우가 있어, 그러면 밤새
+      // 앱을 켜 둔 것으로 집계된다.
+      if (event.eventType == UsageEvents.Event.SCREEN_NON_INTERACTIVE ||
+          event.eventType == UsageEvents.Event.KEYGUARD_SHOWN) {
+        closeOthers(null, event.timeStamp)
+        continue
+      }
+
       val packageName = event.packageName ?: continue
-      if (packageName !in packageNames) continue
 
       when (event.eventType) {
         UsageEvents.Event.ACTIVITY_RESUMED -> {
-          openedAt[packageName] = event.timeStamp
+          // 추적 대상이 아닌 앱이 올라온 것도 신호다 — 보고 있던 앱은 그때 끝났다.
+          closeOthers(packageName, event.timeStamp)
+
+          if (packageName in packageNames && packageName !in openedAt) {
+            openedAt[packageName] = event.timeStamp
+            seen += packageName
+          }
         }
 
         UsageEvents.Event.ACTIVITY_PAUSED, UsageEvents.Event.ACTIVITY_STOPPED -> {
-          // 구간 시작 이전부터 켜져 있던 앱은 startMs부터 센다.
-          val opened = openedAt.remove(packageName) ?: startMs
-          if (event.timeStamp > opened) {
-            totalMs += event.timeStamp - opened
+          if (packageName !in packageNames) continue
+
+          val from = when {
+            // 정상적인 짝.
+            openedAt.containsKey(packageName) -> openedAt.remove(packageName)!!
+            // 이 구간에서 처음 보는 앱이 닫혔다 = 구간 시작 이전부터 켜져 있었다.
+            packageName !in seen -> startMs
+            // 이미 닫힌 뒤에 오는 중복 닫힘(PAUSED 다음의 STOPPED). 버린다.
+            else -> {
+              continue
+            }
           }
+
+          seen += packageName
+          if (event.timeStamp > from) totalMs += event.timeStamp - from
         }
       }
     }
 
     // 지금도 화면에 떠 있는 앱은 구간 끝까지 누적한다.
-    for (opened in openedAt.values) {
-      if (endMs > opened) {
-        totalMs += endMs - opened
-      }
-    }
+    closeOthers(null, endMs)
 
     return totalMs / 1000
   }

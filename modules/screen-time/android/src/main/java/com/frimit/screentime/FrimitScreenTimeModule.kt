@@ -69,16 +69,19 @@ class FrimitScreenTimeModule : Module() {
       store.clearSelection(groupId)
     }
 
-    AsyncFunction("startTrackingAsync") { groupId: String, periodStartMs: Double, timeZoneIdentifier: String ->
+    AsyncFunction("startTrackingAsync") { groupId: String,
+                                          periodStartMs: Double,
+                                          periodEndMs: Double,
+                                          timeZoneIdentifier: String ->
       // Android는 구간을 절대 시각으로 직접 계산하므로 시간대 식별자가 필요 없다.
       // iOS는 매일 반복되는 스케줄을 "그룹 시간대의 몇 시 몇 분"으로 등록해야 해서
       // 이 인자를 쓴다. 계약을 하나로 유지하려고 양쪽 다 받는다.
-      store.setPeriodStart(groupId, periodStartMs.toLong())
+      store.setPeriod(groupId, periodStartMs.toLong(), periodEndMs.toLong())
     }
 
     AsyncFunction("stopTrackingAsync") { groupId: String ->
       // 선택은 남기고 집계만 멈춘다. 다음 오전 6시에 다시 startTracking으로 재개한다.
-      store.setPeriodStart(groupId, 0L)
+      store.setPeriod(groupId, 0L, 0L)
     }
 
     AsyncFunction("getSnapshotAsync") { groupId: String ->
@@ -106,7 +109,16 @@ class FrimitScreenTimeModule : Module() {
     if (packages.isEmpty()) return null
 
     val collectedAt = System.currentTimeMillis()
-    val seconds = FrimitUsage.foregroundSeconds(context, packages, periodStart, collectedAt)
+    // 구간 끝을 넘겨서는 세지 않는다. 앱이 닫힌 채 오전 6시를 지났다면 여기 남아
+    // 있는 구간은 아직 어제 것이고, 지금까지 세면 어제 칸에 오늘이 섞인다.
+    //
+    // 끝이 없는 경우는 이 필드가 생기기 전 빌드가 남긴 값뿐이다. 그때도 "지금까지"로
+    // 두면 안 된다 — 고친 빌드를 깔아도 다음 경계에서 같은 오염이 딱 한 번 더
+    // 재현된다. 24시간으로 갈음한다. 서머타임이 있는 시간대에서는 한 시간 어긋날 수
+    // 있지만, 다음 경계에서 TypeScript가 정확한 끝으로 다시 무장하므로 한 번뿐이다.
+    val fallbackEnd = periodStart + 24 * 60 * 60 * 1000L
+    val windowEnd = (current.periodEnd(groupId) ?: fallbackEnd).coerceAtMost(collectedAt)
+    val seconds = FrimitUsage.foregroundSeconds(context, packages, periodStart, windowEnd)
 
     return mapOf(
       "groupId" to groupId,

@@ -15,6 +15,7 @@ class FrimitStore(context: Context) {
   private fun selectionKey(groupId: String) = "frimit.selection.$groupId"
   private fun updatedAtKey(groupId: String) = "frimit.selection.updatedAt.$groupId"
   private fun periodStartKey(groupId: String) = "frimit.periodStart.$groupId"
+  private fun periodEndKey(groupId: String) = "frimit.periodEnd.$groupId"
   private fun sequenceKey(groupId: String) = "frimit.sequence.$groupId"
 
   fun knownGroupIds(): Set<String> = prefs.getStringSet(KNOWN_GROUPS_KEY, emptySet()) ?: emptySet()
@@ -46,6 +47,7 @@ class FrimitStore(context: Context) {
       .remove(selectionKey(groupId))
       .remove(updatedAtKey(groupId))
       .remove(periodStartKey(groupId))
+      .remove(periodEndKey(groupId))
       .remove(sequenceKey(groupId))
       .apply()
     forgetGroup(groupId)
@@ -55,11 +57,28 @@ class FrimitStore(context: Context) {
   fun periodStart(groupId: String): Long? =
     prefs.getLong(periodStartKey(groupId), 0L).takeIf { it != 0L }
 
-  fun setPeriodStart(groupId: String, epochMs: Long) {
+  /**
+   * 집계 구간의 끝 (epoch ms) = 다음 오전 6시.
+   *
+   * 끝을 알아야 하는 이유는 하나다. 앱이 닫힌 채로 경계를 넘기면 다음에 열릴 때
+   * 기기에 남아 있는 구간은 아직 어제 것인데, 여기서 끝을 모르면 사용량을 "지금"
+   * 까지 세어 **어제 칸에 오늘 사용량이 섞인다**. 실기기 2차 측정(2026-08-17)에서
+   * 08-16 칸에 08-17 오전 4시간이 들어간 원인이다.
+   *
+   * 끝 계산은 TypeScript(`frimit-day.ts`)에만 두고 여기서는 받은 값을 보관만 한다.
+   * 서머타임이 있는 시간대에서 하루는 24시간이 아니고, 그 규칙을 네이티브 두 곳에
+   * 다시 구현할 이유가 없다.
+   */
+  fun periodEnd(groupId: String): Long? =
+    prefs.getLong(periodEndKey(groupId), 0L).takeIf { it != 0L }
+
+  fun setPeriod(groupId: String, startMs: Long, endMs: Long) {
     val previous = periodStart(groupId)
-    val editor = prefs.edit().putLong(periodStartKey(groupId), epochMs)
+    val editor = prefs.edit()
+      .putLong(periodStartKey(groupId), startMs)
+      .putLong(periodEndKey(groupId), endMs)
     // 새 구간이 시작되면 순번도 처음부터 다시 센다.
-    if (previous != epochMs) {
+    if (previous != startMs) {
       editor.putLong(sequenceKey(groupId), 0L)
     }
     editor.apply()

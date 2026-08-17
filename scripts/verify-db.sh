@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Supabase 스키마 검증 — 그룹 수명주기 RPC(0004)와 사용량 집계(0005)
+# Supabase 스키마 검증 — 그룹 수명주기 RPC, 사용량 집계, 규칙 변경 전원 동의
 #
 # Docker가 없어 로컬 스택도 pgTAP도 쓸 수 없다. 그래서 원격 프로젝트에 실제로
 # 붙어서, 클라이언트가 보는 것과 똑같은 PostgREST 경로로 확인한다. 이 스크립트가
@@ -169,15 +169,21 @@ create_users() {
 }
 
 # 두 명이 준비를 마치고 시작한 그룹을 만든다. "gid code"를 돌려준다.
-start_two_person_group() { # <관리자N> <멤버N> <이름>
+start_two_person_group() { # <관리자N> <멤버N> <이름> [공동 한도]
   local admin="$1"
   local member="$2"
   local nm="$3"
+  local limit="${4:-}"
   local gid code
 
   rpc "$admin" create_group "{\"group_name\":\"$nm\"}"
   gid=$(field .group.id)
   code=$(field .group.invite_code)
+
+  # 시작 전에만 관리자가 규칙을 바로 고칠 수 있다.
+  if [ -n "$limit" ]; then
+    rpc "$admin" update_draft_rule "{\"target_group_id\":\"$gid\",\"new_daily_limit_seconds\":$limit}" > /dev/null
+  fi
 
   rpc "$member" join_group "{\"target_invite_code\":\"$code\"}"
   patch "$admin"  "group_memberships?group_id=eq.$gid&profile_id=eq.$(uid "$admin")"  '{"is_ready":true}'
@@ -303,7 +309,10 @@ check "이름 변경은 허용"                 204 "$CURL_CODE"
 section "반영 시각이 오전 6시 경계에 걸리는가"
 # ============================================================================
 
-read -r GROUP_B CODE_B < <(start_two_person_group 4 5 "경계확인")
+# 공동 한도를 900초로 낮춰 만든다. 서버가 "구간 시작 이후 흐른 시간"을 넘는
+# 누적값을 거절하므로(0006), 시험값이 크면 오전 6시 직후에 이 스크립트를 돌렸을 때
+# 정상 동작이 거절로 보인다. 시험값을 전부 15분 여유 안에 두어 시각과 무관하게 한다.
+read -r GROUP_B CODE_B < <(start_two_person_group 4 5 "경계확인" 900)
 
 rpc 6 join_group "{\"target_invite_code\":\"$CODE_B\"}"
 JOIN_AT=$(field .membership.effective_from)
@@ -405,7 +414,7 @@ PERIOD=$(field .period_start)
 check "공동 풀 조회 성공"                 200 "$CURL_CODE"
 check "아직 아무도 안 올려서 합계 0"      0 "$(field .total_seconds)"
 check "다음 구간 가입자는 집계 대상 아님" 2 "$(field .member_count)"
-check "잔여는 한도 전체"                  7200 "$(field .remaining_seconds)"
+check "잔여는 한도 전체"                  900 "$(field .remaining_seconds)"
 
 snap() { # snap <사용자N> <기기> <초> <순번> [그룹]
   rpc "$1" record_usage_snapshot "{
@@ -420,26 +429,26 @@ snap() { # snap <사용자N> <기기> <초> <순번> [그룹]
   }"
 }
 
-snap 4 "$DEV4" 600 1
+snap 4 "$DEV4" 300 1
 check "첫 스냅샷 기록"                    recorded "$(field .status)"
-check "확정값 600초"                      600 "$(field .confirmed_seconds)"
+check "확정값 300초"                      300 "$(field .confirmed_seconds)"
 
-snap 4 "$DEV4" 600 1
+snap 4 "$DEV4" 300 1
 check "같은 순번은 중복 처리"             duplicate "$(field .status)"
 
-snap 4 "$DEV4" 300 2
+snap 4 "$DEV4" 150 2
 check "낮은 값은 채택하지 않음"           stale "$(field .status)"
-check "확정값은 그대로 600초"             600 "$(field .confirmed_seconds)"
+check "확정값은 그대로 300초"             300 "$(field .confirmed_seconds)"
 
-snap 4 "$DEV4" 1800 3
+snap 4 "$DEV4" 600 3
 check "높은 값은 채택"                    recorded "$(field .status)"
-check "확정값 1800초"                     1800 "$(field .confirmed_seconds)"
+check "확정값 600초"                      600 "$(field .confirmed_seconds)"
 
 # 앱을 껐다 켜기만 하면 같은 값이 새 순번으로 다시 온다. 기기의 sequence는 스냅샷을
 # 읽을 때마다 오르므로 이게 재동기화의 기본 모양이고, duplicate보다 훨씬 흔하다.
-snap 4 "$DEV4" 1800 4
+snap 4 "$DEV4" 600 4
 check "같은 값을 새 순번으로 다시 올림"   stale "$(field .status)"
-check "확정값은 그대로"                   1800 "$(field .confirmed_seconds)"
+check "확정값은 그대로"                   600 "$(field .confirmed_seconds)"
 check "오른 만큼은 0초"                   0 "$(field .gained_seconds)"
 
 # 지금까지 순번 1·2·3·4를 올렸고, 그중 1은 두 번 보냈다. 원본은 4줄이어야 한다.
@@ -458,7 +467,7 @@ check "남의 기기로는 못 올림"             device_not_found "$(hint)"
 
 DEV4_OLD="$DEV4"
 DEV4=$(register_device 4)   # 새 기기가 등록되면 이전 기기는 비활성이 된다
-snap 4 "$DEV4_OLD" 2400 4
+snap 4 "$DEV4_OLD" 600 4
 check "물러난 기기는 거절"                device_inactive "$(hint)"
 
 snap 7 "$DEV7" 600 1 "$GROUP_C"
@@ -478,6 +487,14 @@ odd_period "$(shift_days "$PERIOD" 1)" 6
 check "아직 오지 않은 구간은 거절"        future_period "$(hint)"
 odd_period "$(shift_days "$PERIOD" -8)" 7
 check "보관 기간을 넘긴 구간은 거절"      period_too_old "$(hint)"
+
+# 구간의 시작만 보고 길이를 보지 않으면, 아직 흐르지 않은 시간을 쓴 값이 들어온다.
+# 실제로 Android 1차 측정에서 11시간짜리 구간에 22시간이 올라왔다. 확정값은
+# 최대값으로만 움직이므로 한 번 들어오면 그날을 통째로 오염시킨다.
+# 90000은 컬럼 상한(서머타임 25시간용 여유)이라 어느 시각에 돌려도 흐른 시간을 넘는다.
+snap 4 "$DEV4" 90000 8
+check "흐른 시간보다 큰 누적값은 거절"    cumulative_exceeds_period "$(hint)"
+check "PT400이 HTTP 400으로 매핑됨"       400 "$CURL_CODE"
 
 # ============================================================================
 section "사용량 — 집계값을 직접 고칠 수 있는가"
@@ -501,13 +518,13 @@ check "정리 함수는 미노출"                403 "$CURL_CODE"
 section "공동 풀 합계"
 # ============================================================================
 
-snap 5 "$DEV5" 6000 1
+snap 5 "$DEV5" 450 1
 check "다른 멤버도 기록"                  recorded "$(field .status)"
 
 rpc 4 group_daily_usage "{\"target_group_id\":\"$GROUP_B\"}"
-check "합계는 멤버들의 합"                7800 "$(field .total_seconds)"
+check "합계는 멤버들의 합"                1050 "$(field .total_seconds)"
 check "한도를 넘으면 잔여는 0에서 멈춤"   0 "$(field .remaining_seconds)"
-check "초과분이 따로 오른다"              600 "$(field .over_seconds)"
+check "초과분이 따로 오른다"              150 "$(field .over_seconds)"
 
 rpc 9 group_daily_usage "{\"target_group_id\":\"$GROUP_B\"}"
 check "비멤버는 합계를 볼 수 없음"        not_a_member "$(hint)"
@@ -529,10 +546,10 @@ section "묶음 전송"
 NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 rpc 4 record_usage_snapshots "{\"snapshots\":[
   {\"device_id\":\"$DEV4\",\"group_id\":\"$GROUP_B\",\"period_start\":\"$PERIOD\",
-   \"cumulative_seconds\":2400,\"collected_at\":\"$NOW\",\"permission_state\":\"granted\",
+   \"cumulative_seconds\":750,\"collected_at\":\"$NOW\",\"permission_state\":\"granted\",
    \"source\":\"ios-device-activity\",\"sequence\":10},
   {\"device_id\":\"$DEV4\",\"group_id\":\"$GROUP_C\",\"period_start\":\"$PERIOD\",
-   \"cumulative_seconds\":1200,\"collected_at\":\"$NOW\",\"permission_state\":\"granted\",
+   \"cumulative_seconds\":750,\"collected_at\":\"$NOW\",\"permission_state\":\"granted\",
    \"source\":\"ios-device-activity\",\"sequence\":10}
 ]}"
 check "묶음 호출 성공"                    200 "$CURL_CODE"
@@ -541,7 +558,186 @@ check "둘째 건이 실패해도 앞은 살아남음"  rejected "$(field '.[1].
 check "거절 사유가 담김"                  group_not_collecting "$(field '.[1].hint')"
 
 rpc 4 group_daily_usage "{\"target_group_id\":\"$GROUP_B\"}"
-check "묶음으로 올린 값이 반영됨"         8400 "$(field .total_seconds)"
+check "묶음으로 올린 값이 반영됨"         1200 "$(field .total_seconds)"
+
+# ============================================================================
+section "규칙 변경 — 시작 전 그룹은 관리자가 바로 고친다"
+# ============================================================================
+
+rpc 1 create_group '{"group_name":"초안규칙"}'
+GROUP_E=$(field .group.id)
+CODE_E=$(field .group.invite_code)
+rpc 2 join_group "{\"target_invite_code\":\"$CODE_E\"}" > /dev/null
+
+rpc 1 propose_rule_change "{\"target_group_id\":\"$GROUP_E\"}"
+check "시작 전에는 동의 절차를 쓰지 않음"  group_not_started "$(hint)"
+
+rpc 2 update_draft_rule "{\"target_group_id\":\"$GROUP_E\",\"new_daily_limit_seconds\":3600}"
+check "관리자가 아니면 수정 불가"          not_admin "$(hint)"
+
+rpc 1 update_draft_rule "{\"target_group_id\":\"$GROUP_E\",\"new_daily_limit_seconds\":100}"
+check "너무 짧은 한도 거부"                invalid_daily_limit "$(hint)"
+rpc 1 update_draft_rule "{\"target_group_id\":\"$GROUP_E\",\"new_reset_hour\":24}"
+check "범위 밖 초기화 시각 거부"           invalid_reset_hour "$(hint)"
+rpc 1 update_draft_rule "{\"target_group_id\":\"$GROUP_E\",\"new_time_zone\":\"Mars/Phobos\"}"
+check "알 수 없는 시간대 거부"             invalid_time_zone "$(hint)"
+
+rpc 1 update_draft_rule "{\"target_group_id\":\"$GROUP_E\",\"new_daily_limit_seconds\":3600}"
+DRAFT_RULE_FROM=$(field .rule.effective_from)
+check "관리자 수정 성공"                   3600 "$(field .rule.daily_limit_seconds)"
+check "버전을 쌓지 않고 덮어씀"            1 "$(field .rule.version)"
+
+# 직전 경계로 다시 계산해 두므로 수정 즉시 유효하다. 시각 문자열을 셸에서
+# 비교하면 표기가 달라 엉뚱한 답이 나오므로, 서버 함수와 맞춰 본다.
+rpc 1 frimit_period_start "{\"at_time\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",\"time_zone\":\"Asia/Seoul\",\"reset_hour\":6}"
+check "즉시 유효 (직전 경계로 계산됨)"     "$(jq -r . <<< "$CURL_BODY")" "$DRAFT_RULE_FROM"
+
+# ============================================================================
+section "규칙 변경 — 전원 동의"
+#
+# GROUP_B를 쓴다. t4(관리자)와 t5는 집계 중이고 t6은 다음 오전 6시부터 반영된다.
+# t6이 동의 대상에 **들어가는 것**이 여기서 확인할 핵심이다 — 새 규칙 아래서
+# 살게 될 사람이기 때문이다.
+# ============================================================================
+
+rpc 7 propose_rule_change "{\"target_group_id\":\"$GROUP_B\"}"
+check "비멤버는 제안 불가"                 not_a_member "$(hint)"
+
+rpc 4 propose_rule_change "{\"target_group_id\":\"$GROUP_B\"}"
+check "현재 규칙과 같으면 거부"            no_change "$(hint)"
+rpc 4 propose_rule_change "{\"target_group_id\":\"$GROUP_B\",\"proposed_daily_limit_seconds\":100}"
+check "너무 짧은 한도 거부"                invalid_daily_limit "$(hint)"
+rpc 4 propose_rule_change "{\"target_group_id\":\"$GROUP_B\",\"proposed_reset_hour\":24}"
+check "범위 밖 초기화 시각 거부"           invalid_reset_hour "$(hint)"
+rpc 4 propose_rule_change "{\"target_group_id\":\"$GROUP_B\",\"proposed_time_zone\":\"Mars/Phobos\"}"
+check "알 수 없는 시간대 거부"             invalid_time_zone "$(hint)"
+
+rpc 4 propose_rule_change "{\"target_group_id\":\"$GROUP_B\",\"proposed_daily_limit_seconds\":10800}"
+PROPOSAL=$(field .proposal.id)
+check "제안 성공"                          pending "$(field .proposal.status)"
+check "동의 대상 3명 (내일 오는 t6 포함)"  3 "$(field .required_count)"
+check "제안은 곧 동의"                     approved "$(field .my_decision)"
+check "남은 사람 2명"                      2 "$(field .pending_count)"
+check "비교 기준이 현재 규칙"              900 "$(field .base_rule.daily_limit_seconds)"
+check "아직 적용 예정 시각은 없음"         "" "$(field .proposal.effective_from)"
+
+rpc 5 propose_rule_change "{\"target_group_id\":\"$GROUP_B\",\"proposed_daily_limit_seconds\":9000}"
+check "그룹당 진행 중인 변경안은 하나"     proposal_exists "$(hint)"
+
+rpc 7 respond_to_rule_proposal "{\"target_proposal_id\":\"$PROPOSAL\",\"approve\":true}"
+check "비멤버는 응답 불가"                 not_a_member "$(hint)"
+
+rpc 5 respond_to_rule_proposal "{\"target_proposal_id\":\"$PROPOSAL\",\"approve\":true}"
+check "동의 반영"                          1 "$(field .pending_count)"
+check "아직 전원은 아님"                   pending "$(field .proposal.status)"
+rpc 5 respond_to_rule_proposal "{\"target_proposal_id\":\"$PROPOSAL\",\"approve\":true}"
+check "두 번 응답 불가"                    already_decided "$(hint)"
+
+rpc 4 group_daily_usage "{\"target_group_id\":\"$GROUP_B\"}"
+check "동의가 모이는 중에는 한도 그대로"   900 "$(field .daily_limit_seconds)"
+
+rpc 6 respond_to_rule_proposal "{\"target_proposal_id\":\"$PROPOSAL\",\"approve\":true}"
+APPLY_AT=$(field .proposal.effective_from)
+check "전원 동의로 승인됨"                 approved "$(field .proposal.status)"
+
+rpc 6 frimit_next_period_start "{\"at_time\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",\"time_zone\":\"Asia/Seoul\",\"reset_hour\":6}"
+check "적용 예정은 다음 오전 6시"          "$(jq -r . <<< "$CURL_BODY")" "$APPLY_AT"
+
+svc GET "group_rules?group_id=eq.$GROUP_B&order=version&select=version,daily_limit_seconds,effective_from"
+check "새 규칙 버전이 예약됨"              2 "$(jq -r 'length' <<< "$CURL_BODY")"
+check "예약된 값이 변경안 그대로"          10800 "$(jq -r '.[1].daily_limit_seconds' <<< "$CURL_BODY")"
+check "예약 시각이 적용 예정과 같음"       "$APPLY_AT" "$(jq -r '.[1].effective_from' <<< "$CURL_BODY")"
+
+# 승인은 "지금부터"가 아니라 "다음 오전 6시부터"다. 진행 중인 하루의 공동 풀이
+# 합의 직후에 흔들리면 오늘 남은 시간을 계산하던 사람들의 근거가 사라진다.
+rpc 4 group_daily_usage "{\"target_group_id\":\"$GROUP_B\"}"
+check "오늘의 한도는 그대로 900"           900 "$(field .daily_limit_seconds)"
+
+rpc 5 current_rule_proposal "{\"target_group_id\":\"$GROUP_B\"}"
+check "최근 변경안 조회"                   approved "$(field .proposal.status)"
+rpc 9 current_rule_proposal "{\"target_group_id\":\"$GROUP_B\"}"
+check "비멤버는 조회 불가"                 not_a_member "$(hint)"
+
+# ============================================================================
+section "규칙 변경 — 거절·철회·만료"
+# ============================================================================
+
+rpc 4 propose_rule_change "{\"target_group_id\":\"$GROUP_B\",\"proposed_daily_limit_seconds\":5400}"
+PROPOSAL2=$(field .proposal.id)
+check "승인된 변경안이 다음 기준이 됨"     2 "$(field .proposal.base_version)"
+check "비교 기준도 예약된 값"              10800 "$(field .base_rule.daily_limit_seconds)"
+
+rpc 5 respond_to_rule_proposal "{\"target_proposal_id\":\"$PROPOSAL2\",\"approve\":false}"
+check "한 명이 거절하면 즉시 종료"         rejected "$(field .proposal.status)"
+rpc 6 respond_to_rule_proposal "{\"target_proposal_id\":\"$PROPOSAL2\",\"approve\":true}"
+check "끝난 변경안에는 응답 불가"          proposal_not_pending "$(hint)"
+
+svc GET "group_rules?group_id=eq.$GROUP_B&select=version"
+check "거절된 변경안은 규칙을 만들지 않음" 2 "$(jq -r 'length' <<< "$CURL_BODY")"
+
+rpc 4 propose_rule_change "{\"target_group_id\":\"$GROUP_B\",\"proposed_daily_limit_seconds\":5400}"
+PROPOSAL3=$(field .proposal.id)
+rpc 5 withdraw_rule_proposal "{\"target_proposal_id\":\"$PROPOSAL3\"}"
+check "제안자도 관리자도 아니면 철회 불가" not_allowed "$(hint)"
+rpc 4 withdraw_rule_proposal "{\"target_proposal_id\":\"$PROPOSAL3\"}"
+check "제안자는 철회 가능"                 withdrawn "$(field .proposal.status)"
+
+# 48시간을 기다릴 수는 없으므로 만료 시각을 과거로 옮겨 둔다. 이 스키마에는
+# 만료를 알려 줄 예약 작업이 없고, 판정은 누군가 이 변경안을 건드릴 때 일어난다.
+rpc 4 propose_rule_change "{\"target_group_id\":\"$GROUP_B\",\"proposed_daily_limit_seconds\":5400}"
+PROPOSAL4=$(field .proposal.id)
+svc PATCH "rule_proposals?id=eq.$PROPOSAL4" '{"expires_at":"2020-01-01T00:00:00Z"}'
+
+rpc 5 respond_to_rule_proposal "{\"target_proposal_id\":\"$PROPOSAL4\",\"approve\":true}"
+check "48시간이 지나면 동의해도 소용없음"  proposal_not_pending "$(hint)"
+rpc 4 current_rule_proposal "{\"target_group_id\":\"$GROUP_B\"}"
+check "조회하면 만료로 확정돼 있음"        expired "$(field .proposal.status)"
+
+# ============================================================================
+section "규칙 변경 — 명단은 낼 때 고정된다"
+# ============================================================================
+
+rpc 7 join_group "{\"target_invite_code\":\"$CODE_B\"}" > /dev/null
+
+rpc 4 propose_rule_change "{\"target_group_id\":\"$GROUP_B\",\"proposed_daily_limit_seconds\":5400}"
+PROPOSAL5=$(field .proposal.id)
+check "만료된 자리는 비어 있음"            pending "$(field .proposal.status)"
+check "낼 때의 멤버 4명이 대상"            4 "$(field .required_count)"
+
+# 변경안이 만들어진 뒤에 들어온 사람은 대상이 아니다. 창 도중에 명단이 늘어나면
+# 마지막 한 명이 동의하는 순간 새 멤버가 들어와 다시 미달이 되는 일이 생긴다.
+rpc 8 join_group "{\"target_invite_code\":\"$CODE_B\"}" > /dev/null
+rpc 8 respond_to_rule_proposal "{\"target_proposal_id\":\"$PROPOSAL5\",\"approve\":true}"
+check "나중에 들어온 사람은 대상 아님"     not_required "$(hint)"
+
+rpc 4 withdraw_rule_proposal "{\"target_proposal_id\":\"$PROPOSAL5\"}" > /dev/null
+
+# ============================================================================
+section "규칙 변경 — 직접 쓰기와 노출 범위"
+# ============================================================================
+
+post 4 rule_proposals "{\"group_id\":\"$GROUP_B\",\"proposer_id\":\"$(uid 4)\",\"daily_limit_seconds\":600,\"reset_hour\":6,\"time_zone\":\"Asia/Seoul\",\"base_version\":1,\"expires_at\":\"2030-01-01T00:00:00Z\"}"
+check "변경안 직접 insert 차단"            403 "$CURL_CODE"
+patch 4 "rule_proposals?id=eq.$PROPOSAL2" '{"status":"approved"}'
+check "변경안 상태 직접 수정 차단"         403 "$CURL_CODE"
+patch 6 "rule_approvals?proposal_id=eq.$PROPOSAL2" '{"decision":"approved"}'
+check "동의 직접 수정 차단"                403 "$CURL_CODE"
+
+call GET "$SB_URL/rest/v1/rule_proposals?group_id=eq.$GROUP_B&select=id" "$(jwt 5)" "$SB_ANON"
+check "멤버는 변경안을 봄"                 yes "$([ "$(jq -r 'length' <<< "$CURL_BODY")" -gt 0 ] && echo yes || echo no)"
+call GET "$SB_URL/rest/v1/rule_proposals?select=id" "$(jwt 9)" "$SB_ANON"
+check "비멤버에게는 보이지 않음"           0 "$(jq -r 'length' <<< "$CURL_BODY")"
+call GET "$SB_URL/rest/v1/rule_approvals?select=id" "$(jwt 9)" "$SB_ANON"
+check "승인 상태도 비멤버에게는 안 보임"   0 "$(jq -r 'length' <<< "$CURL_BODY")"
+
+rpc 4 settle_rule_proposal "{\"target_proposal_id\":\"$PROPOSAL2\"}"
+check "판정 함수는 미노출"                 403 "$CURL_CODE"
+rpc 4 rule_proposal_snapshot "{\"target_proposal_id\":\"$PROPOSAL2\",\"viewer_id\":\"$(uid 4)\"}"
+check "변경안 스냅샷 헬퍼는 미노출"        403 "$CURL_CODE"
+rpc 4 rule_voter_ids "{\"target_group_id\":\"$GROUP_B\"}"
+check "동의 명단 헬퍼는 미노출"            403 "$CURL_CODE"
+rpc 4 latest_rule "{\"target_group_id\":\"$GROUP_B\"}"
+check "최신 규칙 헬퍼는 미노출"            403 "$CURL_CODE"
 
 # ============================================================================
 printf '\n'

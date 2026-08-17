@@ -156,3 +156,24 @@ export function frimitDateKey(
   const day = String(local.day).padStart(2, '0');
   return `${local.year}-${month}-${day}`;
 }
+
+/**
+ * 기기가 들고 있는 집계 구간이 낡았는가 — 즉 하루 경계를 지났는가.
+ *
+ * **시각이 아니라 날짜 라벨로 견준다.** 기기에 저장된 구간 시작이 항상 정확히
+ * 06:00:00인 것은 아니다. iOS는 `DeviceActivitySchedule`의 `intervalDidStart`가
+ * 불린 **실제 시각**을 적으므로 몇 백 밀리초 뒤일 수 있다. 시각을 그대로 견주면
+ * 매번 "달라졌다"가 되어 다시 무장하게 되고, 네이티브의 `setPeriodStart`는 값이
+ * 바뀐 줄 알고 그날 누적을 0으로 되돌린다. 같은 Frimit 일자 안이면 낡지 않은 것이다.
+ */
+export function isStalePeriod(
+  periodStart: Date,
+  now: Date,
+  timeZone: string = DEFAULT_TIME_ZONE,
+  resetHour: number = DEFAULT_RESET_HOUR
+): boolean {
+  return (
+    frimitDateKey(periodStart, timeZone, resetHour) !==
+    frimitDateKey(now, timeZone, resetHour)
+  );
+}

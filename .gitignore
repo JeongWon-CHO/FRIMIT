@@ -45,5 +45,6 @@ example
 # 로컬 네이티브 모듈의 빌드 산출물.
 # 위의 /android는 루트만 가리켜서 modules/*/android/build 는 걸러지지 않는다.
 modules/*/android/build/
+modules/*/android/.gradle/
 modules/*/android/.cxx/
 modules/*/ios/build/

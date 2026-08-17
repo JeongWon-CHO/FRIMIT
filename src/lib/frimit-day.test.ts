@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   frimitDateKey,
+  isStalePeriod,
   nextPeriodStartFor,
   periodStartFor,
   zonedParts,
@@ -112,6 +113,61 @@ describe('frimitDateKey', () => {
   it('새벽 시간대는 전날 날짜로 표시된다', () => {
     expect(frimitDateKey(seoul('2026-08-13T02:00:00'), SEOUL)).toBe('2026-08-12');
     expect(frimitDateKey(seoul('2026-08-13T06:00:00'), SEOUL)).toBe('2026-08-13');
+  });
+});
+
+describe('isStalePeriod', () => {
+  it('같은 Frimit 일자 안이면 낡지 않았다', () => {
+    const start = seoul('2026-08-13T06:00:00');
+    expect(isStalePeriod(start, seoul('2026-08-13T23:59:00'), SEOUL)).toBe(false);
+    // 다음 날 새벽 3시는 아직 경계를 넘지 않았다.
+    expect(isStalePeriod(start, seoul('2026-08-14T03:00:00'), SEOUL)).toBe(false);
+  });
+
+  it('오전 6시를 넘기면 낡았다', () => {
+    const start = seoul('2026-08-13T06:00:00');
+    expect(isStalePeriod(start, seoul('2026-08-14T06:00:00'), SEOUL)).toBe(true);
+    expect(isStalePeriod(start, seoul('2026-08-16T14:00:00'), SEOUL)).toBe(true);
+  });
+
+  /**
+   * iOS의 intervalDidStart는 콜백이 실제로 불린 시각을 적으므로 정확히 06:00:00이
+   * 아니다. 여기서 낡았다고 판단하면 다시 무장하게 되고, 네이티브가 구간이 바뀐 줄
+   * 알고 그날 누적을 0으로 되돌린다. 조용히 하루치가 사라지는 종류의 실수다.
+   */
+  it('경계보다 살짝 늦게 기록된 구간 시작을 낡았다고 보지 않는다', () => {
+    const late = new Date(seoul('2026-08-13T06:00:00').getTime() + 340);
+    expect(isStalePeriod(late, seoul('2026-08-13T20:00:00'), SEOUL)).toBe(false);
+  });
+});
+
+/**
+ * 기기가 들고 있는 구간에는 시작뿐 아니라 **끝**도 필요하다. Android에는 경계에서
+ * 구간을 넘겨 줄 콜백이 없어 읽을 때마다 `[시작, 지금]`을 다시 계산하는데, 앱이
+ * 닫힌 채 오전 6시를 넘기면 그 창이 경계 너머까지 뻗는다. 실기기 2차 측정
+ * (2026-08-17)에서 08-16 칸에 08-17 오전 4시간이 들어간 경로가 이것이다.
+ */
+describe('낡은 구간의 끝', () => {
+  it('경계를 넘긴 뒤에도 어제 구간의 끝은 어제의 다음 오전 6시다', () => {
+    const stored = seoul('2026-08-16T06:00:00');
+    const now = seoul('2026-08-17T10:05:00');
+
+    expect(isStalePeriod(stored, now, SEOUL)).toBe(true);
+    // 네이티브는 "지금"이 아니라 이 시각까지만 세야 한다.
+    expect(nextPeriodStartFor(stored, SEOUL).toISOString()).toBe(
+      seoul('2026-08-17T06:00:00').toISOString()
+    );
+  });
+
+  it('새로 무장하는 구간의 시작과 끝은 서로 이어진다', () => {
+    const now = seoul('2026-08-17T10:05:00');
+    expect(nextPeriodStartFor(now, SEOUL).toISOString()).toBe(
+      // 08-17 구간의 끝 = 08-18 06:00. 다음 무장의 시작과 같은 값이다.
+      seoul('2026-08-18T06:00:00').toISOString()
+    );
+    expect(periodStartFor(now, SEOUL).toISOString()).toBe(
+      seoul('2026-08-17T06:00:00').toISOString()
+    );
   });
 });
 

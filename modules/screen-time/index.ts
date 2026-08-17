@@ -53,14 +53,19 @@ export const ScreenTime = {
   clearSelection: (groupId: string): void => Native.clearSelection(groupId),
 
   /**
-   * `periodStart`는 그룹 시간대 기준 오전 6시여야 한다.
+   * `periodStart`는 그룹 시간대 기준 오전 6시, `periodEnd`는 그 다음 오전 6시여야
+   * 한다. 서머타임이 있는 시간대에서는 둘의 간격이 24시간이 아니므로, 경계 계산은
+   * 부르는 쪽(`src/lib/frimit-day.ts`)에 두고 여기서는 받은 값을 그대로 넘긴다.
+   *
    * `timeZone`은 그룹의 시간대 식별자(기본 `Asia/Seoul`)다.
    */
   startTracking: (
     groupId: string,
     periodStart: Date,
+    periodEnd: Date,
     timeZone = 'Asia/Seoul'
-  ): Promise<void> => Native.startTrackingAsync(groupId, periodStart.getTime(), timeZone),
+  ): Promise<void> =>
+    Native.startTrackingAsync(groupId, periodStart.getTime(), periodEnd.getTime(), timeZone),
 
   stopTracking: (groupId: string): Promise<void> => Native.stopTrackingAsync(groupId),
 

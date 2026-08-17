@@ -6,7 +6,12 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { DEFAULT_TIME_ZONE, frimitDateKey, periodStartFor } from '@/lib/frimit-day';
+import {
+  DEFAULT_TIME_ZONE,
+  frimitDateKey,
+  nextPeriodStartFor,
+  periodStartFor,
+} from '@/lib/frimit-day';
 import { ensureGroup, setReady, startGroup, type MyGroup } from '@/lib/groups';
 import { ensureSession } from '@/lib/supabase';
 import { describeSyncSummary } from '@/lib/usage-payload';
@@ -120,9 +125,13 @@ export default function SpikeScreen() {
     syncingRef.current = true;
 
     try {
-      const line = describeSyncSummary(await syncUsage());
+      const summary = await syncUsage();
+      const line = describeSyncSummary(summary);
       setLastSync(line);
       append(`서버 동기화: ${line}`);
+
+      // 구간이 넘어갔으면 화면이 들고 있는 스냅샷은 이미 지난 구간의 것이다.
+      if (summary.rolled.length > 0) await refresh();
     } catch (error) {
       const reason = error instanceof Error ? error.message : String(error);
       setLastSync(`실패: ${reason}`);
@@ -130,7 +139,7 @@ export default function SpikeScreen() {
     } finally {
       syncingRef.current = false;
     }
-  }, [append]);
+  }, [append, refresh]);
 
   // 그룹 확보는 앱을 켤 때 한 번이면 된다.
   useEffect(() => {
@@ -221,8 +230,14 @@ export default function SpikeScreen() {
 
   const onStartTracking = () =>
     run('집계 시작', async () => {
-      const periodStart = periodStartFor(new Date(), DEFAULT_TIME_ZONE);
-      await ScreenTime.startTracking(requireGroup(), periodStart, DEFAULT_TIME_ZONE);
+      const now = new Date();
+      const periodStart = periodStartFor(now, DEFAULT_TIME_ZONE);
+      await ScreenTime.startTracking(
+        requireGroup(),
+        periodStart,
+        nextPeriodStartFor(now, DEFAULT_TIME_ZONE),
+        DEFAULT_TIME_ZONE
+      );
       setTracking(true);
       append(`구간 시작: ${periodStart.toISOString()}`);
     });

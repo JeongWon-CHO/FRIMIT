@@ -49,14 +49,18 @@ declare class FrimitScreenTimeModule extends NativeModule<FrimitScreenTimeModule
   clearSelection(groupId: string): void;
 
   /**
-   * `periodStartMs` 이후의 사용량만 누적한다. 오전 6시 경계마다 다시 호출한다.
+   * `periodStartMs`부터 `periodEndMs`까지의 사용량만 누적한다. 오전 6시 경계마다
+   * 다시 호출한다.
    *
    * iOS는 `timeZoneIdentifier` 기준으로 "매일 그 시각에 반복"되는 DeviceActivity
-   * 스케줄을 건다. Android는 절대 시각으로 직접 계산하므로 시간대를 쓰지 않는다.
+   * 스케줄을 걸고 경계에서 스스로 넘어가므로 `periodEndMs`를 쓰지 않는다. Android는
+   * 넘겨 줄 주체가 없어 읽을 때마다 구간 전체를 다시 계산하는데, 끝을 모르면 앱이
+   * 닫힌 채 경계를 넘겼을 때 어제 칸에 오늘 사용량이 섞인다.
    */
   startTrackingAsync(
     groupId: string,
     periodStartMs: number,
+    periodEndMs: number,
     timeZoneIdentifier: string
   ): Promise<void>;
 
