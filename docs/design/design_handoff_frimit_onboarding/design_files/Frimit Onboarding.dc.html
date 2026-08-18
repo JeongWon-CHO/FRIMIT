@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing:border-box; }
+  html, body { margin:0; padding:0; background:#07070A; }
+  a { color:#A78BFA; text-decoration:none; }
+  a:hover { color:#C4B5FD; }
+  @keyframes frimitPulse { 0%,100% { opacity:.55; transform:scale(1); } 50% { opacity:1; transform:scale(1.06); } }
+</style>
+</helmet>
+
+<div style="min-height:100%; background:#07070A; padding:80px 64px 120px; font-family:Manrope, -apple-system, 'Helvetica Neue', sans-serif; color:#fff; display:flex; flex-direction:column; gap:64px; align-items:center">
+
+  <div style="width:1720px; display:flex; flex-direction:column; gap:12px">
+    <div style="font-size:13px; letter-spacing:.22em; text-transform:uppercase; color:rgba(255,255,255,0.38); font-weight:600">Frimit — Onboarding &amp; Group Setup</div>
+    <div style="font-size:44px; font-weight:800; letter-spacing:-0.03em">Alone → Invite → Together → Shared Time Starts</div>
+    <div style="font-size:16px; color:rgba(255,255,255,0.45); line-height:1.7; max-width:780px">Design V1의 서피스·빛·Shared Orbit을 그대로 사용합니다. 처음에는 혼자 들어온 하나의 빛이, 마지막 화면에서 네 사람의 궤도가 됩니다. 각 프레임 아래에 다음 화면으로의 연결을 적었습니다.</div>
+  </div>
+
+  <!-- ── PHASE 1 ── -->
+  <div style="width:1720px; display:flex; flex-direction:column; gap:22px">
+    <div style="display:flex; align-items:center; gap:14px"><div style="width:8px; height:8px; border-radius:50%; background:#A78BFA; box-shadow:0 0 12px 3px rgba(167,139,250,0.8)"></div><div style="font-size:20px; font-weight:800; letter-spacing:-0.02em">Phase 1 · Alone</div><div style="font-size:13px; color:rgba(255,255,255,0.35); font-weight:600">01 – 03 · 아직 궤도에 빛은 하나</div></div>
+    <div style="display:grid; grid-template-columns:repeat(4, 390px); gap:40px">
+
+      <!-- 01 WELCOME -->
+      <div style="display:flex; flex-direction:column; gap:12px">
+        <div data-screen-label="01 Welcome" style="position:relative; width:390px; height:844px; border-radius:54px; background:#050507; border:1px solid rgba(255,255,255,0.09); overflow:hidden">
+          <div style="position:absolute; inset:0; background-image:radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px); background-size:20px 20px"></div>
+          <div style="position:absolute; top:120px; left:50%; margin-left:-220px; width:440px; height:420px; border-radius:50%; background:radial-gradient(circle, rgba(124,77,255,0.4), rgba(59,130,246,0.12) 55%, rgba(0,0,0,0) 76%); filter:blur(34px)"></div>
+          <div style="position:absolute; top:0; left:0; right:0; height:54px; padding:0 34px; display:flex; align-items:center; font-size:14px; font-weight:700; color:rgba(255,255,255,0.9)">9:41</div>
+          <div style="position:absolute; inset:0; padding:70px 26px 40px; display:flex; flex-direction:column; justify-content:space-between">
+            <div style="font-size:13px; font-family:'JetBrains Mono', monospace; letter-spacing:.24em; color:rgba(255,255,255,0.5)">FRIMIT</div>
+            <div style="position:relative; align-self:center; width:250px; height:250px">
+              <div style="position:absolute; inset:0; border-radius:50%; border:1px dashed rgba(255,255,255,0.12)"></div>
+              <div style="position:absolute; inset:16px; border-radius:50%; background:conic-gradient(from -100deg, #7C4DFF, #3B82F6 130deg, #22D3EE 220deg, rgba(124,77,255,0.15) 330deg, #7C4DFF); -webkit-mask:radial-gradient(closest-side, transparent 86%, #000 87%); mask:radial-gradient(closest-side, transparent 86%, #000 87%); opacity:.9"></div>
+              <div style="position:absolute; inset:16px; border-radius:50%; background:conic-gradient(from -100deg, #7C4DFF, #22D3EE 220deg, rgba(0,0,0,0) 300deg); -webkit-mask:radial-gradient(closest-side, transparent 86%, #000 87%); mask:radial-gradient(closest-side, transparent 86%, #000 87%); filter:blur(16px); animation:frimitPulse 8s ease-in-out infinite"></div>
+              <div style="position:absolute; left:50%; top:50%; width:16px; height:16px; margin:-8px 0 0 -8px; border-radius:50%; background:#EDE9FE; box-shadow:0 0 20px 6px rgba(196,181,253,0.85); transform:translate(0px,-117px)"></div>
+              <div style="position:absolute; left:50%; top:50%; width:10px; height:10px; margin:-5px 0 0 -5px; border-radius:50%; background:#67E8F9; box-shadow:0 0 16px 5px rgba(103,232,249,0.6); transform:translate(117px,0px)"></div>
+              <div style="position:absolute; left:50%; top:50%; width:10px; height:10px; margin:-5px 0 0 -5px; border-radius:50%; background:#93C5FD; box-shadow:0 0 16px 5px rgba(147,197,253,0.55); transform:translate(0px,117px)"></div>
+              <div style="position:absolute; left:50%; top:50%; width:10px; height:10px; margin:-5px 0 0 -5px; border-radius:50%; background:#C4B5FD; box-shadow:0 0 16px 5px rgba(196,181,253,0.55); transform:translate(-117px,0px)"></div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:22px">
+              <div style="display:flex; flex-direction:column; gap:12px">
+                <div style="font-size:38px; font-weight:800; letter-spacing:-0.035em; line-height:1.1">Less screen.<br>More together.</div>
+                <div style="font-size:15px; color:rgba(255,255,255,0.45); font-weight:500; line-height:1.6">친구들과 하루 시간을 하나로 묶고<br>같이 아껴 쓰는 방법.</div>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:10px">
+                <div style="padding:16px; border-radius:18px; background:linear-gradient(100deg,#7C4DFF,#3B82F6); box-shadow:0 0 30px -4px rgba(99,102,241,0.7); text-align:center; font-size:16px; font-weight:800">Get started</div>
+                <div style="padding:15px; border-radius:18px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); text-align:center; font-size:15px; font-weight:700; color:rgba(255,255,255,0.8)">I have an invite</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:3px"><div style="font-size:13px; font-weight:800">01 · Welcome</div><div style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:600">Get started → 02 · I have an invite → 08 Invitation Preview</div></div>
+      </div>
+
+      <!-- 02 SIGN IN -->
+      <div style="display:flex; flex-direction:column; gap:12px">
+        <div data-screen-label="02 Sign in" style="position:relative; width:390px; height:844px; border-radius:54px; background:#050507; border:1px solid rgba(255,255,255,0.09); overflow:hidden">
+          <div style="position:absolute; inset:0; background-image:radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px); background-size:22px 22px"></div>
+          <div style="position:absolute; top:-120px; left:50%; margin-left:-190px; width:380px; height:340px; border-radius:50%; background:radial-gradient(circle, rgba(124,77,255,0.34), rgba(0,0,0,0) 72%); filter:blur(32px)"></div>
+          <div style="position:absolute; top:0; left:0; right:0; height:54px; padding:0 34px; display:flex; align-items:center; font-size:14px; font-weight:700; color:rgba(255,255,255,0.9)">9:41</div>
+          <div style="position:absolute; inset:0; padding:70px 26px 40px; display:flex; flex-direction:column; justify-content:space-between">
+            <div style="display:flex; flex-direction:column; gap:16px">
+              <div style="width:38px; height:38px; border-radius:50%; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700; color:rgba(255,255,255,0.75)">←</div>
+              <div style="position:relative; width:96px; height:96px; margin-top:26px">
+                <div style="position:absolute; inset:0; border-radius:50%; background:conic-gradient(from -100deg, #7C4DFF, #3B82F6 140deg, #22D3EE 230deg, rgba(124,77,255,0.15) 340deg, #7C4DFF); -webkit-mask:radial-gradient(closest-side, transparent 84%, #000 85%); mask:radial-gradient(closest-side, transparent 84%, #000 85%)"></div>
+                <div style="position:absolute; inset:22px; border-radius:50%; background:radial-gradient(circle, rgba(139,92,246,0.5), rgba(0,0,0,0) 70%); filter:blur(10px)"></div>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:10px; margin-top:8px">
+                <div style="font-size:32px; font-weight:800; letter-spacing:-0.03em; line-height:1.15">시작해볼까요</div>
+                <div style="font-size:15px; color:rgba(255,255,255,0.45); font-weight:500; line-height:1.6">계정으로 로그인하면 친구들과<br>같은 시간 풀에 연결돼요.</div>
+              </div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:10px">
+              <div style="padding:16px; border-radius:18px; background:#FFFFFF; color:#050507; display:flex; align-items:center; justify-content:center; gap:9px; font-size:16px; font-weight:700">Continue with Apple</div>
+              <div style="padding:16px; border-radius:18px; background:#FFFFFF; color:#1F1F1F; display:flex; align-items:center; justify-content:center; gap:9px; font-size:16px; font-weight:700"><div style="width:18px; height:18px; border-radius:50%; background:conic-gradient(#EA4335 0deg 90deg, #FBBC05 90deg 180deg, #34A853 180deg 270deg, #4285F4 270deg)"></div>Continue with Google</div>
+              <div style="text-align:center; font-size:12px; color:rgba(255,255,255,0.34); font-weight:600; line-height:1.6; margin-top:6px">계속하면 <span style="color:rgba(255,255,255,0.55)">약관</span>과 <span style="color:rgba(255,255,255,0.55)">개인정보 처리방침</span>에 동의합니다.</div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:3px"><div style="font-size:13px; font-weight:800">02 · Sign in</div><div style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:600">Apple / Google → 03 Profile Setup</div></div>
+      </div>
+
+      <!-- 03 PROFILE SETUP -->
+      <div style="display:flex; flex-direction:column; gap:12px">
+        <div data-screen-label="03 Profile" style="position:relative; width:390px; height:844px; border-radius:54px; background:#050507; border:1px solid rgba(255,255,255,0.09); overflow:hidden">
+          <div style="position:absolute; inset:0; background-image:radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px); background-size:20px 20px"></div>
+          <div style="position:absolute; top:110px; left:50%; margin-left:-170px; width:340px; height:320px; border-radius:50%; background:radial-gradient(circle, rgba(59,130,246,0.3), rgba(0,0,0,0) 72%); filter:blur(30px)"></div>
+          <div style="position:absolute; top:0; left:0; right:0; height:54px; padding:0 34px; display:flex; align-items:center; font-size:14px; font-weight:700; color:rgba(255,255,255,0.9)">9:41</div>
+          <div style="position:absolute; inset:0; padding:70px 26px 40px; display:flex; flex-direction:column; justify-content:space-between">
+            <div style="display:flex; flex-direction:column; gap:24px">
+              <div style="display:flex; align-items:center; justify-content:space-between">
+                <div style="width:38px; height:38px; border-radius:50%; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700; color:rgba(255,255,255,0.75)">←</div>
+                <div style="display:flex; gap:6px"><div style="width:22px; height:4px; border-radius:2px; background:linear-gradient(90deg,#7C4DFF,#3B82F6)"></div><div style="width:22px; height:4px; border-radius:2px; background:rgba(255,255,255,0.12)"></div><div style="width:22px; height:4px; border-radius:2px; background:rgba(255,255,255,0.12)"></div></div>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:9px">
+                <div style="font-size:30px; font-weight:800; letter-spacing:-0.03em">어떻게 불러드릴까요?</div>
+                <div style="font-size:14px; color:rgba(255,255,255,0.42); font-weight:500">친구들에게 보이는 이름과 아바타예요.</div>
+              </div>
+              <div style="position:relative; align-self:center; width:110px; height:110px">
+                <div style="position:absolute; inset:-7px; border-radius:50%; background:conic-gradient(from 200deg,#22D3EE,#7C4DFF,#F0ABFC,#22D3EE); filter:blur(9px); opacity:.7; animation:frimitPulse 7s ease-in-out infinite"></div>
+                <div style="position:absolute; inset:0; border-radius:50%; background:linear-gradient(150deg,#8B5CF6,#3B82F6); border:3px solid #050507; display:flex; align-items:center; justify-content:center; font-size:38px; font-weight:800">정</div>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:10px">
+                <div style="font-size:12px; font-weight:800; letter-spacing:.12em; color:rgba(255,255,255,0.32)">NICKNAME</div>
+                <div style="padding:16px 18px; border-radius:18px; background:rgba(255,255,255,0.05); border:1px solid rgba(167,139,250,0.3); box-shadow:0 0 22px -8px rgba(124,77,255,0.6); display:flex; align-items:center; justify-content:space-between"><div style="font-size:17px; font-weight:700">정원</div><div style="width:2px; height:20px; background:#A78BFA; box-shadow:0 0 8px rgba(167,139,250,0.9)"></div></div>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:12px">
+                <div style="font-size:12px; font-weight:800; letter-spacing:.12em; color:rgba(255,255,255,0.32)">PRESET AVATAR</div>
+                <div style="display:flex; gap:11px; flex-wrap:wrap">
+                  <div style="width:52px; height:52px; border-radius:50%; background:linear-gradient(150deg,#8B5CF6,#3B82F6); border:2px solid #A78BFA; box-shadow:0 0 20px -4px rgba(139,92,246,0.9)"></div>
+                  <div style="width:52px; height:52px; border-radius:50%; background:linear-gradient(150deg,#22D3EE,#0E7490); opacity:.8"></div>
+                  <div style="width:52px; height:52px; border-radius:50%; background:linear-gradient(150deg,#60A5FA,#1D4ED8); opacity:.8"></div>
+                  <div style="width:52px; height:52px; border-radius:50%; background:linear-gradient(150deg,#F0ABFC,#A855F7); opacity:.8"></div>
+                  <div style="width:52px; height:52px; border-radius:50%; background:linear-gradient(150deg,#F472B6,#BE185D); opacity:.8"></div>
+                </div>
+              </div>
+            </div>
+            <div style="padding:16px; border-radius:18px; background:linear-gradient(100deg,#7C4DFF,#3B82F6); box-shadow:0 0 30px -4px rgba(99,102,241,0.7); text-align:center; font-size:16px; font-weight:800">Continue</div>
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:3px"><div style="font-size:13px; font-weight:800">03 · Profile setup</div><div style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:600">Continue → 04 Notification Intro</div></div>
+      </div>
+
+      <!-- 04 NOTIFICATION INTRO -->
+      <div style="display:flex; flex-direction:column; gap:12px">
+        <div data-screen-label="04 Notifications" style="position:relative; width:390px; height:844px; border-radius:54px; background:#050507; border:1px solid rgba(255,255,255,0.09); overflow:hidden">
+          <div style="position:absolute; inset:0; background-image:radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px); background-size:22px 22px"></div>
+          <div style="position:absolute; top:150px; right:-120px; width:340px; height:320px; border-radius:50%; background:radial-gradient(circle, rgba(34,211,238,0.24), rgba(0,0,0,0) 72%); filter:blur(30px)"></div>
+          <div style="position:absolute; top:0; left:0; right:0; height:54px; padding:0 34px; display:flex; align-items:center; font-size:14px; font-weight:700; color:rgba(255,255,255,0.9)">9:41</div>
+          <div style="position:absolute; inset:0; padding:70px 26px 40px; display:flex; flex-direction:column; justify-content:space-between">
+            <div style="display:flex; flex-direction:column; gap:26px">
+              <div style="display:flex; gap:6px"><div style="width:22px; height:4px; border-radius:2px; background:linear-gradient(90deg,#7C4DFF,#3B82F6)"></div><div style="width:22px; height:4px; border-radius:2px; background:linear-gradient(90deg,#7C4DFF,#3B82F6)"></div><div style="width:22px; height:4px; border-radius:2px; background:rgba(255,255,255,0.12)"></div></div>
+              <div style="display:flex; flex-direction:column; gap:10px">
+                <div style="font-size:30px; font-weight:800; letter-spacing:-0.03em; line-height:1.2">우리 시간이 얼마 남았는지<br>놓치지 않도록</div>
+                <div style="font-size:14px; color:rgba(255,255,255,0.42); font-weight:500; line-height:1.6">중요한 순간에만 알려드려요. 하루에 몇 번이면 충분해요.</div>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:10px">
+                <div style="border-radius:22px; padding:14px 16px; background:linear-gradient(150deg,#14141F,#0A0A10); border:1px solid rgba(167,139,250,0.18); box-shadow:0 0 26px -12px rgba(124,77,255,0.7); display:flex; align-items:center; gap:12px">
+                  <div style="width:34px; height:34px; border-radius:11px; background:linear-gradient(150deg,#A78BFA,#3B82F6); flex:none; box-shadow:0 0 14px -2px rgba(139,92,246,0.8)"></div>
+                  <div style="flex:1; display:flex; flex-direction:column; gap:2px"><div style="font-size:13px; font-weight:700">밤샘 금지단 · 75% 사용</div><div style="font-size:12px; color:rgba(255,255,255,0.38); font-weight:600">2시간 남았어요</div></div>
+                </div>
+                <div style="border-radius:22px; padding:14px 16px; background:rgba(255,255,255,0.035); border:1px solid rgba(255,255,255,0.06); display:flex; align-items:center; gap:12px">
+                  <div style="width:34px; height:34px; border-radius:50%; background:linear-gradient(150deg,#22D3EE,#0E7490); flex:none; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700">도</div>
+                  <div style="flex:1; display:flex; flex-direction:column; gap:2px"><div style="font-size:13px; font-weight:700">도형이가 콕 찔렀어요 👀</div><div style="font-size:12px; color:rgba(255,255,255,0.38); font-weight:600">방금</div></div>
+                </div>
+                <div style="border-radius:22px; padding:14px 16px; background:rgba(255,255,255,0.035); border:1px solid rgba(255,255,255,0.06); display:flex; align-items:center; gap:12px">
+                  <div style="width:34px; height:34px; border-radius:11px; background:rgba(34,211,238,0.14); border:1px solid rgba(34,211,238,0.3); flex:none"></div>
+                  <div style="flex:1; display:flex; flex-direction:column; gap:2px"><div style="font-size:13px; font-weight:700">목표 진행 64%</div><div style="font-size:12px; color:rgba(255,255,255,0.38); font-weight:600">이번 주 5번 운동하기</div></div>
+                </div>
+              </div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:10px">
+              <div style="padding:16px; border-radius:18px; background:linear-gradient(100deg,#7C4DFF,#3B82F6); box-shadow:0 0 30px -4px rgba(99,102,241,0.7); text-align:center; font-size:16px; font-weight:800">Turn on notifications</div>
+              <div style="text-align:center; padding:12px; font-size:15px; font-weight:700; color:rgba(255,255,255,0.4)">Not now</div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:3px"><div style="font-size:13px; font-weight:800">04 · Notification intro</div><div style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:600">둘 중 무엇이든 → 05 Screen Time Privacy (OS 시트는 이 화면 위에서 발생)</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PHASE 2 ── -->
+  <div style="width:1720px; display:flex; flex-direction:column; gap:22px">
+    <div style="display:flex; align-items:center; gap:14px"><div style="width:8px; height:8px; border-radius:50%; background:#67E8F9; box-shadow:0 0 12px 3px rgba(103,232,249,0.8)"></div><div style="font-size:20px; font-weight:800; letter-spacing:-0.02em">Phase 2 · Trust</div><div style="font-size:13px; color:rgba(255,255,255,0.35); font-weight:600">05 – 06 · 무엇을 읽고, 무엇을 공유하지 않는지</div></div>
+    <div style="display:grid; grid-template-columns:repeat(4, 390px); gap:40px">
+
+      <!-- 05 SCREEN TIME PRIVACY -->
+      <div style="display:flex; flex-direction:column; gap:12px">
+        <div data-screen-label="05 Privacy" style="position:relative; width:390px; height:844px; border-radius:54px; background:#050507; border:1px solid rgba(255,255,255,0.09); overflow:hidden">
+          <div style="position:absolute; inset:0; background-image:radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px); background-size:22px 22px"></div>
+          <div style="position:absolute; top:-100px; left:-70px; width:360px; height:330px; border-radius:50%; background:radial-gradient(circle, rgba(34,211,238,0.26), rgba(0,0,0,0) 72%); filter:blur(30px)"></div>
+          <div style="position:absolute; top:0; left:0; right:0; height:54px; padding:0 34px; display:flex; align-items:center; font-size:14px; font-weight:700; color:rgba(255,255,255,0.9)">9:41</div>
+          <div style="position:absolute; inset:0; padding:70px 26px 40px; display:flex; flex-direction:column; justify-content:space-between">
+            <div style="display:flex; flex-direction:column; gap:22px">
+              <div style="display:flex; gap:6px"><div style="width:22px; height:4px; border-radius:2px; background:linear-gradient(90deg,#7C4DFF,#3B82F6)"></div><div style="width:22px; height:4px; border-radius:2px; background:linear-gradient(90deg,#7C4DFF,#3B82F6)"></div><div style="width:22px; height:4px; border-radius:2px; background:linear-gradient(90deg,#3B82F6,#22D3EE)"></div></div>
+              <div style="display:flex; flex-direction:column; gap:10px">
+                <div style="font-size:30px; font-weight:800; letter-spacing:-0.03em; line-height:1.2">시간만 공유하고<br>목록은 남기지 않아요</div>
+                <div style="font-size:14px; color:rgba(255,255,255,0.42); font-weight:500; line-height:1.6">공동 시간을 계산하려면 Screen Time 데이터가 필요해요.</div>
+              </div>
+              <div style="border-radius:26px; padding:18px; background:linear-gradient(160deg,#0C1418,#09090F); border:1px solid rgba(34,211,238,0.2); box-shadow:0 0 30px -14px rgba(34,211,238,0.8); display:flex; flex-direction:column; gap:12px">
+                <div style="display:flex; align-items:center; gap:8px"><div style="width:6px; height:6px; border-radius:50%; background:#22D3EE; box-shadow:0 0 10px 2px rgba(34,211,238,0.9)"></div><div style="font-size:12px; font-weight:800; letter-spacing:.1em; color:#67E8F9">FRIENDS CAN SEE</div></div>
+                <div style="font-size:32px; font-weight:800; letter-spacing:-0.04em">1h 42m used</div>
+                <div style="display:flex; gap:8px; flex-wrap:wrap">
+                  <div style="padding:6px 12px; border-radius:999px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.09); font-size:12px; font-weight:700; white-space:nowrap">6 apps counted</div>
+                  <div style="padding:6px 12px; border-radius:999px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.09); font-size:12px; font-weight:700; white-space:nowrap">synced 2m ago</div>
+                </div>
+              </div>
+              <div style="border-radius:26px; padding:18px; background:rgba(255,255,255,0.025); border:1px dashed rgba(255,255,255,0.14); display:flex; flex-direction:column; gap:12px">
+                <div style="display:flex; align-items:center; gap:8px"><div style="width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,0.25)"></div><div style="font-size:12px; font-weight:800; letter-spacing:.1em; color:rgba(255,255,255,0.4)">FRIENDS CAN'T SEE</div></div>
+                <div style="display:flex; flex-direction:column; gap:9px">
+                  <div style="display:flex; justify-content:space-between; font-size:15px; font-weight:600; color:rgba(255,255,255,0.22)"><div>Instagram</div><div>48m</div></div>
+                  <div style="display:flex; justify-content:space-between; font-size:15px; font-weight:600; color:rgba(255,255,255,0.22)"><div>YouTube</div><div>32m</div></div>
+                  <div style="display:flex; justify-content:space-between; font-size:15px; font-weight:600; color:rgba(255,255,255,0.22)"><div>KakaoTalk</div><div>22m</div></div>
+                </div>
+                <div style="font-size:12px; font-weight:600; color:rgba(255,255,255,0.34); line-height:1.6">앱별 상세 기록은 이 기기에만 남아요.</div>
+              </div>
+            </div>
+            <div style="padding:16px; border-radius:18px; background:linear-gradient(100deg,#7C4DFF,#3B82F6); box-shadow:0 0 30px -4px rgba(99,102,241,0.7); text-align:center; font-size:16px; font-weight:800">Continue</div>
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:3px"><div style="font-size:13px; font-weight:800">05 · Screen Time privacy</div><div style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:600">Continue → 06 Permission</div></div>
+      </div>
+
+      <!-- 06 PERMISSION (pre-request) -->
+      <div style="display:flex; flex-direction:column; gap:12px">
+        <div data-screen-label="06 Permission" style="position:relative; width:390px; height:844px; border-radius:54px; background:#050507; border:1px solid rgba(255,255,255,0.09); overflow:hidden">
+          <div style="position:absolute; inset:0; background-image:radial-gradient(rgba(255,255,255,0.045) 1px, transparent 1px); background-size:22px 22px"></div>
+          <div style="position:absolute; top:0; left:0; right:0; height:54px; padding:0 34px; display:flex; align-items:center; font-size:14px; font-weight:700; color:rgba(255,255,255,0.9)">9:41</div>
+          <div style="position:absolute; inset:0; padding:70px 26px 40px; display:flex; flex-direction:column; justify-content:space-between">
+            <div style="display:flex; flex-direction:column; gap:26px">
+              <div style="font-size:12px; font-family:'JetBrains Mono', monospace; letter-spacing:.16em; color:rgba(255,255,255,0.35)">STEP 3 OF 3</div>
+              <div style="position:relative; align-self:center; width:170px; height:170px; margin-top:14px">
+                <div style="position:absolute; inset:0; border-radius:50%; background:rgba(255,255,255,0.06); -webkit-mask:radial-gradient(closest-side, transparent 84%, #000 85%); mask:radial-gradient(closest-side, transparent 84%, #000 85%)"></div>
+                <div style="position:absolute; inset:0; border-radius:50%; background:conic-gradient(from -90deg, #7C4DFF 0deg, #3B82F6 40deg, rgba(0,0,0,0) 44deg); -webkit-mask:radial-gradient(closest-side, transparent 84%, #000 85%); mask:radial-gradient(closest-side, transparent 84%, #000 85%); filter:blur(1px)"></div>
+                <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px"><div style="font-size:30px; font-weight:800; letter-spacing:-0.04em; color:rgba(255,255,255,0.4)">— —</div><div style="font-size:11px; font-family:'JetBrains Mono', monospace; color:rgba(255,255,255,0.32); letter-spacing:.1em">NO DATA YET</div></div>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:10px; text-align:center">
+                <div style="font-size:28px; font-weight:800; letter-spacing:-0.03em">마지막 한 단계</div>
+                <div style="font-size:14px; color:rgba(255,255,255,0.44); font-weight:500; line-height:1.6">권한을 켜면 내 사용 시간이 그룹의 공동 시간에 합산돼요. 언제든 끌 수 있어요.</div>
+              </div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:10px">
+              <div style="padding:16px; border-radius:18px; background:linear-gradient(100deg,#7C4DFF,#3B82F6); box-shadow:0 0 30px -4px rgba(99,102,241,0.7); text-align:center; font-size:16px; font-weight:800">Enable Screen Time</div>
+              <div style="text-align:center; padding:12px; font-size:15px; font-weight:700; color:rgba(255,255,255,0.4)">Continue for now</div>
+              <div style="text-align:center; font-size:12px; color:rgba(255,255,255,0.3); font-weight:600">다음 화면은 iOS / Android 시스템 시트예요.</div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:3px"><div style="font-size:13px; font-weight:800">06 · Permission (not requested)</div><div style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:600">Enable → OS 시트 → 06a 승인 / 06b 거부 · Continue for now → 07</div></div>
+      </div>
+
+      <!-- 06a / 06b RETURN STATES -->
+      <div style="display:flex; flex-direction:column; gap:12px">
+        <div data-screen-label="06a Approved" style="position:relative; width:390px; height:402px; border-radius:44px; background:#050507; border:1px solid rgba(255,255,255,0.09); overflow:hidden">
+          <div style="position:absolute; inset:0; background-image:radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px); background-size:20px 20px"></div>
+          <div style="position:absolute; top:40px; left:50%; margin-left:-160px; width:320px; height:300px; border-radius:50%; background:radial-gradient(circle, rgba(34,211,238,0.3), rgba(124,77,255,0.14) 60%, rgba(0,0,0,0) 78%); filter:blur(30px)"></div>
+          <div style="position:absolute; inset:0; padding:38px 26px 30px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px">
+            <div style="position:relative; width:104px; height:104px">
+              <div style="position:absolute; inset:0; border-radius:50%; background:conic-gradient(from -90deg,#7C4DFF,#3B82F6,#22D3EE,#7C4DFF); -webkit-mask:radial-gradient(closest-side, transparent 84%, #000 85%); mask:radial-gradient(closest-side, transparent 84%, #000 85%)"></div>
+              <div style="position:absolute; inset:16px; border-radius:50%; background:radial-gradient(circle, rgba(34,211,238,0.4), rgba(0,0,0,0) 72%); filter:blur(10px); animation:frimitPulse 6s ease-in-out infinite"></div>
+              <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:30px; font-weight:800; color:#CFFAFE">✓</div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:7px; text-align:center">
+              <div style="font-size:26px; font-weight:800; letter-spacing:-0.03em">You're connected.</div>
+              <div style="font-size:14px; color:rgba(255,255,255,0.44); font-weight:500">이제 공동 시간에 참여할 수 있어요.</div>
+            </div>
+            <div style="width:100%; padding:15px; border-radius:18px; background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.12); text-align:center; font-size:15px; font-weight:700">Continue</div>
+          </div>
+        </div>
+        <div data-screen-label="06b Denied" style="position:relative; width:390px; height:402px; border-radius:44px; background:#050507; border:1px solid rgba(255,255,255,0.09); overflow:hidden">
+          <div style="position:absolute; inset:0; background-image:radial-gradient(rgba(255,255,255,0.045) 1px, transparent 1px); background-size:22px 22px"></div>
+          <div style="position:absolute; inset:0; padding:38px 26px 30px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px">
+            <div style="position:relative; width:104px; height:104px">
+              <div style="position:absolute; inset:0; border-radius:50%; background:rgba(255,255,255,0.06); -webkit-mask:radial-gradient(closest-side, transparent 84%, #000 85%); mask:radial-gradient(closest-side, transparent 84%, #000 85%)"></div>
+              <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:26px; font-weight:800; color:rgba(255,255,255,0.3)">— —</div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:7px; text-align:center">
+              <div style="font-size:24px; font-weight:800; letter-spacing:-0.03em">아직 참여 전이에요</div>
+              <div style="font-size:14px; color:rgba(255,255,255,0.44); font-weight:500; line-height:1.6">둘러보는 건 괜찮아요. 공동 시간 집계는 권한을 켠 뒤부터 시작돼요.</div>
+            </div>
+            <div style="width:100%; display:flex; flex-direction:column; gap:9px">
+              <div style="padding:15px; border-radius:18px; background:linear-gradient(100deg,#7C4DFF,#3B82F6); box-shadow:0 0 26px -6px rgba(99,102,241,0.65); text-align:center; font-size:15px; font-weight:800">Try again</div>
+              <div style="text-align:center; font-size:14px; font-weight:700; color:rgba(255,255,255,0.4)">Continue for now</div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:3px"><div style="font-size:13px; font-weight:800">06a · Approved / 06b · Denied</div><div style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:600">시스템 시트에서 돌아온 상태 · 둘 다 → 07 Create or Join</div></div>
+      </div>
+
+      <!-- 07 CREATE OR JOIN -->
+      <div style="display:flex; flex-direction:column; gap:12px">
+        <div data-screen-label="07 Create or Join" style="position:relative; width:390px; height:844px; border-radius:54px; background:#050507; border:1px solid rgba(255,255,255,0.09); overflow:hidden">
+          <div style="position:absolute; inset:0; background-image:radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px); background-size:20px 20px"></div>
+          <div style="position:absolute; top:180px; left:-100px; width:340px; height:320px; border-radius:50%; background:radial-gradient(circle, rgba(124,77,255,0.32), rgba(0,0,0,0) 72%); filter:blur(30px)"></div>
+          <div style="position:absolute; bottom:120px; right:-110px; width:340px; height:320px; border-radius:50%; background:radial-gradient(circle, rgba(34,211,238,0.24), rgba(0,0,0,0) 72%); filter:blur(30px)"></div>
+          <div style="position:absolute; top:0; left:0; right:0; height:54px; padding:0 34px; display:flex; align-items:center; font-size:14px; font-weight:700; color:rgba(255,255,255,0.9)">9:41</div>
+          <div style="position:absolute; inset:0; padding:70px 26px 40px; display:flex; flex-direction:column; gap:20px">
+            <div style="flex:none; display:flex; flex-direction:column; gap:9px">
+              <div style="font-size:30px; font-weight:800; letter-spacing:-0.03em">혼자서는 시작할 수 없어요</div>
+              <div style="font-size:14px; color:rgba(255,255,255,0.42); font-weight:500">공동 시간은 친구가 있어야 흘러요.</div>
+            </div>
+            <div style="flex:1; display:flex; flex-direction:column; gap:14px; justify-content:center">
+              <div style="position:relative; border-radius:30px; padding:22px; overflow:hidden; background:linear-gradient(160deg,#16162A,#0A0A11); border:1px solid rgba(167,139,250,0.22); box-shadow:inset 0 1px 0 rgba(255,255,255,0.08), 0 0 34px -14px rgba(124,77,255,0.9); height:250px; display:flex; flex-direction:column; justify-content:space-between">
+                <div style="position:absolute; top:-70px; right:-40px; width:250px; height:220px; border-radius:50%; background:radial-gradient(circle, rgba(124,77,255,0.55), rgba(0,0,0,0) 72%); filter:blur(26px)"></div>
+                <div style="position:relative; width:64px; height:64px">
+                  <div style="position:absolute; inset:0; border-radius:50%; border:1px dashed rgba(255,255,255,0.18)"></div>
+                  <div style="position:absolute; left:50%; top:50%; width:24px; height:24px; margin:-12px 0 0 -12px; border-radius:50%; background:linear-gradient(150deg,#8B5CF6,#3B82F6); box-shadow:0 0 16px rgba(139,92,246,0.8); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700">정</div>
+                  <div style="position:absolute; left:50%; top:50%; width:14px; height:14px; margin:-7px 0 0 -7px; border-radius:50%; background:rgba(255,255,255,0.12); border:1px dashed rgba(255,255,255,0.3); transform:translate(0px,-32px)"></div>
+                  <div style="position:absolute; left:50%; top:50%; width:14px; height:14px; margin:-7px 0 0 -7px; border-radius:50%; background:rgba(255,255,255,0.12); border:1px dashed rgba(255,255,255,0.3); transform:translate(32px,0px)"></div>
+                  <div style="position:absolute; left:50%; top:50%; width:14px; height:14px; margin:-7px 0 0 -7px; border-radius:50%; background:rgba(255,255,255,0.12); border:1px dashed rgba(255,255,255,0.3); transform:translate(0px,32px)"></div>
+                </div>
+                <div style="position:relative; display:flex; flex-direction:column; gap:6px">
+                  <div style="font-size:24px; font-weight:800; letter-spacing:-0.025em">Create a group</div>
+                  <div style="font-size:14px; color:rgba(255,255,255,0.5); font-weight:500">Start a shared pool with friends</div>
+                </div>
+              </div>
+              <div style="position:relative; border-radius:30px; padding:22px; overflow:hidden; background:#0E1016; border:1px solid rgba(255,255,255,0.08); height:210px; display:flex; flex-direction:column; justify-content:space-between">
+                <div style="position:absolute; bottom:-80px; left:-30px; width:240px; height:210px; border-radius:50%; background:radial-gradient(circle, rgba(34,211,238,0.3), rgba(0,0,0,0) 72%); filter:blur(26px)"></div>
+                <div style="position:relative; display:flex; gap:8px">
+                  <div style="width:34px; height:44px; border-radius:12px; background:rgba(255,255,255,0.05); border:1px solid rgba(34,211,238,0.28); display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:800; font-family:'JetBrains Mono', monospace; color:#67E8F9">8</div>
+                  <div style="width:34px; height:44px; border-radius:12px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:800; font-family:'JetBrains Mono', monospace; color:rgba(255,255,255,0.3)">2</div>
+                  <div style="width:34px; height:44px; border-radius:12px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1)"></div>
+                  <div style="width:34px; height:44px; border-radius:12px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1)"></div>
+                  <div style="width:34px; height:44px; border-radius:12px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1)"></div>
+                  <div style="width:34px; height:44px; border-radius:12px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1)"></div>
+                </div>
+                <div style="position:relative; display:flex; flex-direction:column; gap:6px">
+                  <div style="font-size:22px; font-weight:800; letter-spacing:-0.025em">Join with invite</div>
+                  <div style="font-size:14px; color:rgba(255,255,255,0.5); font-weight:500">Enter a 6-digit code</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:3px"><div style="font-size:13px; font-weight:800">07 · Create or Join</div><div style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:600">Create → 09 · Join(코드 입력) → 08 Invitation Preview · 초대 링크로 진입 시 이 화면 skip</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PHASE 3 ── -->
+  <div style="width:1720px; display:flex; flex-direction:column; gap:22px">
+    <div style="display:flex; align-items:center; gap:14px"><div style="width:8px; height:8px; border-radius:50%; background:#C4B5FD; box-shadow:0 0 12px 3px rgba(196,181,253,0.8)"></div><div style="font-size:20px; font-weight:800; letter-spacing:-0.02em">Phase 3 · Invite</div><div style="font-size:13px; color:rgba(255,255,255,0.35); font-weight:600">08 – 12 · 궤도의 빈 자리가 채워진다</div></div>
+    <div style="display:grid; grid-template-columns:repeat(4, 390px); gap:40px">
+
+      <!-- 08 INVITATION PREVIEW -->
+      <div style="display:flex; flex-direction:column; gap:12px">
+        <div data-screen-label="08 Invitation" style="position:relative; width:390px; height:844px; border-radius:54px; background:#050507; border:1px solid rgba(255,255,255,0.09); overflow:hidden">
+          <div style="position:absolute; inset:0; background-image:radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px); background-size:20px 20px"></div>
+          <div style="position:absolute; top:150px; left:50%; margin-left:-210px; width:420px; height:400px; border-radius:50%; background:radial-gradient(circle, rgba(124,77,255,0.4), rgba(59,130,246,0.12) 56%, rgba(0,0,0,0) 76%); filter:blur(32px)"></div>
+          <div style="position:absolute; top:0; left:0; right:0; height:54px; padding:0 34px; display:flex; align-items:center; font-size:14px; font-weight:700; color:rgba(255,255,255,0.9)">9:41</div>
+          <div style="position:absolute; inset:0; padding:70px 26px 40px; display:flex; flex-direction:column; justify-content:space-between">
+            <div style="display:flex; flex-direction:column; gap:8px; align-items:center; text-align:center">
+              <div style="display:flex; align-items:center; gap:8px; padding:7px 14px 7px 8px; border-radius:999px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.09)">
+                <div style="width:22px; height:22px; border-radius:50%; background:linear-gradient(150deg,#8B5CF6,#6D28D9); display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700">정</div>
+                <div style="font-size:13px; font-weight:700; color:rgba(255,255,255,0.7)">정원 invited you to</div>
+              </div>
+              <div style="font-size:34px; font-weight:800; letter-spacing:-0.035em; margin-top:6px">밤샘 금지단</div>
+            </div>
+            <div style="position:relative; align-self:center; width:270px; height:270px">
+              <div style="position:absolute; inset:0; border-radius:50%; border:1px dashed rgba(255,255,255,0.12)"></div>
+              <div style="position:absolute; inset:22px; border-radius:50%; background:conic-gradient(from -100deg, #7C4DFF, #3B82F6 150deg, #22D3EE 240deg, rgba(124,77,255,0.12) 320deg, #7C4DFF); -webkit-mask:radial-gradient(closest-side, transparent 88%, #000 89%); mask:radial-gradient(closest-side, transparent 88%, #000 89%); opacity:.85"></div>
+              <div style="position:absolute; inset:60px; border-radius:50%; background:radial-gradient(circle, rgba(124,77,255,0.3), rgba(0,0,0,0) 72%); filter:blur(14px); animation:frimitPulse 7s ease-in-out infinite"></div>
+              <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px">
+                <div style="font-size:44px; font-weight:800; letter-spacing:-0.045em">8h</div>
+                <div style="font-size:12px; font-weight:600; color:rgba(255,255,255,0.42)">shared every day</div>
+              </div>
+              <div style="position:absolute; left:50%; top:50%; width:36px; height:36px; margin:-18px 0 0 -18px; border-radius:50%; background:linear-gradient(150deg,#8B5CF6,#6D28D9); border:2px solid #050507; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; box-shadow:0 0 16px rgba(139,92,246,0.7); transform:translate(0px,-135px)">정</div>
+              <div style="position:absolute; left:50%; top:50%; width:36px; height:36px; margin:-18px 0 0 -18px; border-radius:50%; background:linear-gradient(150deg,#60A5FA,#2563EB); border:2px solid #050507; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; transform:translate(135px,0px)">민</div>
+              <div style="position:absolute; left:50%; top:50%; width:36px; height:36px; margin:-18px 0 0 -18px; border-radius:50%; background:linear-gradient(150deg,#22D3EE,#0E7490); border:2px solid #050507; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; transform:translate(0px,135px)">도</div>
+              <div style="position:absolute; left:50%; top:50%; width:36px; height:36px; margin:-18px 0 0 -18px; border-radius:50%; background:rgba(255,255,255,0.06); border:1px dashed rgba(196,181,253,0.5); display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:700; color:#C4B5FD; transform:translate(-135px,0px)">+</div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:14px">
+              <div style="display:flex; align-items:center; justify-content:center; gap:8px; font-size:14px; font-weight:700; color:rgba(255,255,255,0.55)"><div style="width:6px; height:6px; border-radius:50%; background:#A78BFA; box-shadow:0 0 9px 2px rgba(167,139,250,0.9)"></div>3 friends waiting · 자리 하나가 비어 있어요</div>
+              <div style="padding:16px; border-radius:18px; background:linear-gradient(100deg,#7C4DFF,#3B82F6); box-shadow:0 0 30px -4px rgba(99,102,241,0.7); text-align:center; font-size:16px; font-weight:800">Join the group</div>
+              <div style="text-align:center; font-size:14px; font-weight:700; color:rgba(255,255,255,0.38)">먼저 둘러볼게요</div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:3px"><div style="font-size:13px; font-weight:800">08 · Invitation preview</div><div style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:600">Join → 11 Tracking Intro (그룹 설정은 이미 되어 있음)</div></div>
+      </div>
+
+      <!-- 09 CREATE GROUP -->
+      <div style="display:flex; flex-direction:column; gap:12px">
+        <div data-screen-label="09 Create group" style="position:relative; width:390px; height:844px; border-radius:54px; background:#050507; border:1px solid rgba(255,255,255,0.09); overflow:hidden">
+          <div style="position:absolute; inset:0; background-image:radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px); background-size:20px 20px"></div>
+          <div style="position:absolute; top:230px; left:50%; margin-left:-200px; width:400px; height:360px; border-radius:50%; background:radial-gradient(circle, rgba(124,77,255,0.36), rgba(0,0,0,0) 74%); filter:blur(32px)"></div>
+          <div style="position:absolute; top:0; left:0; right:0; height:54px; padding:0 34px; display:flex; align-items:center; font-size:14px; font-weight:700; color:rgba(255,255,255,0.9)">9:41</div>
+          <div style="position:absolute; inset:0; padding:70px 26px 40px; display:flex; flex-direction:column; justify-content:space-between">
+            <div style="display:flex; flex-direction:column; gap:22px">
+              <div style="display:flex; align-items:center; justify-content:space-between">
+                <div style="width:38px; height:38px; border-radius:50%; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700; color:rgba(255,255,255,0.75)">←</div>
+                <div style="font-size:12px; font-family:'JetBrains Mono', monospace; letter-spacing:.14em; color:rgba(255,255,255,0.35)">2 / 2</div>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:12px">
+                <div style="font-size:12px; font-weight:800; letter-spacing:.12em; color:rgba(255,255,255,0.32)">GROUP NAME</div>
+                <div style="padding:15px 18px; border-radius:18px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); font-size:18px; font-weight:700">밤샘 금지단</div>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:12px">
+                <div style="font-size:12px; font-weight:800; letter-spacing:.12em; color:rgba(255,255,255,0.32)">GROUP ACCENT</div>
+                <div style="display:flex; gap:10px">
+                  <div style="flex:1; height:56px; border-radius:18px; background:linear-gradient(120deg,#7C4DFF,#3B82F6); border:2px solid #C4B5FD; box-shadow:0 0 22px -6px rgba(124,77,255,0.9)"></div>
+                  <div style="flex:1; height:56px; border-radius:18px; background:linear-gradient(120deg,#22D3EE,#1D4ED8); opacity:.55"></div>
+                  <div style="flex:1; height:56px; border-radius:18px; background:linear-gradient(120deg,#F472B6,#A855F7); opacity:.55"></div>
+                </div>
+              </div>
+            </div>
+
+            <div style="position:relative; border-radius:32px; padding:24px 20px; overflow:hidden; background:linear-gradient(160deg,#16162A,#0A0A11); border:1px solid rgba(255,255,255,0.09); box-shadow:inset 0 1px 0 rgba(255,255,255,0.08); display:flex; flex-direction:column; gap:18px; align-items:center">
+              <div style="position:absolute; inset:0; background-image:radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px); background-size:13px 13px; opacity:.7"></div>
+              <div style="position:absolute; top:-90px; left:50%; margin-left:-140px; width:280px; height:240px; border-radius:50%; background:radial-gradient(circle, rgba(124,77,255,0.5), rgba(0,0,0,0) 76%); filter:blur(26px)"></div>
+              <div style="position:relative; font-size:12px; font-weight:800; letter-spacing:.12em; color:rgba(255,255,255,0.4)">SHARED DAILY TIME</div>
+              <div style="position:relative; display:flex; align-items:center; gap:22px">
+                <div style="width:46px; height:46px; border-radius:50%; background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.12); display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:700; color:rgba(255,255,255,0.7)">–</div>
+                <div style="display:flex; flex-direction:column; align-items:center; gap:2px">
+                  <div style="font-size:60px; font-weight:800; letter-spacing:-0.05em; line-height:1">8h</div>
+                  <div style="font-size:12px; font-weight:600; color:rgba(255,255,255,0.4)">4명 기준 · 1인 2h</div>
+                </div>
+                <div style="width:46px; height:46px; border-radius:50%; background:linear-gradient(140deg,#7C4DFF,#3B82F6); display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:700; box-shadow:0 0 20px -4px rgba(124,77,255,0.9)">+</div>
+              </div>
+              <div style="position:relative; width:100%; display:flex; flex-direction:column; gap:8px">
+                <div style="height:6px; border-radius:999px; background:rgba(255,255,255,0.07)"><div style="width:53%; height:100%; border-radius:999px; background:linear-gradient(90deg,#7C4DFF,#3B82F6 60%,#22D3EE); box-shadow:0 0 14px rgba(59,130,246,0.7)"></div></div>
+                <div style="display:flex; justify-content:space-between; font-size:11px; font-family:'JetBrains Mono', monospace; color:rgba(255,255,255,0.32)"><div>2h</div><div>30m 단위</div><div>14h</div></div>
+              </div>
+            </div>
+
+            <div style="padding:16px; border-radius:18px; background:linear-gradient(100deg,#7C4DFF,#3B82F6); box-shadow:0 0 30px -4px rgba(99,102,241,0.7); text-align:center; font-size:16px; font-weight:800">Create group</div>
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:3px"><div style="font-size:13px; font-weight:800">09 · Create group</div><div style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:600">Step 1 이름·accent → Step 2 시간 · Create → 10 Invite Friends</div></div>
+      </div>
+
+      <!-- 10 INVITE FRIENDS -->
+      <div style="display:flex; flex-direction:column; gap:12px">
+        <div data-screen-label="10 Invite" style="position:relative; width:390px; height:844px; border-radius:54px; background:#050507; border:1px solid rgba(255,255,255,0.09); overflow:hidden">
+          <div style="position:absolute; inset:0; background-image:radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px); background-size:20px 20px"></div>
+          <div style="position:absolute; top:170px; left:50%; margin-left:-200px; width:400px; height:380px; border-radius:50%; background:radial-gradient(circle, rgba(124,77,255,0.34), rgba(0,0,0,0) 74%); filter:blur(32px)"></div>
+          <div style="position:absolute; top:0; left:0; right:0; height:54px; padding:0 34px; display:flex; align-items:center; font-size:14px; font-weight:700; color:rgba(255,255,255,0.9)">9:41</div>
+          <div style="position:absolute; inset:0; padding:70px 26px 40px; display:flex; flex-direction:column; justify-content:space-between">
+            <div style="display:flex; flex-direction:column; gap:9px">
+              <div style="font-size:30px; font-weight:800; letter-spacing:-0.03em">친구를 불러요</div>
+              <div style="font-size:14px; color:rgba(255,255,255,0.42); font-weight:500">한 명만 들어와도 공동 시간이 시작돼요.</div>
+            </div>
+            <div style="position:relative; align-self:center; width:250px; height:250px">
+              <div style="position:absolute; inset:0; border-radius:50%; border:1px dashed rgba(255,255,255,0.12)"></div>
+              <div style="position:absolute; inset:20px; border-radius:50%; background:conic-gradient(from -100deg, #7C4DFF 0deg, #3B82F6 90deg, rgba(255,255,255,0.05) 92deg); -webkit-mask:radial-gradient(closest-side, transparent 88%, #000 89%); mask:radial-gradient(closest-side, transparent 88%, #000 89%)"></div>
+              <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px"><div style="font-size:40px; font-weight:800; letter-spacing:-0.045em">8h</div><div style="font-size:12px; font-weight:600; color:rgba(255,255,255,0.42)">1 of 4 joined</div></div>
+              <div style="position:absolute; left:50%; top:50%; width:34px; height:34px; margin:-17px 0 0 -17px; border-radius:50%; background:linear-gradient(150deg,#8B5CF6,#6D28D9); border:2px solid #050507; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; box-shadow:0 0 16px rgba(139,92,246,0.7); transform:translate(0px,-125px)">정</div>
+              <div style="position:absolute; left:50%; top:50%; width:34px; height:34px; margin:-17px 0 0 -17px; border-radius:50%; background:rgba(255,255,255,0.05); border:1px dashed rgba(255,255,255,0.28); display:flex; align-items:center; justify-content:center; font-size:14px; color:rgba(255,255,255,0.45); transform:translate(125px,0px)">+</div>
+              <div style="position:absolute; left:50%; top:50%; width:34px; height:34px; margin:-17px 0 0 -17px; border-radius:50%; background:rgba(255,255,255,0.05); border:1px dashed rgba(255,255,255,0.28); display:flex; align-items:center; justify-content:center; font-size:14px; color:rgba(255,255,255,0.45); transform:translate(0px,125px)">+</div>
+              <div style="position:absolute; left:50%; top:50%; width:34px; height:34px; margin:-17px 0 0 -17px; border-radius:50%; background:rgba(255,255,255,0.05); border:1px dashed rgba(255,255,255,0.28); display:flex; align-items:center; justify-content:center; font-size:14px; color:rgba(255,255,255,0.45); transform:translate(-125px,0px)">+</div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:12px">
+              <div style="border-radius:24px; padding:18px; background:rgba(255,255,255,0.035); border:1px solid rgba(255,255,255,0.07); display:flex; flex-direction:column; gap:10px; align-items:center">
+                <div style="font-size:12px; font-weight:800; letter-spacing:.12em; color:rgba(255,255,255,0.32)">INVITE CODE</div>
+                <div style="font-size:30px; font-weight:800; font-family:'JetBrains Mono', monospace; letter-spacing:.08em; color:#DDD6FE">FRM-824913</div>
+              </div>
+              <div style="padding:16px; border-radius:18px; background:linear-gradient(100deg,#7C4DFF,#3B82F6); box-shadow:0 0 30px -4px rgba(99,102,241,0.7); text-align:center; font-size:16px; font-weight:800">Share invite</div>
+              <div style="padding:15px; border-radius:18px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); text-align:center; font-size:15px; font-weight:700; color:rgba(255,255,255,0.8)">Copy code</div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:3px"><div style="font-size:13px; font-weight:800">10 · Invite friends</div><div style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:600">공유 후 → 11 Tracking Intro · 친구 수락은 실시간으로 궤도에 반영</div></div>
+      </div>
+
+      <!-- 11 TRACKING INTRO -->
+      <div style="display:flex; flex-direction:column; gap:12px">
+        <div data-screen-label="11 Tracking intro" style="position:relative; width:390px; height:844px; border-radius:54px; background:#050507; border:1px solid rgba(255,255,255,0.09); overflow:hidden">
+          <div style="position:absolute; inset:0; background-image:radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px); background-size:22px 22px"></div>
+          <div style="position:absolute; top:-90px; right:-90px; width:340px; height:320px; border-radius:50%; background:radial-gradient(circle, rgba(34,211,238,0.24), rgba(0,0,0,0) 72%); filter:blur(30px)"></div>
+          <div style="position:absolute; top:0; left:0; right:0; height:54px; padding:0 34px; display:flex; align-items:center; font-size:14px; font-weight:700; color:rgba(255,255,255,0.9)">9:41</div>
+          <div style="position:absolute; inset:0; padding:70px 26px 40px; display:flex; flex-direction:column; justify-content:space-between">
+            <div style="display:flex; flex-direction:column; gap:22px">
+              <div style="display:flex; align-items:center; gap:8px; padding:7px 13px 7px 9px; border-radius:999px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.09); align-self:flex-start"><div style="width:6px; height:6px; border-radius:50%; background:#A78BFA; box-shadow:0 0 9px 2px rgba(167,139,250,0.9)"></div><div style="font-size:13px; font-weight:700">밤샘 금지단</div></div>
+              <div style="display:flex; flex-direction:column; gap:10px">
+                <div style="font-size:30px; font-weight:800; letter-spacing:-0.03em; line-height:1.2">무엇을 이 시간에<br>포함할까요?</div>
+                <div style="font-size:14px; color:rgba(255,255,255,0.42); font-weight:500; line-height:1.6">이 그룹의 공동 시간으로 셀 앱을 직접 고르세요. 그룹마다 다르게 정할 수 있어요.</div>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:10px">
+                <div style="display:flex; gap:10px">
+                  <div style="flex:1; height:74px; border-radius:20px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.07); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:rgba(255,255,255,0.4)">Social</div>
+                  <div style="flex:1; height:74px; border-radius:20px; background:rgba(124,77,255,0.1); border:1px solid rgba(167,139,250,0.24); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:#C4B5FD">Video</div>
+                  <div style="flex:1; height:74px; border-radius:20px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.07); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:rgba(255,255,255,0.4)">Games</div>
+                </div>
+                <div style="border-radius:22px; padding:16px; background:rgba(255,255,255,0.025); border:1px dashed rgba(255,255,255,0.14); display:flex; flex-direction:column; gap:6px">
+                  <div style="font-size:13px; font-weight:800; color:rgba(255,255,255,0.75)">Your selected app list stays on your phone.</div>
+                  <div style="font-size:12px; font-weight:600; color:rgba(255,255,255,0.38); line-height:1.6">친구들에게는 앱 개수와 총 시간만 보여요.</div>
+                </div>
+              </div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:10px">
+              <div style="padding:16px; border-radius:18px; background:linear-gradient(100deg,#7C4DFF,#3B82F6); box-shadow:0 0 30px -4px rgba(99,102,241,0.7); text-align:center; font-size:16px; font-weight:800">Choose apps</div>
+              <div style="text-align:center; font-size:12px; color:rgba(255,255,255,0.3); font-weight:600">시스템 앱 선택 화면이 열려요.</div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:3px"><div style="font-size:13px; font-weight:800">11 · Tracking intro</div><div style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:600">Choose apps → 시스템 picker → 12 Selection Result</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PHASE 4 ── -->
+  <div style="width:1720px; display:flex; flex-direction:column; gap:22px">
+    <div style="display:flex; align-items:center; gap:14px"><div style="width:8px; height:8px; border-radius:50%; background:#67E8F9; box-shadow:0 0 12px 3px rgba(103,232,249,0.8)"></div><div style="font-size:20px; font-weight:800; letter-spacing:-0.02em">Phase 4 · Together → Start</div><div style="font-size:13px; color:rgba(255,255,255,0.35); font-weight:600">12 – 16 · 모두 모이고, 시간이 흐르기 시작한다</div></div>
+    <div style="display:grid; grid-template-columns:repeat(4, 390px); gap:40px">
+
+      <!-- 12 SELECTION RESULT -->
+      <div style="display:flex; flex-direction:column; gap:12px">
+        <div data-screen-label="12 Selection result" style="position:relative; width:390px; height:844px; border-radius:54px; background:#050507; border:1px solid rgba(255,255,255,0.09); overflow:hidden">
+          <div style="position:absolute; inset:0; background-image:radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px); background-size:20px 20px"></div>
+          <div style="position:absolute; top:180px; left:50%; margin-left:-180px; width:360px; height:340px; border-radius:50%; background:radial-gradient(circle, rgba(34,211,238,0.28), rgba(124,77,255,0.12) 60%, rgba(0,0,0,0) 78%); filter:blur(30px)"></div>
+          <div style="position:absolute; top:0; left:0; right:0; height:54px; padding:0 34px; display:flex; align-items:center; font-size:14px; font-weight:700; color:rgba(255,255,255,0.9)">9:41</div>
+          <div style="position:absolute; inset:0; padding:70px 26px 40px; display:flex; flex-direction:column; justify-content:space-between">
+            <div style="font-size:12px; font-family:'JetBrains Mono', monospace; letter-spacing:.14em; color:rgba(255,255,255,0.35)">BACK FROM SYSTEM PICKER</div>
+            <div style="display:flex; flex-direction:column; align-items:center; gap:20px">
+              <div style="position:relative; width:190px; height:190px">
+                <div style="position:absolute; inset:0; border-radius:50%; background:conic-gradient(from -90deg,#22D3EE,#3B82F6,#7C4DFF,#22D3EE); -webkit-mask:radial-gradient(closest-side, transparent 86%, #000 87%); mask:radial-gradient(closest-side, transparent 86%, #000 87%); opacity:.8"></div>
+                <div style="position:absolute; inset:30px; border-radius:50%; background:radial-gradient(circle, rgba(34,211,238,0.3), rgba(0,0,0,0) 72%); filter:blur(12px)"></div>
+                <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px"><div style="font-size:64px; font-weight:800; letter-spacing:-0.05em; line-height:1">6</div><div style="font-size:13px; font-weight:600; color:rgba(255,255,255,0.45)">apps in this pool</div></div>
+              </div>
+              <div style="text-align:center; font-size:14px; color:rgba(255,255,255,0.44); font-weight:500; line-height:1.6">고른 앱을 쓰는 시간만<br>밤샘 금지단의 공동 시간에 더해져요.</div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:10px">
+              <div style="padding:16px; border-radius:18px; background:linear-gradient(100deg,#7C4DFF,#3B82F6); box-shadow:0 0 30px -4px rgba(99,102,241,0.7); text-align:center; font-size:16px; font-weight:800">Looks good</div>
+              <div style="padding:15px; border-radius:18px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); text-align:center; font-size:15px; font-weight:700; color:rgba(255,255,255,0.8)">Change selection</div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:3px"><div style="font-size:13px; font-weight:800">12 · App selection result</div><div style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:600">Looks good → 13 Member Readiness · Change → 시스템 picker 재호출</div></div>
+      </div>
+
+      <!-- 13 MEMBER READINESS -->
+      <div style="display:flex; flex-direction:column; gap:12px">
+        <div data-screen-label="13 Readiness" style="position:relative; width:390px; height:844px; border-radius:54px; background:#050507; border:1px solid rgba(255,255,255,0.09); overflow:hidden">
+          <div style="position:absolute; inset:0; background-image:radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px); background-size:20px 20px"></div>
+          <div style="position:absolute; top:-110px; left:-60px; width:380px; height:350px; border-radius:50%; background:radial-gradient(circle, rgba(124,77,255,0.3), rgba(0,0,0,0) 74%); filter:blur(30px)"></div>
+          <div style="position:absolute; top:0; left:0; right:0; height:54px; padding:0 34px; display:flex; align-items:center; font-size:14px; font-weight:700; color:rgba(255,255,255,0.9)">9:41</div>
+          <div style="position:absolute; inset:0; padding:70px 26px 40px; display:flex; flex-direction:column; gap:18px">
+            <div style="flex:none; display:flex; flex-direction:column; gap:8px">
+              <div style="font-size:30px; font-weight:800; letter-spacing:-0.03em">밤샘 금지단</div>
+              <div style="display:flex; align-items:center; gap:10px">
+                <div style="font-size:14px; font-weight:700; color:#C4B5FD">3 of 4 ready</div>
+                <div style="flex:1; height:5px; border-radius:999px; background:rgba(255,255,255,0.07)"><div style="width:75%; height:100%; border-radius:999px; background:linear-gradient(90deg,#7C4DFF,#3B82F6 70%,#22D3EE); box-shadow:0 0 12px rgba(59,130,246,0.6)"></div></div>
+              </div>
+            </div>
+            <div style="flex:1; display:flex; flex-direction:column; gap:10px">
+              <div style="position:relative; border-radius:24px; padding:16px; overflow:hidden; background:linear-gradient(150deg,#151029,#0B0B12); border:1px solid rgba(167,139,250,0.2); box-shadow:0 0 28px -14px rgba(124,77,255,0.9); display:flex; align-items:center; gap:13px">
+                <div style="position:relative; width:44px; height:44px; flex:none"><div style="position:absolute; inset:-3px; border-radius:50%; background:conic-gradient(from 200deg,#22D3EE,#7C4DFF,#F0ABFC,#22D3EE); filter:blur(4px); opacity:.7"></div><div style="position:absolute; inset:0; border-radius:50%; background:linear-gradient(150deg,#8B5CF6,#6D28D9); border:2px solid #0C0C14; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:700">정</div></div>
+                <div style="flex:1; display:flex; flex-direction:column; gap:5px">
+                  <div style="font-size:15px; font-weight:800">정원 <span style="font-size:11px; font-weight:700; color:rgba(255,255,255,0.4)">· 나</span></div>
+                  <div style="display:flex; gap:6px; flex-wrap:wrap">
+                    <div style="padding:4px 10px; border-radius:999px; background:rgba(34,211,238,0.12); border:1px solid rgba(34,211,238,0.26); font-size:11px; font-weight:700; color:#A5F3FC; white-space:nowrap">✓ Screen Time</div>
+                    <div style="padding:4px 10px; border-radius:999px; background:rgba(167,139,250,0.12); border:1px solid rgba(167,139,250,0.26); font-size:11px; font-weight:700; color:#DDD6FE; white-space:nowrap">✓ 6 apps</div>
+                  </div>
+                </div>
+              </div>
+              <div style="border-radius:24px; padding:16px; background:rgba(255,255,255,0.035); border:1px solid rgba(255,255,255,0.06); display:flex; align-items:center; gap:13px">
+                <div style="position:relative; width:44px; height:44px; flex:none"><div style="position:absolute; inset:-2px; border-radius:50%; background:conic-gradient(from 200deg,#3B82F6,#22D3EE,#3B82F6); filter:blur(3px); opacity:.55"></div><div style="position:absolute; inset:0; border-radius:50%; background:linear-gradient(150deg,#60A5FA,#2563EB); border:2px solid #0A0A10; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:700">민</div></div>
+                <div style="flex:1; font-size:15px; font-weight:700">민지</div>
+                <div style="font-size:13px; font-weight:700; color:#67E8F9">Ready</div>
+              </div>
+              <div style="border-radius:24px; padding:16px; background:rgba(255,255,255,0.035); border:1px solid rgba(255,255,255,0.06); display:flex; align-items:center; gap:13px">
+                <div style="position:relative; width:44px; height:44px; flex:none"><div style="position:absolute; inset:-2px; border-radius:50%; background:conic-gradient(from 200deg,#22D3EE,#0EA5E9,#22D3EE); filter:blur(3px); opacity:.55"></div><div style="position:absolute; inset:0; border-radius:50%; background:linear-gradient(150deg,#22D3EE,#0E7490); border:2px solid #0A0A10; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:700">도</div></div>
+                <div style="flex:1; font-size:15px; font-weight:700">도형</div>
+                <div style="font-size:13px; font-weight:700; color:#67E8F9">Ready</div>
+              </div>
+              <div style="border-radius:24px; padding:16px; background:rgba(255,255,255,0.02); border:1px dashed rgba(255,255,255,0.12); display:flex; align-items:center; gap:13px">
+                <div style="width:44px; height:44px; border-radius:50%; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:700; color:rgba(255,255,255,0.45); flex:none">수</div>
+                <div style="flex:1; display:flex; flex-direction:column; gap:3px">
+                  <div style="font-size:15px; font-weight:700; color:rgba(255,255,255,0.6)">수민</div>
+                  <div style="font-size:12px; font-weight:600; color:rgba(252,211,77,0.75)">Waiting for Screen Time</div>
+                </div>
+                <div style="padding:7px 13px; border-radius:999px; background:rgba(252,211,77,0.14); border:1px solid rgba(252,211,77,0.28); font-size:12px; font-weight:800; color:#FDE68A; white-space:nowrap">Nudge</div>
+              </div>
+            </div>
+            <div style="flex:none; display:flex; flex-direction:column; gap:9px">
+              <div style="padding:16px; border-radius:18px; background:linear-gradient(100deg,#7C4DFF,#3B82F6); box-shadow:0 0 30px -4px rgba(99,102,241,0.7); text-align:center; font-size:16px; font-weight:800">Go to waiting room</div>
+              <div style="text-align:center; font-size:12px; color:rgba(255,255,255,0.32); font-weight:600">2명 이상 준비되면 시작할 수 있어요.</div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:3px"><div style="font-size:13px; font-weight:800">13 · Member readiness</div><div style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:600">→ 14 Waiting Room · Nudge는 알림만 발송</div></div>
+      </div>
+
+      <!-- 14 WAITING ROOM -->
+      <div style="display:flex; flex-direction:column; gap:12px">
+        <div data-screen-label="14 Waiting room" style="position:relative; width:390px; height:844px; border-radius:54px; background:#050507; border:1px solid rgba(255,255,255,0.09); overflow:hidden">
+          <div style="position:absolute; inset:0; background-image:radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px); background-size:20px 20px"></div>
+          <div style="position:absolute; top:150px; left:50%; margin-left:-230px; width:460px; height:430px; border-radius:50%; background:radial-gradient(circle, rgba(124,77,255,0.42), rgba(59,130,246,0.14) 55%, rgba(0,0,0,0) 76%); filter:blur(34px)"></div>
+          <div style="position:absolute; top:0; left:0; right:0; height:54px; padding:0 34px; display:flex; align-items:center; font-size:14px; font-weight:700; color:rgba(255,255,255,0.9)">9:41</div>
+          <div style="position:absolute; inset:0; padding:70px 26px 40px; display:flex; flex-direction:column; justify-content:space-between">
+            <div style="display:flex; flex-direction:column; gap:8px; align-items:center; text-align:center">
+              <div style="display:flex; align-items:center; gap:8px; padding:7px 14px 7px 10px; border-radius:999px; background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.09)"><div style="width:7px; height:7px; border-radius:50%; background:#A78BFA; box-shadow:0 0 10px 2px rgba(167,139,250,0.9)"></div><div style="font-size:14px; font-weight:700">밤샘 금지단</div></div>
+              <div style="font-size:26px; font-weight:800; letter-spacing:-0.03em; margin-top:8px">다 모였어요</div>
+            </div>
+            <div style="position:relative; align-self:center; width:280px; height:280px">
+              <div style="position:absolute; inset:0; border-radius:50%; border:1px dashed rgba(255,255,255,0.12)"></div>
+              <div style="position:absolute; inset:24px; border-radius:50%; background:conic-gradient(from -100deg, #7C4DFF, #3B82F6 140deg, #22D3EE 230deg, rgba(124,77,255,0.14) 320deg, #7C4DFF); -webkit-mask:radial-gradient(closest-side, transparent 88%, #000 89%); mask:radial-gradient(closest-side, transparent 88%, #000 89%); opacity:.9"></div>
+              <div style="position:absolute; inset:24px; border-radius:50%; background:conic-gradient(from -100deg, #7C4DFF, #22D3EE 230deg, rgba(0,0,0,0) 330deg); -webkit-mask:radial-gradient(closest-side, transparent 88%, #000 89%); mask:radial-gradient(closest-side, transparent 88%, #000 89%); filter:blur(14px); animation:frimitPulse 7s ease-in-out infinite"></div>
+              <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px">
+                <div style="font-size:56px; font-weight:800; letter-spacing:-0.05em; line-height:1">8h</div>
+                <div style="font-size:13px; font-weight:600; color:rgba(255,255,255,0.44)">shared every day</div>
+              </div>
+              <div style="position:absolute; left:50%; top:50%; width:38px; height:38px; margin:-19px 0 0 -19px; border-radius:50%; background:linear-gradient(150deg,#8B5CF6,#6D28D9); border:2px solid #050507; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; box-shadow:0 0 18px rgba(139,92,246,0.75); transform:translate(0px,-140px)">정</div>
+              <div style="position:absolute; left:50%; top:50%; width:38px; height:38px; margin:-19px 0 0 -19px; border-radius:50%; background:linear-gradient(150deg,#60A5FA,#2563EB); border:2px solid #050507; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; box-shadow:0 0 18px rgba(59,130,246,0.6); transform:translate(140px,0px)">민</div>
+              <div style="position:absolute; left:50%; top:50%; width:38px; height:38px; margin:-19px 0 0 -19px; border-radius:50%; background:linear-gradient(150deg,#22D3EE,#0E7490); border:2px solid #050507; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; box-shadow:0 0 18px rgba(34,211,238,0.55); transform:translate(0px,140px)">도</div>
+              <div style="position:absolute; left:50%; top:50%; width:38px; height:38px; margin:-19px 0 0 -19px; border-radius:50%; background:rgba(255,255,255,0.06); border:1px dashed rgba(255,255,255,0.24); display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; color:rgba(255,255,255,0.45); transform:translate(-140px,0px)">수</div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:12px">
+              <div style="display:flex; align-items:center; justify-content:center; gap:8px; font-size:14px; font-weight:700; color:rgba(255,255,255,0.55)"><div style="width:6px; height:6px; border-radius:50%; background:#67E8F9; box-shadow:0 0 9px 2px rgba(103,232,249,0.9)"></div>3 friends ready · 수민 준비 중</div>
+              <div style="padding:17px; border-radius:18px; background:linear-gradient(100deg,#7C4DFF,#3B82F6); box-shadow:0 0 34px -4px rgba(99,102,241,0.8); text-align:center; font-size:17px; font-weight:800">Start our pool</div>
+              <div style="padding:15px; border-radius:18px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); text-align:center; font-size:15px; font-weight:700; color:rgba(255,255,255,0.8)">Invite another friend</div>
+              <div style="text-align:center; font-size:12px; color:rgba(255,255,255,0.3); font-weight:600">멤버 화면에서는 · Waiting for 정원 to start</div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:3px"><div style="font-size:13px; font-weight:800">14 · Waiting room</div><div style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:600">Admin: Start our pool → 15 · Member: 시작되면 자동 이동</div></div>
+      </div>
+
+      <!-- 15 GROUP STARTED -->
+      <div style="display:flex; flex-direction:column; gap:12px">
+        <div data-screen-label="15 Started" style="position:relative; width:390px; height:844px; border-radius:54px; background:#050507; border:1px solid rgba(255,255,255,0.09); overflow:hidden">
+          <div style="position:absolute; inset:0; background-image:radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px); background-size:18px 18px"></div>
+          <div style="position:absolute; top:80px; left:50%; margin-left:-280px; width:560px; height:540px; border-radius:50%; background:radial-gradient(circle, rgba(124,77,255,0.5), rgba(34,211,238,0.16) 52%, rgba(0,0,0,0) 74%); filter:blur(40px); animation:frimitPulse 5s ease-in-out infinite"></div>
+          <div style="position:absolute; top:0; left:0; right:0; height:54px; padding:0 34px; display:flex; align-items:center; font-size:14px; font-weight:700; color:rgba(255,255,255,0.9)">9:41</div>
+          <div style="position:absolute; inset:0; padding:70px 26px 40px; display:flex; flex-direction:column; align-items:center; justify-content:space-between">
+            <div style="font-size:12px; font-family:'JetBrains Mono', monospace; letter-spacing:.16em; color:rgba(255,255,255,0.4)">POOL ACTIVE</div>
+            <div style="position:relative; width:300px; height:300px">
+              <div style="position:absolute; inset:26px; border-radius:50%; background:conic-gradient(from -95deg, #7C4DFF 0deg, #6366F1 60deg, #3B82F6 130deg, #22D3EE 200deg, rgba(255,255,255,0.06) 204deg); -webkit-mask:radial-gradient(closest-side, transparent 86%, #000 87%); mask:radial-gradient(closest-side, transparent 86%, #000 87%)"></div>
+              <div style="position:absolute; inset:26px; border-radius:50%; background:conic-gradient(from -95deg, #7C4DFF 0deg, #3B82F6 130deg, #22D3EE 200deg, rgba(0,0,0,0) 206deg); -webkit-mask:radial-gradient(closest-side, transparent 86%, #000 87%); mask:radial-gradient(closest-side, transparent 86%, #000 87%); filter:blur(16px)"></div>
+              <div style="position:absolute; inset:70px; border-radius:50%; background:radial-gradient(circle, rgba(124,77,255,0.34), rgba(0,0,0,0) 72%); filter:blur(16px)"></div>
+              <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px">
+                <div style="font-size:52px; font-weight:800; letter-spacing:-0.05em; line-height:1">8h 00m</div>
+                <div style="font-size:13px; font-weight:600; color:rgba(255,255,255,0.44)">shared today</div>
+              </div>
+              <div style="position:absolute; left:50%; top:50%; width:40px; height:40px; margin:-20px 0 0 -20px; border-radius:50%; background:linear-gradient(150deg,#8B5CF6,#6D28D9); border:2px solid #050507; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:700; box-shadow:0 0 20px rgba(139,92,246,0.8); transform:translate(0px,-150px)">정</div>
+              <div style="position:absolute; left:50%; top:50%; width:40px; height:40px; margin:-20px 0 0 -20px; border-radius:50%; background:linear-gradient(150deg,#60A5FA,#2563EB); border:2px solid #050507; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:700; box-shadow:0 0 20px rgba(59,130,246,0.7); transform:translate(150px,0px)">민</div>
+              <div style="position:absolute; left:50%; top:50%; width:40px; height:40px; margin:-20px 0 0 -20px; border-radius:50%; background:linear-gradient(150deg,#22D3EE,#0E7490); border:2px solid #050507; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:700; box-shadow:0 0 20px rgba(34,211,238,0.6); transform:translate(0px,150px)">도</div>
+              <div style="position:absolute; left:50%; top:50%; width:40px; height:40px; margin:-20px 0 0 -20px; border-radius:50%; background:linear-gradient(150deg,#F0ABFC,#A855F7); border:2px solid #050507; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:700; box-shadow:0 0 20px rgba(240,171,252,0.6); transform:translate(-150px,0px)">수</div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:22px; width:100%">
+              <div style="display:flex; flex-direction:column; gap:8px; text-align:center">
+                <div style="font-size:32px; font-weight:800; letter-spacing:-0.035em">Our time starts now.</div>
+                <div style="font-size:14px; color:rgba(255,255,255,0.44); font-weight:500">4명이 하나의 시간을 공유해요.</div>
+              </div>
+              <div style="padding:16px; border-radius:18px; background:linear-gradient(100deg,#7C4DFF,#3B82F6); box-shadow:0 0 30px -4px rgba(99,102,241,0.7); text-align:center; font-size:16px; font-weight:800">See today</div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:3px"><div style="font-size:13px; font-weight:800">15 · Group started</div><div style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:600">See today → Today 화면 · orbit이 축소되며 Shared Pool 히어로로 morph</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PHASE 5 ── -->
+  <div style="width:1720px; display:flex; flex-direction:column; gap:22px">
+    <div style="display:flex; align-items:center; gap:14px"><div style="width:8px; height:8px; border-radius:50%; background:#FCD34D; box-shadow:0 0 12px 3px rgba(252,211,77,0.7)"></div><div style="font-size:20px; font-weight:800; letter-spacing:-0.02em">Phase 5 · Recovery</div><div style="font-size:13px; color:rgba(255,255,255,0.35); font-weight:600">권한 없이 둘러보다 다시 합류하는 경로</div></div>
+    <div style="display:grid; grid-template-columns:390px 1fr; gap:40px">
+
+      <!-- 16 PERMISSION RECOVERY -->
+      <div style="display:flex; flex-direction:column; gap:12px">
+        <div data-screen-label="16 Recovery" style="position:relative; width:390px; height:844px; border-radius:54px; background:#050507; border:1px solid rgba(255,255,255,0.09); overflow:hidden">
+          <div style="position:absolute; inset:0; background-image:radial-gradient(rgba(255,255,255,0.045) 1px, transparent 1px); background-size:22px 22px"></div>
+          <div style="position:absolute; top:0; left:0; right:0; height:54px; padding:0 34px; display:flex; align-items:center; font-size:14px; font-weight:700; color:rgba(255,255,255,0.9)">9:41</div>
+          <div style="position:absolute; inset:0; padding:64px 20px 108px; display:flex; flex-direction:column; gap:14px">
+            <div style="flex:none; display:flex; align-items:flex-start; justify-content:space-between; gap:16px; padding:0 4px">
+              <div style="display:flex; flex-direction:column; gap:5px"><div style="font-size:24px; font-weight:800; letter-spacing:-0.025em">Good morning, Jungwon</div><div style="font-size:14px; color:rgba(255,255,255,0.42); font-weight:500">아직 우리 시간에 참여하지 못했어요.</div></div>
+              <div style="width:44px; height:44px; border-radius:50%; background:rgba(255,255,255,0.1); border:2px solid #050507; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700; color:rgba(255,255,255,0.55); flex:none">정</div>
+            </div>
+            <div style="flex:none; position:relative; border-radius:32px; padding:20px; overflow:hidden; background:#0D0D12; border:1px solid rgba(255,255,255,0.07)">
+              <div style="display:flex; align-items:center; justify-content:space-between">
+                <div style="display:flex; align-items:center; gap:8px; padding:6px 12px 6px 9px; border-radius:999px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08)"><div style="width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,0.3)"></div><div style="font-size:13px; font-weight:700; color:rgba(255,255,255,0.6)">밤샘 금지단</div></div>
+                <div style="font-size:11px; font-family:'JetBrains Mono', monospace; color:rgba(255,255,255,0.35); letter-spacing:.08em">NOT COUNTED</div>
+              </div>
+              <div style="position:relative; height:170px; display:flex; align-items:center; justify-content:center">
+                <div style="position:absolute; width:158px; height:158px; border-radius:50%; background:rgba(255,255,255,0.06); -webkit-mask:radial-gradient(closest-side, transparent 82%, #000 83%); mask:radial-gradient(closest-side, transparent 82%, #000 83%)"></div>
+                <div style="position:absolute; left:50%; top:50%; width:28px; height:28px; margin:-14px 0 0 -14px; border-radius:50%; background:linear-gradient(150deg,#60A5FA,#2563EB); border:2px solid #0D0D12; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; transform:translate(79px,0px)">민</div>
+                <div style="position:absolute; left:50%; top:50%; width:28px; height:28px; margin:-14px 0 0 -14px; border-radius:50%; background:linear-gradient(150deg,#22D3EE,#0E7490); border:2px solid #0D0D12; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; transform:translate(0px,79px)">도</div>
+                <div style="position:absolute; left:50%; top:50%; width:28px; height:28px; margin:-14px 0 0 -14px; border-radius:50%; background:rgba(255,255,255,0.08); border:1px dashed rgba(255,255,255,0.28); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:rgba(255,255,255,0.5); transform:translate(0px,-79px)">정</div>
+                <div style="position:relative; display:flex; flex-direction:column; align-items:center; gap:3px"><div style="font-size:30px; font-weight:800; letter-spacing:-0.04em; color:rgba(255,255,255,0.35)">— —</div><div style="font-size:12px; font-weight:600; color:rgba(255,255,255,0.34)">권한이 꺼져 있어요</div></div>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:10px">
+                <div style="font-size:14px; font-weight:700; color:rgba(255,255,255,0.72); line-height:1.5">Connect Screen Time to join today's shared pool.</div>
+                <div style="padding:14px; border-radius:18px; background:linear-gradient(100deg,#7C4DFF,#3B82F6); box-shadow:0 0 26px -4px rgba(99,102,241,0.7); text-align:center; font-size:15px; font-weight:800">Connect Screen Time</div>
+              </div>
+            </div>
+            <div style="flex:none; display:flex; flex-direction:column; gap:8px">
+              <div style="font-size:12px; font-weight:700; letter-spacing:.14em; color:rgba(255,255,255,0.28); padding:4px 6px 0">EXPLORE WITHOUT PERMISSION</div>
+              <div style="border-radius:22px; padding:14px 16px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); display:flex; align-items:center; justify-content:space-between"><div style="font-size:14px; font-weight:700; color:rgba(255,255,255,0.7)">친구들의 오늘</div><div style="font-size:13px; font-weight:700; color:rgba(255,255,255,0.4)">볼 수 있어요</div></div>
+              <div style="border-radius:22px; padding:14px 16px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); display:flex; align-items:center; justify-content:space-between"><div style="font-size:14px; font-weight:700; color:rgba(255,255,255,0.7)">Goals · Activity</div><div style="font-size:13px; font-weight:700; color:rgba(255,255,255,0.4)">볼 수 있어요</div></div>
+              <div style="border-radius:22px; padding:14px 16px; background:rgba(255,255,255,0.02); border:1px dashed rgba(255,255,255,0.12); display:flex; align-items:center; justify-content:space-between"><div style="font-size:14px; font-weight:700; color:rgba(255,255,255,0.45)">내 시간 합산</div><div style="font-size:13px; font-weight:700; color:rgba(252,211,77,0.75)">권한 필요</div></div>
+            </div>
+          </div>
+          <div style="position:absolute; bottom:0; left:0; right:0; height:104px; padding:14px 22px 0; display:flex; align-items:flex-start; justify-content:space-between; background:linear-gradient(to top, rgba(5,5,7,0.98) 40%, rgba(5,5,7,0))">
+            <div style="display:flex; flex-direction:column; align-items:center; gap:7px; padding:9px 18px; border-radius:20px; background:rgba(124,77,255,0.16); border:1px solid rgba(167,139,250,0.28); box-shadow:0 0 24px rgba(124,77,255,0.35)"><div style="width:18px; height:18px; border-radius:6px; background:linear-gradient(150deg,#A78BFA,#3B82F6)"></div><div style="font-size:11px; font-weight:700; color:#DDD6FE">Today</div></div>
+            <div style="display:flex; flex-direction:column; align-items:center; gap:7px; padding:9px 18px"><div style="width:18px; height:18px; border-radius:50%; border:2px solid rgba(255,255,255,0.32)"></div><div style="font-size:11px; font-weight:600; color:rgba(255,255,255,0.34)">Goals</div></div>
+            <div style="display:flex; flex-direction:column; align-items:center; gap:7px; padding:9px 18px"><div style="width:18px; height:18px; display:flex; align-items:flex-end; gap:3px"><div style="width:3px; height:9px; border-radius:2px; background:rgba(255,255,255,0.32)"></div><div style="width:3px; height:16px; border-radius:2px; background:rgba(255,255,255,0.32)"></div><div style="width:3px; height:12px; border-radius:2px; background:rgba(255,255,255,0.32)"></div></div><div style="font-size:11px; font-weight:600; color:rgba(255,255,255,0.34)">Activity</div></div>
+            <div style="display:flex; flex-direction:column; align-items:center; gap:7px; padding:9px 18px"><div style="width:18px; height:18px; border-radius:50%; background:rgba(255,255,255,0.22)"></div><div style="font-size:11px; font-weight:600; color:rgba(255,255,255,0.34)">MY</div></div>
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:3px"><div style="font-size:13px; font-weight:800">16 · Permission recovery</div><div style="font-size:12px; color:rgba(255,255,255,0.4); font-weight:600">Today · MY 양쪽에서 동일한 CTA · 승인 후 06a와 같은 success로 이어짐</div></div>
+      </div>
+
+      <!-- NAV MAP -->
+      <div style="display:flex; flex-direction:column; gap:16px">
+        <div style="border-radius:26px; padding:24px; background:#0E0E14; border:1px solid rgba(255,255,255,0.07); display:flex; flex-direction:column; gap:14px">
+          <div style="font-size:13px; font-weight:800; letter-spacing:.1em; color:#C4B5FD">NAVIGATION MAP</div>
+          <div style="font-size:14px; line-height:1.9; color:rgba(255,255,255,0.6)">
+            01 Welcome → 02 Sign in → 03 Profile → 04 Notifications → 05 Privacy → 06 Permission<br>
+            06 → OS 시트 → <span style="color:#67E8F9">06a Approved</span> 또는 <span style="color:rgba(252,211,77,0.9)">06b Denied</span> → 07 Create or Join<br>
+            07 Create → 09 Create group → 10 Invite friends → 11 Tracking intro<br>
+            07 Join / 초대 링크 → 08 Invitation preview → 11 Tracking intro<br>
+            11 → 시스템 picker → 12 Selection result → 13 Readiness → 14 Waiting room<br>
+            14 Start our pool → 15 Group started → <span style="color:#DDD6FE">Today</span><br>
+            06b에서 Continue for now → 앱 탐색 → 16 Recovery → 승인 시 06a와 동일한 success
+          </div>
+        </div>
+        <div style="border-radius:26px; padding:24px; background:#0E0E14; border:1px solid rgba(255,255,255,0.07); display:flex; flex-direction:column; gap:12px">
+          <div style="font-size:13px; font-weight:800; letter-spacing:.1em; color:#67E8F9">SYSTEM UI BOUNDARY</div>
+          <div style="font-size:14px; line-height:1.8; color:rgba(255,255,255,0.6)">시스템이 소유하는 지점은 두 곳입니다. 알림·Screen Time 권한 시트(04·06), 그리고 앱 선택 picker(11 이후). Frimit은 그 앞의 이유 설명 화면과 뒤의 결과 화면(06a/06b, 12)만 디자인하고, 시스템 UI는 그대로 사용합니다.</div>
+        </div>
+        <div style="border-radius:26px; padding:24px; background:#0E0E14; border:1px solid rgba(255,255,255,0.07); display:flex; flex-direction:column; gap:12px">
+          <div style="font-size:13px; font-weight:800; letter-spacing:.1em; color:#DDD6FE">ORBIT AS THE STORY</div>
+          <div style="font-size:14px; line-height:1.8; color:rgba(255,255,255,0.6)">01의 궤도에는 빛 하나. 07·10에서는 점선 빈 자리. 08에서 내 자리가 비어 있고, 14에서 세 자리가 채워지고, 15에서 네 아바타가 모두 발광합니다. 15 → Today는 orbit이 축소·회전하며 Shared Pool 히어로 링으로 이어지는 하나의 동작입니다(Reanimated: scale + strokeDashoffset).</div>
+        </div>
+        <div style="border-radius:26px; padding:24px; background:#0E0E14; border:1px solid rgba(255,255,255,0.07); display:flex; flex-direction:column; gap:12px">
+          <div style="font-size:13px; font-weight:800; letter-spacing:.1em; color:#FDE68A">RN 구현 메모</div>
+          <div style="font-size:14px; line-height:1.8; color:rgba(255,255,255,0.6)">궤도는 SVG Circle + 그라디언트 stroke, 아바타는 각도 → x/y 변환으로 배치(모두 동일 반지름). bloom은 화면당 1–2개, 정적 RadialGradient. 화면 전환은 opacity + translateY 12px 정도로 절제합니다.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</x-dc>
+</body>
+</html>

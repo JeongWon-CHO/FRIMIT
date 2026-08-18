@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing:border-box; }
+  html, body { margin:0; padding:0; background:#07070A; }
+  a { color:#A78BFA; text-decoration:none; }
+  a:hover { color:#C4B5FD; }
+</style>
+</helmet>
+
+<div style="min-height:100%; background:#07070A; padding:80px 64px 120px; font-family:Manrope, -apple-system, 'Helvetica Neue', sans-serif; color:#fff; display:flex; flex-direction:column; gap:64px; align-items:center">
+
+  <div style="width:1240px; display:flex; flex-direction:column; gap:12px">
+    <div style="font-size:13px; letter-spacing:.22em; text-transform:uppercase; color:rgba(255,255,255,0.38); font-weight:600">Frimit Design System · v1</div>
+    <div style="font-size:44px; font-weight:800; letter-spacing:-0.03em">Dark Social Space</div>
+    <div style="font-size: 16px; color: rgba(255,255,255,0.45); line-height: 1.7; max-width: 720px; height: 79px">승인된 Today / Goals / Activity / MY / Group Detail 화면에서 그대로 추출한 토큰입니다. 새 스타일은 없습니다. 모든 값은 React Native에서 구현 가능한 형태(단색 · linear/conic gradient · 단일 blur 레이어 · border)로만 정의했습니다.</div>
+  </div>
+
+  <!-- COLOR TOKENS -->
+  <div style="width:1240px; display:flex; flex-direction:column; gap:20px">
+    <div style="display:flex; align-items:baseline; gap:14px"><div style="font-size:24px; font-weight:800; letter-spacing:-0.02em">Color tokens</div><div style="font-size:13px; color:rgba(255,255,255,0.35); font-weight:600">검정이 화면의 80% 이상을 차지합니다</div></div>
+    <div style="display:grid; grid-template-columns:repeat(6, 1fr); gap:14px">
+      <div style="border-radius:20px; overflow:hidden; background:#0E0E14; border:1px solid rgba(255,255,255,0.07)"><div style="height:82px; background:#050507; border-bottom:1px solid rgba(255,255,255,0.06)"></div><div style="padding:12px 14px; display:flex; flex-direction:column; gap:3px"><div style="font-size:13px; font-weight:700">bg/base</div><div style="font-size:12px; font-family:'JetBrains Mono', monospace; color:rgba(255,255,255,0.42)">#050507</div></div></div>
+      <div style="border-radius:20px; overflow:hidden; background:#0E0E14; border:1px solid rgba(255,255,255,0.07)"><div style="height:82px; background:#0A0A0D; border-bottom:1px solid rgba(255,255,255,0.06)"></div><div style="padding:12px 14px; display:flex; flex-direction:column; gap:3px"><div style="font-size:13px; font-weight:700">bg/deep</div><div style="font-size:12px; font-family:'JetBrains Mono', monospace; color:rgba(255,255,255,0.42)">#0A0A0D</div></div></div>
+      <div style="border-radius:20px; overflow:hidden; background:#0E0E14; border:1px solid rgba(255,255,255,0.07)"><div style="height:82px; background:#111116; border-bottom:1px solid rgba(255,255,255,0.06)"></div><div style="padding:12px 14px; display:flex; flex-direction:column; gap:3px"><div style="font-size:13px; font-weight:700">surface/elevated</div><div style="font-size:12px; font-family:'JetBrains Mono', monospace; color:rgba(255,255,255,0.42)">#111116</div></div></div>
+      <div style="border-radius:20px; overflow:hidden; background:#0E0E14; border:1px solid rgba(255,255,255,0.07)"><div style="height:82px; background:#17171D; border-bottom:1px solid rgba(255,255,255,0.06)"></div><div style="padding:12px 14px; display:flex; flex-direction:column; gap:3px"><div style="font-size:13px; font-weight:700">surface/card</div><div style="font-size:12px; font-family:'JetBrains Mono', monospace; color:rgba(255,255,255,0.42)">#17171D</div></div></div>
+      <div style="border-radius:20px; overflow:hidden; background:#0E0E14; border:1px solid rgba(255,255,255,0.07)"><div style="height:82px; background:#F7F7FA; border-bottom:1px solid rgba(255,255,255,0.06)"></div><div style="padding:12px 14px; display:flex; flex-direction:column; gap:3px"><div style="font-size:13px; font-weight:700">text/primary</div><div style="font-size:12px; font-family:'JetBrains Mono', monospace; color:rgba(255,255,255,0.42)">#F7F7FA</div></div></div>
+      <div style="border-radius:20px; overflow:hidden; background:#0E0E14; border:1px solid rgba(255,255,255,0.07)"><div style="height:82px; background:#8A8A99; border-bottom:1px solid rgba(255,255,255,0.06)"></div><div style="padding:12px 14px; display:flex; flex-direction:column; gap:3px"><div style="font-size:13px; font-weight:700">text/secondary</div><div style="font-size:12px; font-family:'JetBrains Mono', monospace; color:rgba(255,255,255,0.42)">#8A8A99</div></div></div>
+
+      <div style="border-radius:20px; overflow:hidden; background:#0E0E14; border:1px solid rgba(255,255,255,0.07)"><div style="height:82px; background:#7C4DFF; border-bottom:1px solid rgba(255,255,255,0.06)"></div><div style="padding:12px 14px; display:flex; flex-direction:column; gap:3px"><div style="font-size:13px; font-weight:700">accent/violet</div><div style="font-size:12px; font-family:'JetBrains Mono', monospace; color:rgba(255,255,255,0.42)">#7C4DFF</div></div></div>
+      <div style="border-radius:20px; overflow:hidden; background:#0E0E14; border:1px solid rgba(255,255,255,0.07)"><div style="height:82px; background:#A78BFA; border-bottom:1px solid rgba(255,255,255,0.06)"></div><div style="padding:12px 14px; display:flex; flex-direction:column; gap:3px"><div style="font-size:13px; font-weight:700">accent/violet-soft</div><div style="font-size:12px; font-family:'JetBrains Mono', monospace; color:rgba(255,255,255,0.42)">#A78BFA</div></div></div>
+      <div style="border-radius:20px; overflow:hidden; background:#0E0E14; border:1px solid rgba(255,255,255,0.07)"><div style="height:82px; background:#3B82F6; border-bottom:1px solid rgba(255,255,255,0.06)"></div><div style="padding:12px 14px; display:flex; flex-direction:column; gap:3px"><div style="font-size:13px; font-weight:700">accent/blue</div><div style="font-size:12px; font-family:'JetBrains Mono', monospace; color:rgba(255,255,255,0.42)">#3B82F6</div></div></div>
+      <div style="border-radius:20px; overflow:hidden; background:#0E0E14; border:1px solid rgba(255,255,255,0.07)"><div style="height:82px; background:#22D3EE; border-bottom:1px solid rgba(255,255,255,0.06)"></div><div style="padding:12px 14px; display:flex; flex-direction:column; gap:3px"><div style="font-size:13px; font-weight:700">accent/cyan</div><div style="font-size:12px; font-family:'JetBrains Mono', monospace; color:rgba(255,255,255,0.42)">#22D3EE</div></div></div>
+      <div style="border-radius:20px; overflow:hidden; background:#0E0E14; border:1px solid rgba(255,255,255,0.07)"><div style="height:82px; background:#F0ABFC; border-bottom:1px solid rgba(255,255,255,0.06)"></div><div style="padding:12px 14px; display:flex; flex-direction:column; gap:3px"><div style="font-size:13px; font-weight:700">state/approaching</div><div style="font-size:12px; font-family:'JetBrains Mono', monospace; color:rgba(255,255,255,0.42)">#F0ABFC</div></div></div>
+      <div style="border-radius:20px; overflow:hidden; background:#0E0E14; border:1px solid rgba(255,255,255,0.07)"><div style="height:82px; background:#FDA4C0; border-bottom:1px solid rgba(255,255,255,0.06)"></div><div style="padding:12px 14px; display:flex; flex-direction:column; gap:3px"><div style="font-size:13px; font-weight:700">state/over</div><div style="font-size:12px; font-family:'JetBrains Mono', monospace; color:rgba(255,255,255,0.42)">#FDA4C0</div></div></div>
+      <div style="border-radius:20px; overflow:hidden; background:#0E0E14; border:1px solid rgba(255,255,255,0.07)"><div style="height:82px; background:#FCD34D; border-bottom:1px solid rgba(255,255,255,0.06)"></div><div style="padding:12px 14px; display:flex; flex-direction:column; gap:3px"><div style="font-size:13px; font-weight:700">state/stale-sync</div><div style="font-size:12px; font-family:'JetBrains Mono', monospace; color:rgba(255,255,255,0.42)">#FCD34D</div></div></div>
+      <div style="border-radius:20px; overflow:hidden; background:#0E0E14; border:1px solid rgba(255,255,255,0.07)"><div style="height:82px; background:#FDE68A; border-bottom:1px solid rgba(255,255,255,0.06)"></div><div style="padding:12px 14px; display:flex; flex-direction:column; gap:3px"><div style="font-size:13px; font-weight:700">state/achievement</div><div style="font-size:12px; font-family:'JetBrains Mono', monospace; color:rgba(255,255,255,0.42)">#FDE68A</div></div></div>
+      <div style="border-radius:20px; overflow:hidden; background:#0E0E14; border:1px solid rgba(255,255,255,0.07)"><div style="height:82px; background:#3A3A44; border-bottom:1px solid rgba(255,255,255,0.06)"></div><div style="padding:12px 14px; display:flex; flex-direction:column; gap:3px"><div style="font-size:13px; font-weight:700">text/disabled</div><div style="font-size:12px; font-family:'JetBrains Mono', monospace; color:rgba(255,255,255,0.42)">#3A3A44</div></div></div>
+      <div style="border-radius:20px; overflow:hidden; background:#0E0E14; border:1px solid rgba(255,255,255,0.07)"><div style="height:82px; background:rgba(255,255,255,0.07); border-bottom:1px solid rgba(255,255,255,0.06)"></div><div style="padding:12px 14px; display:flex; flex-direction:column; gap:3px"><div style="font-size:13px; font-weight:700">glass/fill</div><div style="font-size:12px; font-family:'JetBrains Mono', monospace; color:rgba(255,255,255,0.42)">#FFFFFF 07%</div></div></div>
+      <div style="border-radius:20px; overflow:hidden; background:#0E0E14; border:1px solid rgba(255,255,255,0.07)"><div style="height:82px; background:rgba(255,255,255,0.09); border-bottom:1px solid rgba(255,255,255,0.06)"></div><div style="padding:12px 14px; display:flex; flex-direction:column; gap:3px"><div style="font-size:13px; font-weight:700">border/hairline</div><div style="font-size:12px; font-family:'JetBrains Mono', monospace; color:rgba(255,255,255,0.42)">#FFFFFF 09%</div></div></div>
+      <div style="border-radius:20px; overflow:hidden; background:#0E0E14; border:1px solid rgba(255,255,255,0.07)"><div style="height:82px; background:rgba(255,255,255,0.035); border-bottom:1px solid rgba(255,255,255,0.06)"></div><div style="padding:12px 14px; display:flex; flex-direction:column; gap:3px"><div style="font-size:13px; font-weight:700">surface/row</div><div style="font-size:12px; font-family:'JetBrains Mono', monospace; color:rgba(255,255,255,0.42)">#FFFFFF 3.5%</div></div></div>
+    </div>
+  </div>
+
+  <!-- GRADIENTS + GLOWS -->
+  <div style="width:1240px; display:grid; grid-template-columns:1fr 1fr; gap:28px">
+    <div style="display:flex; flex-direction:column; gap:20px">
+      <div style="font-size:24px; font-weight:800; letter-spacing:-0.02em">Gradient recipes</div>
+      <div style="display:flex; flex-direction:column; gap:12px">
+        <div style="border-radius:22px; overflow:hidden; border:1px solid rgba(255,255,255,0.07)"><div style="height:64px; background:linear-gradient(100deg,#7C4DFF,#3B82F6)"></div><div style="padding:12px 16px; background:#0E0E14; display:flex; justify-content:space-between; align-items:center"><div style="font-size:13px; font-weight:700">violet → blue · primary button, toggle</div><div style="font-size:11px; font-family:'JetBrains Mono', monospace; color:rgba(255,255,255,0.4)">100deg #7C4DFF → #3B82F6</div></div></div>
+        <div style="border-radius:22px; overflow:hidden; border:1px solid rgba(255,255,255,0.07)"><div style="height:64px; background:linear-gradient(100deg,#3B82F6,#22D3EE)"></div><div style="padding:12px 16px; background:#0E0E14; display:flex; justify-content:space-between; align-items:center"><div style="font-size:13px; font-weight:700">blue → cyan · healthy progress</div><div style="font-size:11px; font-family:'JetBrains Mono', monospace; color:rgba(255,255,255,0.4)">100deg #3B82F6 → #22D3EE</div></div></div>
+        <div style="border-radius:22px; overflow:hidden; border:1px solid rgba(255,255,255,0.07)"><div style="height:64px; background:linear-gradient(90deg,#7C4DFF,#3B82F6 62%,#22D3EE)"></div><div style="padding:12px 16px; background:#0E0E14; display:flex; justify-content:space-between; align-items:center"><div style="font-size:13px; font-weight:700">shared pool arc · gauge, goal bar</div><div style="font-size:11px; font-family:'JetBrains Mono', monospace; color:rgba(255,255,255,0.4)">3-stop, conic from -90deg</div></div></div>
+        <div style="border-radius:22px; overflow:hidden; border:1px solid rgba(255,255,255,0.07)"><div style="height:64px; background:linear-gradient(100deg,#A855F7,#F472B6)"></div><div style="padding:12px 16px; background:#0E0E14; display:flex; justify-content:space-between; align-items:center"><div style="font-size:13px; font-weight:700">approaching → over</div><div style="font-size:11px; font-family:'JetBrains Mono', monospace; color:rgba(255,255,255,0.4)">#A855F7 → #F472B6</div></div></div>
+        <div style="border-radius:22px; overflow:hidden; border:1px solid rgba(255,255,255,0.07)"><div style="height:64px; background:linear-gradient(165deg,#16162A,#0B0B12 58%,#09090F)"></div><div style="padding:12px 16px; background:#0E0E14; display:flex; justify-content:space-between; align-items:center"><div style="font-size:13px; font-weight:700">hero card surface</div><div style="font-size:11px; font-family:'JetBrains Mono', monospace; color:rgba(255,255,255,0.4)">165deg #16162A → #09090F</div></div></div>
+      </div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:20px">
+      <div style="font-size:24px; font-weight:800; letter-spacing:-0.02em">Glow recipes</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px">
+        <div style="position:relative; height:150px; border-radius:22px; overflow:hidden; background:#0A0A10; border:1px solid rgba(255,255,255,0.07); padding:14px; display:flex; flex-direction:column; justify-content:flex-end; gap:4px">
+          <div style="position:absolute; top:-70px; left:-30px; width:220px; height:190px; border-radius:50%; background:radial-gradient(circle, rgba(124,77,255,0.55), rgba(0,0,0,0) 70%); filter:blur(28px)"></div>
+          <div style="position:relative; font-size:13px; font-weight:800">Hero glow</div>
+          <div style="position:relative; font-size:11px; font-family:'JetBrains Mono', monospace; color:rgba(255,255,255,0.45); line-height:1.5">#7C4DFF · 55% · blur 28<br>카드 상단 1개만</div>
+        </div>
+        <div style="position:relative; height:150px; border-radius:22px; overflow:hidden; background:#0A0A10; border:1px solid rgba(255,255,255,0.07); padding:14px; display:flex; flex-direction:column; justify-content:flex-end; gap:4px">
+          <div style="position:absolute; top:26px; left:50%; margin-left:-22px; width:44px; height:44px; border-radius:50%; background:conic-gradient(from 200deg,#22D3EE,#7C4DFF,#F0ABFC,#22D3EE); filter:blur(5px); opacity:.8"></div>
+          <div style="position:absolute; top:32px; left:50%; margin-left:-16px; width:32px; height:32px; border-radius:50%; background:linear-gradient(150deg,#8B5CF6,#3B82F6); border:2px solid #0A0A10"></div>
+          <div style="position:relative; font-size:13px; font-weight:800">Avatar glow</div>
+          <div style="position:relative; font-size:11px; font-family:'JetBrains Mono', monospace; color:rgba(255,255,255,0.45); line-height:1.5">conic ring · 75% · blur 4<br>새 활동 있을 때만</div>
+        </div>
+        <div style="position:relative; height:150px; border-radius:22px; overflow:hidden; background:#0A0A10; border:1px solid rgba(255,255,255,0.07); padding:14px; display:flex; flex-direction:column; justify-content:space-between">
+          <div style="align-self:center; margin-top:12px; display:flex; flex-direction:column; align-items:center; gap:6px; padding:9px 16px; border-radius:20px; background:rgba(124,77,255,0.16); border:1px solid rgba(167,139,250,0.28); box-shadow:0 0 24px rgba(124,77,255,0.35)"><div style="width:16px; height:16px; border-radius:6px; background:linear-gradient(150deg,#A78BFA,#3B82F6)"></div><div style="font-size:10px; font-weight:700; color:#DDD6FE">Today</div></div>
+          <div style="display:flex; flex-direction:column; gap:4px"><div style="font-size:13px; font-weight:800">Nav glow</div><div style="font-size:11px; font-family:'JetBrains Mono', monospace; color:rgba(255,255,255,0.45)">shadow 0 0 24 · 35%</div></div>
+        </div>
+        <div style="position:relative; height:150px; border-radius:22px; overflow:hidden; background:#0A0A10; border:1px solid rgba(255,255,255,0.07); padding:14px; display:flex; flex-direction:column; justify-content:space-between">
+          <div style="display:flex; gap:10px; align-items:center; margin-top:10px">
+            <div style="width:8px; height:8px; border-radius:50%; background:#22D3EE; box-shadow:0 0 12px 3px rgba(34,211,238,0.8)"></div>
+            <div style="width:8px; height:8px; border-radius:50%; background:#FCD34D; box-shadow:0 0 12px 3px rgba(252,211,77,0.6)"></div>
+            <div style="width:8px; height:8px; border-radius:50%; background:#FDA4C0; box-shadow:0 0 12px 3px rgba(253,164,192,0.6)"></div>
+            <div style="width:8px; height:8px; border-radius:50%; background:#A78BFA; box-shadow:0 0 12px 3px rgba(167,139,250,0.8)"></div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:4px"><div style="font-size:13px; font-weight:800">Status glow</div><div style="font-size:11px; font-family:'JetBrains Mono', monospace; color:rgba(255,255,255,0.45)">dot 6-10px · shadow 12/3</div></div>
+        </div>
+      </div>
+      <div style="border-radius:22px; padding:16px 18px; background:#0E0E14; border:1px solid rgba(255,255,255,0.07); font-size:13px; line-height:1.7; color:rgba(255,255,255,0.55)">Achievement glow는 1위에만: 골드 conic ring(#FDE68A → #A78BFA) 75% + violet bloom 45%. 한 화면에 achievement glow는 하나까지.</div>
+    </div>
+  </div>
+
+  <!-- TYPOGRAPHY -->
+  <div style="width:1240px; display:flex; flex-direction:column; gap:20px">
+    <div style="display:flex; align-items:baseline; gap:14px"><div style="font-size:24px; font-weight:800; letter-spacing:-0.02em">Typography</div><div style="font-size:13px; color:rgba(255,255,255,0.35); font-weight:600">Manrope (UI) · JetBrains Mono (metadata numerals) · SF Pro로 대체 가능</div></div>
+    <div style="border-radius:26px; background:#0B0B10; border:1px solid rgba(255,255,255,0.07); overflow:hidden">
+      <div style="display:flex; align-items:baseline; justify-content:space-between; padding:20px 24px; border-bottom:1px solid rgba(255,255,255,0.05)"><div style="font-size:52px; font-weight:800; letter-spacing:-0.045em">3h 42m</div><div style="font-size:12px; font-family:'JetBrains Mono', monospace; color:rgba(255,255,255,0.42)">hero/number · 52 / 800 / -4.5%</div></div>
+      <div style="display:flex; align-items:baseline; justify-content:space-between; padding:18px 24px; border-bottom:1px solid rgba(255,255,255,0.05)"><div style="font-size:36px; font-weight:800; letter-spacing:-0.04em">2h 00m</div><div style="font-size:12px; font-family:'JetBrains Mono', monospace; color:rgba(255,255,255,0.42)">hero/number-compact · 36 / 800</div></div>
+      <div style="display:flex; align-items:baseline; justify-content:space-between; padding:18px 24px; border-bottom:1px solid rgba(255,255,255,0.05)"><div style="font-size:32px; font-weight:800; letter-spacing:-0.03em">Goals</div><div style="font-size:12px; font-family:'JetBrains Mono', monospace; color:rgba(255,255,255,0.42)">screen/title · 32 / 800 / -3%</div></div>
+      <div style="display:flex; align-items:baseline; justify-content:space-between; padding:18px 24px; border-bottom:1px solid rgba(255,255,255,0.05)"><div style="font-size:24px; font-weight:800; letter-spacing:-0.025em">Good morning, Jungwon</div><div style="font-size:12px; font-family:'JetBrains Mono', monospace; color:rgba(255,255,255,0.42)">greeting · 24 / 800</div></div>
+      <div style="display:flex; align-items:baseline; justify-content:space-between; padding:18px 24px; border-bottom:1px solid rgba(255,255,255,0.05)"><div style="font-size:15px; font-weight:800">Your groups</div><div style="font-size:12px; font-family:'JetBrains Mono', monospace; color:rgba(255,255,255,0.42)">section/title · 15 / 800</div></div>
+      <div style="display:flex; align-items:baseline; justify-content:space-between; padding:18px 24px; border-bottom:1px solid rgba(255,255,255,0.05)"><div style="font-size:22px; font-weight:800; letter-spacing:-0.03em">1h 18m</div><div style="font-size:12px; font-family:'JetBrains Mono', monospace; color:rgba(255,255,255,0.42)">card/number · 22 / 800</div></div>
+      <div style="display:flex; align-items:baseline; justify-content:space-between; padding:18px 24px; border-bottom:1px solid rgba(255,255,255,0.05)"><div style="font-size:14px; font-weight:600; color:rgba(255,255,255,0.9)">민지가 오늘 1시간을 사용했어요</div><div style="font-size:12px; font-family:'JetBrains Mono', monospace; color:rgba(255,255,255,0.42)">body · 14 / 600</div></div>
+      <div style="display:flex; align-items:baseline; justify-content:space-between; padding:18px 24px; border-bottom:1px solid rgba(255,255,255,0.05)"><div style="font-size:12px; font-weight:600; color:rgba(255,255,255,0.34)">Updated 2m ago</div><div style="font-size:12px; font-family:'JetBrains Mono', monospace; color:rgba(255,255,255,0.42)">metadata · 12 / 600 / 34%</div></div>
+      <div style="display:flex; align-items:baseline; justify-content:space-between; padding:18px 24px; border-bottom:1px solid rgba(255,255,255,0.05)"><div style="font-size:11px; font-family:'JetBrains Mono', monospace; letter-spacing:.1em; color:#22D3EE">54% USED</div><div style="font-size:12px; font-family:'JetBrains Mono', monospace; color:rgba(255,255,255,0.42)">numeric/label · 11 / mono / +10%</div></div>
+      <div style="display:flex; align-items:baseline; justify-content:space-between; padding:18px 24px"><div style="font-size:15px; font-weight:800">Screen Time 권한 켜기</div><div style="font-size:12px; font-family:'JetBrains Mono', monospace; color:rgba(255,255,255,0.42)">button · 15 / 800</div></div>
+    </div>
+  </div>
+
+  <!-- SPACING / RADIUS / TEXTURE -->
+  <div style="width:1240px; display:grid; grid-template-columns:1fr 1fr 1fr; gap:28px">
+    <div style="display:flex; flex-direction:column; gap:16px">
+      <div style="font-size:24px; font-weight:800; letter-spacing:-0.02em">Spacing</div>
+      <div style="border-radius:24px; padding:20px; background:#0B0B10; border:1px solid rgba(255,255,255,0.07); display:flex; flex-direction:column; gap:12px">
+        <div style="display:flex; align-items:center; gap:12px"><div style="width:4px; height:14px; background:#7C4DFF; border-radius:2px"></div><div style="font-size:13px; font-weight:700; width:34px">4</div><div style="font-size:12px; color:rgba(255,255,255,0.42)">아이콘 · 점 간격</div></div>
+        <div style="display:flex; align-items:center; gap:12px"><div style="width:8px; height:14px; background:#8B5CF6; border-radius:2px"></div><div style="font-size:13px; font-weight:700; width:34px">8</div><div style="font-size:12px; color:rgba(255,255,255,0.42)">리스트 행 간격</div></div>
+        <div style="display:flex; align-items:center; gap:12px"><div style="width:12px; height:14px; background:#6366F1; border-radius:2px"></div><div style="font-size:13px; font-weight:700; width:34px">12</div><div style="font-size:12px; color:rgba(255,255,255,0.42)">그리드 gap</div></div>
+        <div style="display:flex; align-items:center; gap:12px"><div style="width:14px; height:14px; background:#3B82F6; border-radius:2px"></div><div style="font-size:13px; font-weight:700; width:34px">14</div><div style="font-size:12px; color:rgba(255,255,255,0.42)">카드 내부 padding</div></div>
+        <div style="display:flex; align-items:center; gap:12px"><div style="width:20px; height:14px; background:#0EA5E9; border-radius:2px"></div><div style="font-size:13px; font-weight:700; width:34px">20</div><div style="font-size:12px; color:rgba(255,255,255,0.42)">화면 좌우 여백</div></div>
+        <div style="display:flex; align-items:center; gap:12px"><div style="width:24px; height:14px; background:#22D3EE; border-radius:2px"></div><div style="font-size:13px; font-weight:700; width:34px">24</div><div style="font-size:12px; color:rgba(255,255,255,0.42)">섹션 사이</div></div>
+      </div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:16px">
+      <div style="font-size:24px; font-weight:800; letter-spacing:-0.02em">Radius</div>
+      <div style="border-radius:24px; padding:20px; background:#0B0B10; border:1px solid rgba(255,255,255,0.07); display:flex; flex-direction:column; gap:10px">
+        <div style="display:flex; align-items:center; gap:12px"><div style="width:40px; height:28px; border-radius:32px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12)"></div><div style="font-size:13px; font-weight:700; width:34px">32</div><div style="font-size:12px; color:rgba(255,255,255,0.42)">Hero card</div></div>
+        <div style="display:flex; align-items:center; gap:12px"><div style="width:40px; height:28px; border-radius:26px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12)"></div><div style="font-size:13px; font-weight:700; width:34px">26</div><div style="font-size:12px; color:rgba(255,255,255,0.42)">Group / member card</div></div>
+        <div style="display:flex; align-items:center; gap:12px"><div style="width:40px; height:28px; border-radius:22px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12)"></div><div style="font-size:13px; font-weight:700; width:34px">22</div><div style="font-size:12px; color:rgba(255,255,255,0.42)">List row</div></div>
+        <div style="display:flex; align-items:center; gap:12px"><div style="width:40px; height:28px; border-radius:18px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12)"></div><div style="font-size:13px; font-weight:700; width:34px">18</div><div style="font-size:12px; color:rgba(255,255,255,0.42)">Button</div></div>
+        <div style="display:flex; align-items:center; gap:12px"><div style="width:40px; height:28px; border-radius:20px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12)"></div><div style="font-size:13px; font-weight:700; width:34px">20</div><div style="font-size:12px; color:rgba(255,255,255,0.42)">Nav pill</div></div>
+        <div style="display:flex; align-items:center; gap:12px"><div style="width:40px; height:28px; border-radius:999px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12)"></div><div style="font-size:13px; font-weight:700; width:34px">999</div><div style="font-size:12px; color:rgba(255,255,255,0.42)">Pill · avatar · bar</div></div>
+        <div style="display:flex; align-items:center; gap:12px"><div style="width:40px; height:28px; border-radius:54px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12)"></div><div style="font-size:13px; font-weight:700; width:34px">54</div><div style="font-size:12px; color:rgba(255,255,255,0.42)">Device frame</div></div>
+      </div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:16px">
+      <div style="font-size:24px; font-weight:800; letter-spacing:-0.02em">Dot texture</div>
+      <div style="border-radius:24px; padding:20px; background:#0B0B10; border:1px solid rgba(255,255,255,0.07); display:flex; flex-direction:column; gap:12px">
+        <div style="display:flex; gap:12px; align-items:center"><div style="width:74px; height:56px; border-radius:14px; background:#050507; background-image:radial-gradient(rgba(255,255,255,0.075) 1px, transparent 1px); background-size:17px 17px; border:1px solid rgba(255,255,255,0.07)"></div><div style="display:flex; flex-direction:column; gap:2px"><div style="font-size:13px; font-weight:700">Screen · 17px / 7.5%</div><div style="font-size:12px; color:rgba(255,255,255,0.4)">기본 배경</div></div></div>
+        <div style="display:flex; gap:12px; align-items:center"><div style="width:74px; height:56px; border-radius:14px; background:#0C0C14; background-image:radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px); background-size:13px 13px; border:1px solid rgba(255,255,255,0.07)"></div><div style="display:flex; flex-direction:column; gap:2px"><div style="font-size:13px; font-weight:700">Hero card · 13px / 5%</div><div style="font-size:12px; color:rgba(255,255,255,0.4)">밀도 높게, 더 흐리게</div></div></div>
+        <div style="display:flex; gap:12px; align-items:center"><div style="width:74px; height:56px; border-radius:14px; background:#050507; background-image:radial-gradient(rgba(255,255,255,0.045) 1px, transparent 1px); background-size:22px 22px; border:1px solid rgba(255,255,255,0.07)"></div><div style="display:flex; flex-direction:column; gap:2px"><div style="font-size:13px; font-weight:700">Calm · 22px / 4.5%</div><div style="font-size:12px; color:rgba(255,255,255,0.4)">Limit reached · Permission</div></div></div>
+        <div style="display:flex; gap:12px; align-items:center"><div style="width:74px; height:56px; border-radius:14px; background:#101017; border:1px solid rgba(255,255,255,0.07)"></div><div style="display:flex; flex-direction:column; gap:2px"><div style="font-size:13px; font-weight:700">Secondary surface · none</div><div style="font-size:12px; color:rgba(255,255,255,0.4)">리스트 행 · 작은 카드</div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GROUP ACCENTS -->
+  <div style="width:1240px; display:flex; flex-direction:column; gap:20px">
+    <div style="display:flex; align-items:baseline; gap:14px"><div style="font-size:24px; font-weight:800; letter-spacing:-0.02em">Group accent identity</div><div style="font-size:13px; color:rgba(255,255,255,0.35); font-weight:600">Today · Group Detail · Activity · Goals · badge에서 동일하게 유지</div></div>
+    <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:16px">
+      <div style="position:relative; border-radius:26px; padding:20px; overflow:hidden; background:#101017; border:1px solid rgba(255,255,255,0.07); height:170px; display:flex; flex-direction:column; justify-content:space-between">
+        <div style="position:absolute; top:-70px; left:-30px; width:250px; height:210px; border-radius:50%; background:radial-gradient(circle, rgba(124,77,255,0.55), rgba(0,0,0,0) 70%); filter:blur(26px)"></div>
+        <div style="position:relative; display:flex; align-items:center; gap:8px"><div style="width:8px; height:8px; border-radius:50%; background:#A78BFA; box-shadow:0 0 12px 3px rgba(167,139,250,0.85)"></div><div style="font-size:16px; font-weight:800">밤샘 금지단</div></div>
+        <div style="position:relative; display:flex; flex-direction:column; gap:8px">
+          <div style="height:8px; border-radius:999px; background:linear-gradient(90deg,#7C4DFF,#3B82F6)"></div>
+          <div style="font-size:12px; font-family:'JetBrains Mono', monospace; color:rgba(255,255,255,0.45)">#7C4DFF → #3B82F6 · violet</div>
+        </div>
+      </div>
+      <div style="position:relative; border-radius:26px; padding:20px; overflow:hidden; background:#0E1016; border:1px solid rgba(255,255,255,0.07); height:170px; display:flex; flex-direction:column; justify-content:space-between">
+        <div style="position:absolute; bottom:-70px; right:-30px; width:250px; height:210px; border-radius:50%; background:radial-gradient(circle, rgba(34,211,238,0.45), rgba(0,0,0,0) 70%); filter:blur(26px)"></div>
+        <div style="position:relative; display:flex; align-items:center; gap:8px"><div style="width:8px; height:8px; border-radius:50%; background:#22D3EE; box-shadow:0 0 12px 3px rgba(34,211,238,0.85)"></div><div style="font-size:16px; font-weight:800">과제 생존단</div></div>
+        <div style="position:relative; display:flex; flex-direction:column; gap:8px">
+          <div style="height:8px; border-radius:999px; background:linear-gradient(90deg,#22D3EE,#1D4ED8)"></div>
+          <div style="font-size:12px; font-family:'JetBrains Mono', monospace; color:rgba(255,255,255,0.45)">#22D3EE → #1D4ED8 · cyan</div>
+        </div>
+      </div>
+      <div style="position:relative; border-radius:26px; padding:20px; overflow:hidden; background:#130E12; border:1px solid rgba(255,255,255,0.07); height:170px; display:flex; flex-direction:column; justify-content:space-between">
+        <div style="position:absolute; top:-70px; right:-20px; width:250px; height:210px; border-radius:50%; background:radial-gradient(circle, rgba(244,114,182,0.45), rgba(0,0,0,0) 70%); filter:blur(26px)"></div>
+        <div style="position:relative; display:flex; align-items:center; gap:8px"><div style="width:8px; height:8px; border-radius:50%; background:#F472B6; box-shadow:0 0 12px 3px rgba(244,114,182,0.85)"></div><div style="font-size:16px; font-weight:800">졸업하자</div></div>
+        <div style="position:relative; display:flex; flex-direction:column; gap:8px">
+          <div style="height:8px; border-radius:999px; background:linear-gradient(90deg,#F472B6,#A855F7)"></div>
+          <div style="font-size:12px; font-family:'JetBrains Mono', monospace; color:rgba(255,255,255,0.45)">#F472B6 → #A855F7 · pink</div>
+        </div>
+      </div>
+    </div>
+    <div style="border-radius:22px; padding:16px 20px; background:#0E0E14; border:1px solid rgba(255,255,255,0.07); font-size:13px; line-height:1.7; color:rgba(255,255,255,0.55)">그룹 accent는 dot · 게이지 arc · bloom · 진행 바에만 적용합니다. 서피스 색, 텍스트 색, radius, 타입은 그룹과 무관하게 동일합니다.</div>
+  </div>
+
+  <!-- COMPONENTS -->
+  <div style="width:1240px; display:flex; flex-direction:column; gap:20px">
+    <div style="font-size:24px; font-weight:800; letter-spacing:-0.02em">Components</div>
+    <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:16px">
+
+      <div style="border-radius:26px; padding:20px; background:#0B0B10; border:1px solid rgba(255,255,255,0.07); display:flex; flex-direction:column; gap:14px">
+        <div style="font-size:12px; font-weight:800; letter-spacing:.12em; color:rgba(255,255,255,0.35)">AVATAR · STACK · RING</div>
+        <div style="display:flex; align-items:center; gap:18px">
+          <div style="width:40px; height:40px; border-radius:50%; background:linear-gradient(150deg,#8B5CF6,#6D28D9); display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:700">정</div>
+          <div style="position:relative; width:40px; height:40px"><div style="position:absolute; inset:-3px; border-radius:50%; background:conic-gradient(from 200deg,#22D3EE,#7C4DFF,#F0ABFC,#22D3EE); filter:blur(4px); opacity:.8"></div><div style="position:absolute; inset:0; border-radius:50%; background:linear-gradient(150deg,#60A5FA,#2563EB); border:2px solid #0B0B10; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:700">민</div></div>
+          <div style="display:flex"><div style="width:32px; height:32px; border-radius:50%; background:linear-gradient(150deg,#8B5CF6,#6D28D9); border:2px solid #0B0B10"></div><div style="width:32px; height:32px; border-radius:50%; background:linear-gradient(150deg,#38BDF8,#2563EB); border:2px solid #0B0B10; margin-left:-11px"></div><div style="width:32px; height:32px; border-radius:50%; background:linear-gradient(150deg,#22D3EE,#0E7490); border:2px solid #0B0B10; margin-left:-11px"></div><div style="width:32px; height:32px; border-radius:50%; background:rgba(255,255,255,0.1); border:2px solid #0B0B10; margin-left:-11px; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700">+2</div></div>
+        </div>
+        <div style="font-size:12px; color:rgba(255,255,255,0.4); line-height:1.6">40 / 32 / 28 세 사이즈. 겹침 -11. 실제 앱에서는 사진, 없으면 이니셜 + 그룹 accent gradient.</div>
+      </div>
+
+      <div style="border-radius:26px; padding:20px; background:#0B0B10; border:1px solid rgba(255,255,255,0.07); display:flex; flex-direction:column; gap:14px">
+        <div style="font-size:12px; font-weight:800; letter-spacing:.12em; color:rgba(255,255,255,0.35)">STATUS PILL · BADGE</div>
+        <div style="display:flex; flex-wrap:wrap; gap:8px">
+          <div style="display:flex; align-items:center; gap:7px; padding:7px 13px 7px 9px; border-radius:999px; background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.09)"><div style="width:6px; height:6px; border-radius:50%; background:#A78BFA; box-shadow:0 0 9px 2px rgba(167,139,250,0.9)"></div><div style="font-size:13px; font-weight:700">밤샘 금지단</div></div>
+          <div style="padding:6px 11px; border-radius:999px; background:rgba(253,230,138,0.12); border:1px solid rgba(253,230,138,0.28); font-size:11px; font-weight:800; color:#FDE68A; white-space:nowrap">LEAST TODAY</div>
+          <div style="padding:6px 11px; border-radius:999px; background:rgba(252,211,77,0.14); border:1px solid rgba(252,211,77,0.28); font-size:11px; font-weight:800; color:#FDE68A; white-space:nowrap">STALE 38m</div>
+          <div style="padding:6px 11px; border-radius:999px; background:rgba(244,114,182,0.12); border:1px solid rgba(244,114,182,0.26); font-size:11px; font-weight:800; color:#FDA4C0; white-space:nowrap">42m OVER</div>
+        </div>
+        <div style="font-size:12px; color:rgba(255,255,255,0.4); line-height:1.6">glass fill 7% + hairline. 텍스트 11–13 / 700–800.</div>
+      </div>
+
+      <div style="border-radius:26px; padding:20px; background:#0B0B10; border:1px solid rgba(255,255,255,0.07); display:flex; flex-direction:column; gap:14px">
+        <div style="font-size:12px; font-weight:800; letter-spacing:.12em; color:rgba(255,255,255,0.35)">BUTTON · TOGGLE</div>
+        <div style="display:flex; flex-direction:column; gap:10px">
+          <div style="padding:13px; border-radius:18px; background:linear-gradient(100deg,#7C4DFF,#3B82F6); box-shadow:0 0 26px -4px rgba(99,102,241,0.7); text-align:center; font-size:15px; font-weight:800">Primary</div>
+          <div style="padding:13px; border-radius:18px; background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.12); text-align:center; font-size:15px; font-weight:700">Secondary</div>
+          <div style="display:flex; align-items:center; justify-content:space-between"><div style="font-size:13px; font-weight:600; color:rgba(255,255,255,0.6)">Notifications</div><div style="width:42px; height:26px; border-radius:999px; background:linear-gradient(90deg,#7C4DFF,#3B82F6); box-shadow:0 0 16px rgba(99,102,241,0.6); position:relative"><div style="position:absolute; top:3px; right:3px; width:20px; height:20px; border-radius:50%; background:#fff"></div></div></div>
+        </div>
+      </div>
+
+      <div style="border-radius:26px; padding:20px; background:#0B0B10; border:1px solid rgba(255,255,255,0.07); display:flex; flex-direction:column; gap:14px">
+        <div style="font-size:12px; font-weight:800; letter-spacing:.12em; color:rgba(255,255,255,0.35)">PROGRESS VISUALIZATION</div>
+        <div style="display:flex; align-items:center; gap:18px">
+          <div style="position:relative; width:84px; height:84px; flex:none">
+            <div style="position:absolute; inset:0; border-radius:50%; background:conic-gradient(from -90deg, #7C4DFF 0deg, #3B82F6 120deg, #22D3EE 194deg, rgba(255,255,255,0.055) 196deg); -webkit-mask:radial-gradient(closest-side, transparent 80%, #000 81%); mask:radial-gradient(closest-side, transparent 80%, #000 81%)"></div>
+            <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800">54%</div>
+          </div>
+          <div style="flex:1; display:flex; flex-direction:column; gap:12px">
+            <div style="height:10px; border-radius:999px; background:rgba(255,255,255,0.06); position:relative"><div style="position:absolute; inset:0; width:64%; border-radius:999px; background:linear-gradient(90deg,#7C4DFF,#3B82F6 60%,#22D3EE); box-shadow:0 0 18px rgba(59,130,246,0.7)"></div><div style="position:absolute; top:-3px; left:64%; margin-left:-8px; width:16px; height:16px; border-radius:50%; background:#E0F2FE; box-shadow:0 0 16px 4px rgba(34,211,238,0.8)"></div></div>
+            <div style="height:5px; border-radius:999px; background:rgba(255,255,255,0.07)"><div style="width:40%; height:100%; border-radius:999px; background:linear-gradient(90deg,#22D3EE,#0EA5E9)"></div></div>
+          </div>
+        </div>
+        <div style="font-size:12px; color:rgba(255,255,255,0.4); line-height:1.6">Shared ring(conic + mask), goal bar(끝점 발광), member bar(5px, glow 없음).</div>
+      </div>
+
+      <div style="border-radius:26px; padding:20px; background:#0B0B10; border:1px solid rgba(255,255,255,0.07); display:flex; flex-direction:column; gap:14px">
+        <div style="font-size:12px; font-weight:800; letter-spacing:.12em; color:rgba(255,255,255,0.35)">RANKING ITEM · MEMBER CARD</div>
+        <div style="position:relative; border-radius:22px; padding:12px 14px; overflow:hidden; background:linear-gradient(150deg,#161029,#0B0B12); border:1px solid rgba(167,139,250,0.22); display:flex; align-items:center; gap:12px">
+          <div style="position:relative; width:38px; height:38px; flex:none"><div style="position:absolute; inset:-3px; border-radius:50%; background:conic-gradient(from 190deg,#FDE68A,#A78BFA,#22D3EE,#FDE68A); filter:blur(4px); opacity:.75"></div><div style="position:absolute; inset:0; border-radius:50%; background:linear-gradient(150deg,#8B5CF6,#6D28D9); border:2px solid #0C0C14; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700">정</div><div style="position:absolute; top:-8px; right:-6px; font-size:13px">👑</div></div>
+          <div style="flex:1; font-size:14px; font-weight:800">정원</div>
+          <div style="font-size:18px; font-weight:800; letter-spacing:-0.03em">42m</div>
+        </div>
+        <div style="border-radius:22px; padding:12px 14px; background:rgba(255,255,255,0.035); border:1px solid rgba(255,255,255,0.06); display:flex; align-items:center; gap:12px">
+          <div style="width:20px; font-size:13px; font-weight:800; color:rgba(255,255,255,0.4); font-family:'JetBrains Mono', monospace">2</div>
+          <div style="width:34px; height:34px; border-radius:50%; background:linear-gradient(150deg,#60A5FA,#2563EB); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700">민</div>
+          <div style="flex:1; font-size:14px; font-weight:700">민지</div>
+          <div style="font-size:17px; font-weight:800; letter-spacing:-0.03em">1h 05m</div>
+        </div>
+      </div>
+
+      <div style="border-radius:26px; padding:20px; background:#0B0B10; border:1px solid rgba(255,255,255,0.07); display:flex; flex-direction:column; gap:14px">
+        <div style="font-size:12px; font-weight:800; letter-spacing:.12em; color:rgba(255,255,255,0.35)">ACTIVITY ITEM</div>
+        <div style="display:flex; align-items:center; gap:12px; padding:10px 12px; border-radius:20px; background:rgba(255,255,255,0.032); border:1px solid rgba(255,255,255,0.05)">
+          <div style="width:36px; height:36px; border-radius:50%; background:linear-gradient(150deg,#38BDF8,#2563EB); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; flex:none">민</div>
+          <div style="flex:1; display:flex; flex-direction:column; gap:3px"><div style="font-size:14px; font-weight:600; color:rgba(255,255,255,0.9)">민지가 오늘 1시간을 사용했어요</div><div style="font-size:12px; font-weight:600; color:rgba(255,255,255,0.34)">12분 전</div></div>
+        </div>
+        <div style="display:flex; gap:6px"><div style="padding:4px 10px; border-radius:999px; background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.09); font-size:11px; font-weight:700; white-space:nowrap">🔥 3</div><div style="padding:4px 10px; border-radius:999px; background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.09); font-size:11px; font-weight:700; white-space:nowrap">👏 2</div></div>
+      </div>
+
+      <div style="border-radius:26px; padding:20px; background:#0B0B10; border:1px solid rgba(255,255,255,0.07); display:flex; flex-direction:column; gap:14px">
+        <div style="font-size:12px; font-weight:800; letter-spacing:.12em; color:rgba(255,255,255,0.35)">BOTTOM NAVIGATION</div>
+        <div style="border-radius:22px; padding:12px 14px 10px; background:rgba(5,5,7,0.9); border:1px solid rgba(255,255,255,0.06); display:flex; align-items:flex-start; justify-content:space-between">
+          <div style="display:flex; flex-direction:column; align-items:center; gap:6px; padding:8px 14px; border-radius:20px; background:rgba(124,77,255,0.16); border:1px solid rgba(167,139,250,0.28); box-shadow:0 0 24px rgba(124,77,255,0.35)"><div style="width:16px; height:16px; border-radius:6px; background:linear-gradient(150deg,#A78BFA,#3B82F6)"></div><div style="font-size:10px; font-weight:700; color:#DDD6FE">Today</div></div>
+          <div style="display:flex; flex-direction:column; align-items:center; gap:6px; padding:8px 14px"><div style="width:16px; height:16px; border-radius:50%; border:2px solid rgba(255,255,255,0.32)"></div><div style="font-size:10px; font-weight:600; color:rgba(255,255,255,0.34)">Goals</div></div>
+          <div style="display:flex; flex-direction:column; align-items:center; gap:6px; padding:8px 14px"><div style="width:16px; height:16px; display:flex; align-items:flex-end; gap:3px"><div style="width:3px; height:8px; border-radius:2px; background:rgba(255,255,255,0.32)"></div><div style="width:3px; height:14px; border-radius:2px; background:rgba(255,255,255,0.32)"></div><div style="width:3px; height:11px; border-radius:2px; background:rgba(255,255,255,0.32)"></div></div><div style="font-size:10px; font-weight:600; color:rgba(255,255,255,0.34)">Activity</div></div>
+          <div style="display:flex; flex-direction:column; align-items:center; gap:6px; padding:8px 14px"><div style="width:16px; height:16px; border-radius:50%; background:rgba(255,255,255,0.22)"></div><div style="font-size:10px; font-weight:600; color:rgba(255,255,255,0.34)">MY</div></div>
+        </div>
+        <div style="font-size:12px; color:rgba(255,255,255,0.4); line-height:1.6">높이 104, 선택 항목만 luminous pill. blur 대신 불투명 그라디언트 배경.</div>
+      </div>
+
+      <div style="border-radius:26px; padding:20px; background:#0B0B10; border:1px solid rgba(255,255,255,0.07); display:flex; flex-direction:column; gap:14px">
+        <div style="font-size:12px; font-weight:800; letter-spacing:.12em; color:rgba(255,255,255,0.35)">PERMISSION CTA</div>
+        <div style="border-radius:22px; padding:16px; background:#0D0D12; border:1px solid rgba(255,255,255,0.07); display:flex; flex-direction:column; gap:10px">
+          <div style="font-size:13px; font-weight:600; color:rgba(255,255,255,0.5); line-height:1.5">권한을 켜면 내 사용 시간이 공동 시간에 합산돼요.</div>
+          <div style="padding:12px; border-radius:18px; background:linear-gradient(100deg,#7C4DFF,#3B82F6); box-shadow:0 0 26px -4px rgba(99,102,241,0.7); text-align:center; font-size:14px; font-weight:800">Screen Time 권한 켜기</div>
+        </div>
+      </div>
+
+      <div style="border-radius:26px; padding:20px; background:#0B0B10; border:1px solid rgba(255,255,255,0.07); display:flex; flex-direction:column; gap:14px">
+        <div style="font-size:12px; font-weight:800; letter-spacing:.12em; color:rgba(255,255,255,0.35)">EMPTY STATE</div>
+        <div style="border-radius:22px; padding:24px 16px; background:rgba(255,255,255,0.025); border:1px dashed rgba(255,255,255,0.12); display:flex; flex-direction:column; align-items:center; gap:10px">
+          <div style="width:52px; height:52px; border-radius:50%; background:rgba(255,255,255,0.05); border:1px dashed rgba(255,255,255,0.14)"></div>
+          <div style="font-size:14px; font-weight:700">아직 그룹이 없어요</div>
+          <div style="font-size:12px; color:rgba(255,255,255,0.38); text-align:center; line-height:1.6">친구 한 명만 있으면 공동 시간을 시작할 수 있어요.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RN NOTES -->
+  <div style="width:1240px; display:flex; flex-direction:column; gap:20px">
+    <div style="font-size:24px; font-weight:800; letter-spacing:-0.02em">React Native 구현 노트</div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px">
+      <div style="border-radius:24px; padding:20px 22px; background:#0E0E14; border:1px solid rgba(255,255,255,0.07); display:flex; flex-direction:column; gap:9px">
+        <div style="font-size:14px; font-weight:800; color:#C4B5FD">Bloom = 정적 이미지 또는 RadialGradient 1장</div>
+        <div style="font-size:13px; line-height:1.7; color:rgba(255,255,255,0.55)">화면당 blur 레이어는 최대 2개. 카드 뒤 bloom은 expo-linear-gradient / react-native-svg의 RadialGradient, 또는 미리 렌더한 PNG로 처리하고 실시간 blur는 쓰지 않습니다.</div>
+      </div>
+      <div style="border-radius:24px; padding:20px 22px; background:#0E0E14; border:1px solid rgba(255,255,255,0.07); display:flex; flex-direction:column; gap:9px">
+        <div style="font-size:14px; font-weight:800; color:#93C5FD">Shared ring = SVG Circle strokeDashoffset</div>
+        <div style="font-size:13px; line-height:1.7; color:rgba(255,255,255,0.55)">conic-gradient는 RN에 없습니다. react-native-svg의 원 + 그라디언트 stroke, 멤버 세그먼트는 dash 배열로 나눕니다. 애니메이션은 Reanimated로 strokeDashoffset만 보간.</div>
+      </div>
+      <div style="border-radius:24px; padding:20px 22px; background:#0E0E14; border:1px solid rgba(255,255,255,0.07); display:flex; flex-direction:column; gap:9px">
+        <div style="font-size:14px; font-weight:800; color:#67E8F9">Glass는 pill에만</div>
+        <div style="font-size:13px; line-height:1.7; color:rgba(255,255,255,0.55)">BlurView는 그룹 pill, nav pill 등 작은 요소에만. 전면 blur와 다중 투명 레이어는 금지. 대부분의 서피스는 불투명 단색 + hairline border로 깊이를 만듭니다.</div>
+      </div>
+      <div style="border-radius:24px; padding:20px 22px; background:#0E0E14; border:1px solid rgba(255,255,255,0.07); display:flex; flex-direction:column; gap:9px">
+        <div style="font-size:14px; font-weight:800; color:#FDE68A">Dot texture = 타일 이미지</div>
+        <div style="font-size:13px; line-height:1.7; color:rgba(255,255,255,0.55)">17px 타일 PNG를 ImageBackground로 반복합니다. 카드용 13px, calm용 22px 세 종류만 준비하면 됩니다.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</x-dc>
+</body>
+</html>
