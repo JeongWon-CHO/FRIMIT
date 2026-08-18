@@ -71,11 +71,7 @@ export default function GroupDetailScreen() {
           disabled={!group || leave.isPending}
           onPress={() =>
             group &&
-            leave.prompt(
-              group,
-              members.data?.length ?? 1,
-              group.admin_id === profile.data?.id
-            )
+            leave.prompt(group, members.data, profile.data?.id)
           }
         />
       </View>

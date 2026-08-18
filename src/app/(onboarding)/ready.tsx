@@ -134,10 +134,7 @@ export default function ReadinessScreen() {
             <StatusPill label={group?.name ?? '…'} dotColor={colors.accent.violetSoft} />
             <LeaveButton
               disabled={!group || leave.isPending}
-              onPress={() =>
-                group &&
-                leave.prompt(group, members.data?.length ?? 1, isAdmin)
-              }
+              onPress={() => group && leave.prompt(group, members.data, profile.data?.id)}
             />
           </View>
 
@@ -215,7 +212,7 @@ export default function ReadinessScreen() {
           <BackButton />
           <LeaveButton
             disabled={!group || leave.isPending}
-            onPress={() => group && leave.prompt(group, members.data?.length ?? 1, isAdmin)}
+            onPress={() => group && leave.prompt(group, members.data, profile.data?.id)}
           />
         </View>
 
