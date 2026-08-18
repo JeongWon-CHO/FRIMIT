@@ -115,8 +115,25 @@ export async function listGroupMembers(groupId: string): Promise<GroupMember[]> 
     }));
 }
 
-export async function createGroup(name: string): Promise<GroupSnapshot> {
-  const { data, error } = await supabase.rpc('create_group', { group_name: name });
+/**
+ * 그룹 만들기.
+ *
+ * 서버 RPC는 처음부터 아이콘·색·시간대·한도·초기화 시각을 받도록 만들어져 있었고,
+ * 지금까지 이름만 넘기고 있었다. 온보딩의 그룹 만들기 화면이 강조색과 공동 시간을
+ * 고르게 되면서 나머지도 실어 보낸다 — 마이그레이션은 필요 없다.
+ *
+ * `colorKey`는 서버 제약(`^color-[0-9]{2}$`)을 따르고, 디자인의 세 강조색과의
+ * 대응은 `lib/today.ts`의 매핑 한 곳에만 있다.
+ */
+export async function createGroup(
+  name: string,
+  options: { colorKey?: string; dailyLimitSeconds?: number } = {}
+): Promise<GroupSnapshot> {
+  const { data, error } = await supabase.rpc('create_group', {
+    group_name: name,
+    ...(options.colorKey ? { color_key: options.colorKey } : {}),
+    ...(options.dailyLimitSeconds ? { daily_limit_seconds: options.dailyLimitSeconds } : {}),
+  });
   if (error) throw new Error(`그룹을 만들지 못했습니다: ${error.message}`);
   return data as GroupSnapshot;
 }

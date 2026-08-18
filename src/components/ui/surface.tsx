@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Pressable, StyleSheet, View, type ViewStyle } from 'react-native';
+import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -32,7 +32,7 @@ type SurfaceProps = {
   /** 블룸은 카드 밖으로 새면 안 되므로 여기서 클립된다. */
   bloom?: ReactNode;
   onPress?: () => void;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
 };
 
 export function Surface({

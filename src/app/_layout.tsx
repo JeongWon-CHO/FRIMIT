@@ -74,7 +74,10 @@ export default function RootLayout() {
 function EntryGate() {
   const navigationState = useRootNavigationState();
   const isNavigationReady = Boolean(navigationState?.key);
-  const [routeSettled, setRouteSettled] = useState(false);
+  // 개발용 강제 이동이 걸려 있으면 판정은 아예 돌리지 않는다. 돌리면 몇 백
+  // 밀리초 뒤에 도착한 판정 결과가 우리를 다시 밀어낸다.
+  const devRoute = __DEV__ ? DEV_ROUTE : null;
+  const [routeSettled, setRouteSettled] = useState(Boolean(devRoute));
 
   const [fontsLoaded, fontError] = useFonts({
     Manrope_500Medium,
@@ -90,15 +93,14 @@ function EntryGate() {
   const fontsSettled = fontsLoaded || Boolean(fontError);
 
   useEffect(() => {
-    if (!isNavigationReady || routeSettled) return;
+    if (!isNavigationReady) return;
 
-    // 개발용 강제 이동이 걸려 있으면 판정을 아예 돌리지 않는다. 돌리면 몇 백
-    // 밀리초 뒤에 도착한 판정 결과가 우리를 다시 밀어낸다.
-    if (__DEV__ && DEV_ROUTE) {
-      router.replace(DEV_ROUTE as never);
-      setRouteSettled(true);
+    if (devRoute) {
+      router.replace(devRoute as never);
       return;
     }
+
+    if (routeSettled) return;
 
     let cancelled = false;
 
@@ -119,7 +121,7 @@ function EntryGate() {
     return () => {
       cancelled = true;
     };
-  }, [isNavigationReady, routeSettled]);
+  }, [isNavigationReady, routeSettled, devRoute]);
 
   useEffect(() => {
     if (routeSettled && fontsSettled) SplashScreen.hideAsync();

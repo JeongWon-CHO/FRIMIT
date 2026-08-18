@@ -23,6 +23,8 @@ const PROGRESS_KEY = 'frimit.onboarding.v1';
 export type OnboardingProgress = {
   /** 닉네임 단계를 지났다. 자기를 정말 '친구'라고 부르고 싶은 사람을 위해 필요하다. */
   nicknameDone: boolean;
+  /** 알림 사전 설명을 봤다. 켰든 넘겼든 다시 보여주지 않는다. */
+  notificationsSeen: boolean;
   /** 권한을 나중에 하기로 했다. */
   permissionSkipped: boolean;
   /** 추적 대상 선택을 나중에 하기로 했다. */
@@ -33,6 +35,7 @@ export type OnboardingProgress = {
 
 const EMPTY_PROGRESS: OnboardingProgress = {
   nicknameDone: false,
+  notificationsSeen: false,
   permissionSkipped: false,
   trackingSkipped: false,
   done: false,
@@ -62,11 +65,17 @@ export async function resetProgress(): Promise<void> {
 /** 온보딩 라우트. `(onboarding)` 그룹은 경로에 나타나지 않는다. */
 export const OnboardingRoutes = {
   welcome: '/welcome',
+  signIn: '/sign-in',
   nickname: '/nickname',
+  notifications: '/notifications',
+  privacy: '/privacy',
   permission: '/permission',
+  start: '/start',
   group: '/group',
+  inviteFriends: '/invite-friends',
   tracking: '/tracking',
   ready: '/ready',
+  started: '/started',
 } as const;
 
 export const TABS_ROUTE = '/';
@@ -90,8 +99,8 @@ export async function resolveEntryRoute(): Promise<EntryRoute> {
 
   // 그룹이 없으면 오늘 화면에 그릴 것이 없다. 온보딩을 끝낸 사람이 여기 걸리는
   // 경우도 있다 — 마지막 그룹에서 탈퇴하면 그렇다. 그때는 소개를 다시 보여주지
-  // 않고 그룹 단계로 바로 보낸다.
-  if (groups.length === 0) return OnboardingRoutes.group;
+  // 않고 만들기/참여 갈림길로 바로 보낸다.
+  if (groups.length === 0) return OnboardingRoutes.start;
 
   if (progress.done) return TABS_ROUTE;
 
@@ -99,7 +108,9 @@ export async function resolveEntryRoute(): Promise<EntryRoute> {
   // "거부"가 아니라 "한 번도 물어보지 않았다"다.
   const tracking = readTrackingState(groups[0].id);
   if (tracking.permission === 'notDetermined' && !progress.permissionSkipped) {
-    return OnboardingRoutes.permission;
+    // 권한 화면에 바로 떨구지 않는다. 05가 권한을 얻어 내는 화면이고, 그걸
+    // 건너뛰면 사용자는 이유를 모른 채 시스템 시트를 만난다.
+    return progress.notificationsSeen ? OnboardingRoutes.privacy : OnboardingRoutes.notifications;
   }
 
   if (tracking.permission === 'granted' && tracking.selectionCount === 0 && !progress.trackingSkipped) {

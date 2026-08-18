@@ -9,4 +9,4 @@
  * `null`이면 평소대로 `resolveEntryRoute()`의 판정을 따른다.
  * **릴리스 전에 반드시 null로 되돌린다.** `__DEV__` 밖에서는 무시된다.
  */
-export const DEV_ROUTE: string | null = '/';
+export const DEV_ROUTE: string | null = null;

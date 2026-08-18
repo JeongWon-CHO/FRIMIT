@@ -1,124 +1,197 @@
-import { router } from 'expo-router';
-import { useState } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { Linking, Platform, StyleSheet, View } from 'react-native';
 
-import { Button } from '@/components/button';
-import { Card } from '@/components/card';
-import { OnboardingStep } from '@/components/onboarding-step';
-import { ThemedText } from '@/components/themed-text';
-import { Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
-import { useTrackingState } from '@/hooks/use-tracking';
+import { SharedOrbitRing } from '@/components/orbit';
+import { OnboardingFrame } from '@/components/onboarding';
+import { AppText, ButtonStack, GradientButton } from '@/components/ui';
+import { gradients } from '@/constants/design-tokens';
 import { markProgress } from '@/lib/onboarding';
 import { describePermission, requestPermission } from '@/lib/tracking';
+import { useTrackingState } from '@/hooks/use-tracking';
 
 /**
- * 3단계 · 사용량 권한.
+ * 06 · 스크린타임 권한 — 그리고 06a / 06b 복귀 화면.
  *
- * 권한을 요청하기 전에 **무엇이 그룹에 보이는지** 먼저 말한다. 이 앱이 읽는 것은
- * 앱별 사용시간이고 그건 대부분의 사용자에게 민감한 값이다. 실제로 그룹에 나가는
- * 것은 개수·합계·마지막 동기화 시각·권한 상태뿐이므로(plan.md 24행), 그 사실을
- * 권한 시트보다 먼저 보여주는 것이 순서다.
+ * 한 라우트에 셋이 있다. 요청 전(`?result` 없음), 승인(`granted`), 거부(`denied`).
+ * 세 화면의 뼈대가 같고(가운데 링 + 문구 + CTA) 바뀌는 것은 링과 카피뿐이라,
+ * 라우트를 셋으로 나누면 같은 레이아웃을 세 번 쓰게 된다.
  *
- * 거부해도 막지 않는다(plan.md 71행). 다만 공동 집계의 준비 멤버로는 인정되지
- * 않으므로, 그 결과를 여기서 미리 알려 준다.
+ * **시스템 시트는 그리지 않는다.** 우리 몫은 그 앞과 뒤뿐이다.
+ * 거부해도 막지 않는다 — 거부한 사람도 온보딩을 끝까지 지나간다.
  */
 export default function PermissionScreen() {
-  const theme = useTheme();
+  const { result } = useLocalSearchParams<{ result?: 'granted' | 'denied' }>();
   const tracking = useTrackingState(undefined);
-  const [requesting, setRequesting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
   const granted = tracking.permission === 'granted';
+  // 시스템이 더 이상 묻지 않는 상태. 이때 "다시 시도"는 설정으로 보내야 한다.
+  const blocked = tracking.permission === 'denied' || tracking.permission === 'restricted';
 
   const ask = async () => {
-    setRequesting(true);
-    setError(null);
+    setBusy(true);
     try {
+      if (blocked) {
+        await Linking.openSettings();
+        return;
+      }
       await requestPermission();
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : String(caught));
+    } catch {
+      // 사유는 상태로 다시 읽는다. iOS는 시트 취소를 오류로 알려주지 않는다.
     } finally {
-      // 시트를 취소해도 상태를 다시 읽어야 한다. iOS는 취소를 오류로 알려주지 않는다.
       tracking.refresh();
-      setRequesting(false);
+      setBusy(false);
     }
   };
 
-  const skip = async () => {
-    await markProgress({ permissionSkipped: true });
-    router.push('/group');
+  // 시트가 닫히면 결과 화면으로 옮긴다. 권한 변화는 네이티브 이벤트와 앱 복귀로
+  // 들어오므로(`lib/tracking.ts`), 여기서는 그 결과만 읽는다.
+  useEffect(() => {
+    if (!busy && result === undefined && granted) {
+      router.replace({ pathname: '/permission', params: { result: 'granted' } });
+    }
+  }, [busy, granted, result]);
+
+  const next = async () => {
+    if (!granted) await markProgress({ permissionSkipped: true });
+    router.push('/start');
   };
 
+  if (result === 'granted') {
+    return (
+      <Result
+        ring={<SharedOrbitRing size={104} progress={1} gradient={gradients.sharedPool.colors} strokeRatio={0.16}>
+          <AppText variant="screenTitle" tone="cyan">✓</AppText>
+        </SharedOrbitRing>}
+        title="You're connected."
+        body="이제 공동 시간에 참여할 수 있어요."
+        primary={{ label: 'Continue', onPress: next }}
+      />
+    );
+  }
+
+  if (result === 'denied') {
+    return (
+      <Result
+        calm
+        ring={<SharedOrbitRing size={104} progress={0} variant="empty" gradient={['rgba(255,255,255,0.06)', 'rgba(255,255,255,0.06)']} glow="none" strokeRatio={0.16}>
+          <AppText variant="cardNumber" tone="faint">— —</AppText>
+        </SharedOrbitRing>}
+        title="아직 참여 전이에요"
+        body="둘러보는 건 괜찮아요. 공동 시간 집계는 권한을 켠 뒤부터 시작돼요."
+        primary={{ label: blocked ? '설정에서 켜기' : 'Try again', onPress: ask }}
+        secondary={{ label: 'Continue for now', onPress: next }}
+      />
+    );
+  }
+
   return (
-    <OnboardingStep
-      step="permission"
-      eyebrow="권한"
-      title="사용시간을 읽어도 될까요"
-      description={
-        Platform.OS === 'ios'
-          ? '스크린 타임 권한이 필요해요. 애플이 그리는 화면에서 허용해 주세요.'
-          : '사용 정보 접근 권한이 필요해요. 설정 화면이 열리면 목록에서 Frimit을 찾아 켜 주세요.'
-      }
+    <OnboardingFrame
+      texture="calm"
       footer={
-        granted ? (
-          <Button label="다음" onPress={() => router.push('/group')} />
-        ) : (
-          <>
-            <Button label="권한 허용하기" onPress={ask} loading={requesting} />
-            <Button label="나중에 하기" variant="plain" onPress={skip} />
-          </>
-        )
+        <ButtonStack>
+          <GradientButton label="Enable Screen Time" onPress={ask} loading={busy} />
+          <GradientButton label="Continue for now" variant="tertiary" onPress={next} />
+          <AppText variant="metadata" tone="faint" style={styles.note}>
+            다음 화면은 {Platform.OS === 'ios' ? 'iOS' : 'Android'} 시스템 시트예요.
+          </AppText>
+        </ButtonStack>
       }>
-      <Card>
-        <ThemedText type="label" themeColor="textSecondary">
-          친구들에게 보이는 것
-        </ThemedText>
-        <Line theme="text" text="합계 사용시간 · 고른 앱 개수 · 마지막 동기화 시각" />
+      <AppText variant="numericLabel" tone="faint">
+        STEP 3 OF 3
+      </AppText>
 
-        <View style={[styles.divider, { backgroundColor: theme.border }]} />
+      <View style={styles.center}>
+        <SharedOrbitRing
+          size={170}
+          progress={0.11}
+          gradient={gradients.violetToBlue.colors}
+          glow="none"
+          strokeRatio={0.14}>
+          <AppText variant="heroNumberSm" tone="faint" style={styles.dash}>
+            — —
+          </AppText>
+          <AppText variant="numericLabel" tone="faint">
+            NO DATA YET
+          </AppText>
+        </SharedOrbitRing>
 
-        <ThemedText type="label" themeColor="textSecondary">
-          기기에만 남는 것
-        </ThemedText>
-        <Line theme="textSecondary" text="어떤 앱을 골랐는지 · 앱 이름 · 앱별 사용시간" />
-      </Card>
+        <View style={styles.copy}>
+          <AppText variant="screenTitle" style={styles.title}>
+            마지막 한 단계
+          </AppText>
+          <AppText variant="body" tone="muted" style={styles.center}>
+            권한을 켜면 내 사용 시간이 그룹의 공동 시간에 합산돼요. 언제든 끌 수 있어요.
+          </AppText>
+          <AppText variant="metadata" tone="faint" style={styles.note}>
+            {describePermission(tracking.permission)}
+          </AppText>
+        </View>
+      </View>
 
-      <Card>
-        <ThemedText type="small" themeColor="textSecondary">
-          지금 상태
-        </ThemedText>
-        <ThemedText type="small" themeColor={granted ? 'positive' : 'caution'}>
-          {describePermission(tracking.permission)}
-        </ThemedText>
-        {!granted && (
-          <ThemedText type="small" themeColor="textSecondary">
-            권한이 없어도 앱은 그냥 쓸 수 있어요. 대신 공동 풀 집계에는 들어가지 않아서, 친구들
-            화면에는 &apos;동기화 불가&apos;로 보여요.
-          </ThemedText>
-        )}
-      </Card>
-
-      {error ? (
-        <ThemedText type="small" themeColor="over">
-          {error}
-        </ThemedText>
-      ) : null}
-    </OnboardingStep>
+      <View />
+    </OnboardingFrame>
   );
 }
 
-function Line({ text, theme }: { text: string; theme: 'text' | 'textSecondary' }) {
+/** 06a·06b 공통 뼈대. 링과 카피만 다르다. */
+function Result({
+  ring,
+  title,
+  body,
+  primary,
+  secondary,
+  calm,
+}: {
+  ring: React.ReactNode;
+  title: string;
+  body: string;
+  primary: { label: string; onPress: () => void };
+  secondary?: { label: string; onPress: () => void };
+  calm?: boolean;
+}) {
   return (
-    <ThemedText type="small" themeColor={theme}>
-      {text}
-    </ThemedText>
+    <OnboardingFrame
+      texture={calm ? 'calm' : 'screen'}
+      footer={
+        <ButtonStack>
+          <GradientButton
+            label={primary.label}
+            variant={calm ? 'primary' : 'secondary'}
+            onPress={primary.onPress}
+          />
+          {secondary && (
+            <GradientButton
+              label={secondary.label}
+              variant="tertiary"
+              onPress={secondary.onPress}
+            />
+          )}
+        </ButtonStack>
+      }>
+      <View />
+
+      <View style={styles.center}>
+        {ring}
+        <AppText variant="greeting" style={styles.resultTitle}>
+          {title}
+        </AppText>
+        <AppText variant="body" tone="muted" style={styles.center}>
+          {body}
+        </AppText>
+      </View>
+
+      <View />
+    </OnboardingFrame>
   );
 }
 
 const styles = StyleSheet.create({
-  divider: {
-    height: StyleSheet.hairlineWidth,
-    marginVertical: Spacing.one,
-  },
+  center: { alignItems: 'center', gap: 14, textAlign: 'center' },
+  copy: { alignItems: 'center', gap: 10, paddingTop: 8 },
+  title: { fontSize: 28, lineHeight: 34 },
+  resultTitle: { fontSize: 26, lineHeight: 32, paddingTop: 6 },
+  dash: { letterSpacing: 2 },
+  note: { textAlign: 'center' },
 });

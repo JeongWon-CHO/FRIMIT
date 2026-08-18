@@ -25,6 +25,8 @@ type ScreenFrameProps = {
   /** 화면 단위 블룸 하나. 화면당 최대 하나다. */
   ambient?: { color: string; size: number; opacity: number; x: number; y: number } | null;
   scroll?: boolean;
+  /** 내용이 짧아도 화면 높이를 채운다. 온보딩의 `space-between` 리듬에 필요하다. */
+  fill?: boolean;
   onRefresh?: () => void;
   refreshing?: boolean;
   /** 아래에 고정되는 CTA 블록. 온보딩의 `space-between` 리듬이 여기서 나온다. */
@@ -38,6 +40,7 @@ export function ScreenFrame({
   texture = 'screen',
   ambient = null,
   scroll = true,
+  fill = false,
   onRefresh,
   refreshing,
   footer,
@@ -52,7 +55,10 @@ export function ScreenFrame({
 
   const body = scroll ? (
     <ScrollView
-      contentContainerStyle={[padding, styles.content]}
+      // `flexGrow: 1`이 없으면 안쪽의 `flex: 1`과 `space-between`이 죽는다 —
+      // 내용이 화면보다 짧을 때 전부 위로 몰리고 아래가 비어 버린다. 온보딩의
+      // "위 블록 · 가운데 그림 · 아래 CTA" 리듬이 전부 이것에 걸려 있다.
+      contentContainerStyle={[padding, styles.content, fill && styles.grow]}
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
       refreshControl={
@@ -93,6 +99,7 @@ export function ScreenFrame({
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background.base },
   content: { gap: spacing.sectionGap },
+  grow: { flexGrow: 1 },
   fill: { flex: 1 },
   footer: { paddingTop: 12, gap: 10 },
 });

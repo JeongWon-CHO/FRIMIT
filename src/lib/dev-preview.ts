@@ -11,7 +11,7 @@ import type { PoolView } from '@/lib/today';
  *
  * `null`이면 실제 데이터를 쓴다. `__DEV__` 밖에서는 무시된다.
  */
-export const DEV_POOL_STATE: PoolState | null = 'normal';
+export const DEV_POOL_STATE: PoolState | null = null;
 
 /** 동기화 지연 겹(G 상태)을 함께 얹어 본다. */
 export const DEV_STALE = false;

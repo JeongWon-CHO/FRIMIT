@@ -73,7 +73,11 @@ export function useCreateGroup() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (name: string) => toMyGroup(await createGroup(name)),
+    mutationFn: async (input: {
+      name: string;
+      colorKey?: string;
+      dailyLimitSeconds?: number;
+    }) => toMyGroup(await createGroup(input.name, input)),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.allGroups }),
   });
 }
