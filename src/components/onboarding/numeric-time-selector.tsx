@@ -60,7 +60,13 @@ export function NumericTimeSelector({
         "큰 숫자"가 그대로 남는 배치다.
       */}
       <View style={styles.value}>
-        <AppText variant="heroNumber" style={styles.number} numberOfLines={1} adjustsFontSizeToFit>
+        {/*
+          `adjustsFontSizeToFit`을 쓰지 않는다. `lineHeight`와 함께 주면 iOS가
+          크기를 잘못 계산해서 글자가 점만 하게 줄어든다 — 실기기에서 `8h`가
+          사라졌다. 숫자가 한 줄을 통째로 쓰는 지금은 줄일 이유도 없다:
+          카드 안쪽 폭 298pt에 가장 긴 값(`13h 30m`)이 60px에서 약 212pt다.
+        */}
+        <AppText variant="heroNumber" style={styles.number} numberOfLines={1}>
           {formatHours(valueMinutes)}
         </AppText>
         <AppText variant="metadata" tone="metadata">

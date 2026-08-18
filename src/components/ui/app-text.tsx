@@ -15,6 +15,11 @@ import { colors, typography } from '@/constants/design-tokens';
  * Manrope는 한글이 나올 수 없는 자리에만 건다: 큰 숫자, 영문 라벨, mono 메타데이터.
  * 그 자리는 variant로 이미 구분되므로 대개 신경 쓸 필요가 없고, 영문 헤드라인처럼
  * 예외가 필요할 때만 `font="display"`를 준다.
+ *
+ * ⚠️ 모든 variant에 `lineHeight`가 들어 있다. 그래서 여기에 `adjustsFontSizeToFit`을
+ * 얹으면 iOS가 크기를 잘못 계산해 글자가 점만 하게 줄어든다(실기기에서 `8h`가
+ * 사라진 적이 있다). 폭이 모자라면 자동 축소에 기대지 말고 배치를 고치거나
+ * `minimumFontScale`로 바닥을 반드시 정해 둘 것.
  */
 
 export type TextVariant = keyof typeof typography & string;
