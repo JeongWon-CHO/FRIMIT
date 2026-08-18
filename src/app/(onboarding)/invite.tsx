@@ -2,7 +2,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
 import { OrbitSeats, SharedOrbitRing } from '@/components/orbit';
-import { OnboardingFrame } from '@/components/onboarding';
+import { BackButton, OnboardingFrame } from '@/components/onboarding';
 import { AppText, ButtonStack, EmptyState, GradientButton, StatusDot } from '@/components/ui';
 import { colors, gradients } from '@/constants/design-tokens';
 import { useJoinGroup } from '@/hooks/use-groups';
@@ -57,6 +57,11 @@ export default function InvitationPreviewScreen() {
           />
         </ButtonStack>
       }>
+      <View style={styles.navRow}>
+        <BackButton />
+        <View style={styles.navSpacer} />
+      </View>
+
       <View style={styles.top}>
         <AppText variant="metadata" tone="muted">
           초대 코드
@@ -103,6 +108,8 @@ export default function InvitationPreviewScreen() {
 }
 
 const styles = StyleSheet.create({
+  navRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  navSpacer: { width: 38 },
   top: { gap: 6, alignItems: 'center' },
   code: { fontSize: 30, lineHeight: 36, letterSpacing: 2 },
   orbitBox: { width: ORBIT, height: ORBIT, alignSelf: 'center' },

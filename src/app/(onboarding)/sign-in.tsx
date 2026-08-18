@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { SharedOrbitRing } from '@/components/orbit';
-import { OnboardingFrame } from '@/components/onboarding';
+import { BackButton, OnboardingFrame } from '@/components/onboarding';
 import { AppText } from '@/components/ui';
 import { colors, gradients, radius as radii } from '@/constants/design-tokens';
 import { ensureSession } from '@/lib/supabase';
@@ -66,6 +66,8 @@ export default function SignInScreen() {
         </View>
       }>
       <View style={styles.top}>
+        <BackButton />
+
         <View style={styles.mark}>
           <SharedOrbitRing
             size={96}

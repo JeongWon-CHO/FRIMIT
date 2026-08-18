@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
-import { OnboardingFrame, StepProgress } from '@/components/onboarding';
+import { BackButton, OnboardingFrame, StepProgress } from '@/components/onboarding';
 import { AppText, Avatar, GradientButton } from '@/components/ui';
 import { colors, radius as radii } from '@/constants/design-tokens';
 import { AVATAR_PRESETS } from '@/lib/avatars';
@@ -57,7 +57,10 @@ export default function ProfileSetupScreen() {
         />
       }>
       <View style={styles.top}>
-        <StepProgress total={3} current={1} />
+        <View style={styles.navRow}>
+          <BackButton />
+          <StepProgress total={3} current={1} />
+        </View>
 
         <AppText variant="screenTitle" style={styles.title}>
           어떻게 불러드릴까요?
@@ -130,6 +133,7 @@ export default function ProfileSetupScreen() {
 
 const styles = StyleSheet.create({
   top: { gap: 14 },
+  navRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   title: { fontSize: 30, lineHeight: 38 },
   preview: { alignItems: 'center', paddingVertical: 8 },
   field: {

@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { OrbitSeats, SharedOrbitRing } from '@/components/orbit';
-import { OnboardingFrame, ReadinessRow } from '@/components/onboarding';
+import { BackButton, OnboardingFrame, ReadinessRow } from '@/components/onboarding';
 import {
   AppText,
   ButtonStack,
@@ -47,6 +47,12 @@ const ORBIT = 280;
 
 export default function ReadinessScreen() {
   const params = useLocalSearchParams<{ groupId?: string }>();
+  /**
+   * 13에서 버튼을 눌러 14로 넘어왔는가.
+   *
+   * 집계 중인 그룹은 이 값 없이도 14를 그린다(13은 시작 전에만 의미가 있다).
+   * 그래서 이 값이 참일 때만 뒤로 가기가 13으로 돌아가고, 아니면 화면을 떠난다.
+   */
   const [inWaitingRoom, setInWaitingRoom] = useState(false);
 
   const profile = useMyProfile();
@@ -110,7 +116,23 @@ export default function ReadinessScreen() {
           </ButtonStack>
         }>
         <View style={styles.top}>
-          <StatusPill label={group?.name ?? '…'} dotColor={colors.accent.violetSoft} />
+          <View style={styles.navRow}>
+            {/*
+              대기실은 며칠 머무를 수 있는 자리다. 관리자가 아니고 준비 인원도
+              모자라면 누를 수 있는 버튼이 하나도 없어서, 뒤로 가기가 없으면
+              앱을 껐다 켜는 것 말고는 나갈 방법이 없다.
+            */}
+            <BackButton
+              onPress={() => {
+                if (inWaitingRoom) setInWaitingRoom(false);
+                else if (router.canGoBack()) router.back();
+                else router.replace('/');
+              }}
+            />
+            <StatusPill label={group?.name ?? '…'} dotColor={colors.accent.violetSoft} />
+            <View style={styles.navSpacer} />
+          </View>
+
           <AppText variant="greeting" style={styles.center}>
             {canStart ? '다 모였어요' : '친구를 기다리는 중'}
           </AppText>
@@ -181,6 +203,11 @@ export default function ReadinessScreen() {
         </ButtonStack>
       }>
       <View style={styles.top}>
+        <View style={styles.navRow}>
+          <BackButton />
+          <View style={styles.navSpacer} />
+        </View>
+
         <AppText variant="screenTitle" style={styles.title}>
           {group?.name ?? '…'}
         </AppText>
@@ -227,6 +254,14 @@ export default function ReadinessScreen() {
 
 const styles = StyleSheet.create({
   top: { gap: 8 },
+  navRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingBottom: 10,
+  },
+  // 알약이 가운데에 오도록 오른쪽에 같은 폭을 비워 둔다.
+  navSpacer: { width: 38 },
   title: { fontSize: 30, lineHeight: 38 },
   center: { textAlign: 'center' },
   readyRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 4 },

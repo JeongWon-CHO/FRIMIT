@@ -16,3 +16,4 @@ export { ReadinessRow } from './readiness-row';
 export { SampleRow } from './sample-row';
 export { StepProgress } from './step-progress';
 export { OnboardingFrame } from './frame';
+export { BackButton } from './back-button';

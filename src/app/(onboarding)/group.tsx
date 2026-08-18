@@ -4,6 +4,7 @@ import { StyleSheet, TextInput, View } from 'react-native';
 
 import {
   AccentPicker,
+  BackButton,
   NumericTimeSelector,
   OnboardingFrame,
   SHARED_TIME_DEFAULT,
@@ -63,9 +64,13 @@ export default function CreateGroupScreen() {
         )
       }>
       <View style={styles.top}>
-        <AppText variant="numericLabel" tone="faint">
-          {step} / 2
-        </AppText>
+        <View style={styles.navRow}>
+          {/* 2단계의 뒤로는 화면을 떠나는 것이 아니라 이름·색으로 돌아가는 것이다. */}
+          <BackButton onPress={step === 2 ? () => setStep(1) : undefined} />
+          <AppText variant="numericLabel" tone="faint">
+            {step} / 2
+          </AppText>
+        </View>
 
         {step === 1 ? (
           <>
@@ -101,6 +106,7 @@ export default function CreateGroupScreen() {
 
 const styles = StyleSheet.create({
   top: { gap: 22 },
+  navRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   field: {
     borderRadius: radii.button,
     paddingVertical: 15,

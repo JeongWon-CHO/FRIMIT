@@ -2,7 +2,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { Share, StyleSheet, View } from 'react-native';
 
 import { OrbitSeats, SharedOrbitRing } from '@/components/orbit';
-import { InviteCodeCard, OnboardingFrame } from '@/components/onboarding';
+import { BackButton, InviteCodeCard, OnboardingFrame } from '@/components/onboarding';
 import { AppText, ButtonStack, GradientButton } from '@/components/ui';
 import { colors, gradients } from '@/constants/design-tokens';
 import { useGroupMembers, useMyGroups } from '@/hooks/use-groups';
@@ -51,6 +51,16 @@ export default function InviteFriendsScreen() {
         </ButtonStack>
       }>
       <View style={styles.top}>
+        {/*
+          여기서 뒤는 만들기 화면이 아니라 오늘 화면이다. 그룹은 이미 만들어졌고,
+          앞 화면으로 돌려보내면 두 번째 그룹을 만들게 된다. 만든 그룹은 오늘
+          화면에 '시작 대기' 카드로 서 있으니 언제든 다시 들어올 수 있다.
+        */}
+        <View style={styles.navRow}>
+          <BackButton onPress={() => router.replace('/')} />
+          <View style={styles.navSpacer} />
+        </View>
+
         <AppText variant="screenTitle" style={styles.title}>
           친구를 불러요
         </AppText>
@@ -99,6 +109,8 @@ export default function InviteFriendsScreen() {
 
 const styles = StyleSheet.create({
   top: { gap: 8 },
+  navRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 8 },
+  navSpacer: { width: 38 },
   title: { fontSize: 30, lineHeight: 38 },
   orbitBox: { width: ORBIT, height: ORBIT, alignSelf: 'center' },
 });
