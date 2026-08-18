@@ -97,7 +97,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   display: {
-    fontFamily: Fonts.rounded,
+    fontFamily: Fonts.sans,
     fontSize: 44,
     lineHeight: 48,
     fontWeight: 700,
@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
   metric: {
-    fontFamily: Fonts.rounded,
+    fontFamily: Fonts.sans,
     fontSize: 22,
     lineHeight: 28,
     fontWeight: 700,
