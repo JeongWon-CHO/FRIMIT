@@ -49,18 +49,27 @@ export function NumericTimeSelector({
         SHARED DAILY TIME
       </AppText>
 
+      {/*
+        디자인은 ± 를 숫자 좌우에 두지만, 390pt 화면에서 그 배치는 `8h`까지만
+        버틴다. 30분 단위 값(`8h 30m`)은 60px에서 210pt를 먹는데 두 원(46×2)과
+        간격을 빼고 남는 자리는 100pt 남짓이다 — 실기기에서 숫자가 카드를 뚫고
+        나왔다.
+
+        슬라이더로 바꾸지 않고 ± 도 유지한다(스펙이 못 박은 부분이다). 대신
+        숫자에 한 줄을 통째로 주고 버튼을 그 아래로 내렸다. 이 화면의 요점인
+        "큰 숫자"가 그대로 남는 배치다.
+      */}
+      <View style={styles.value}>
+        <AppText variant="heroNumber" style={styles.number} numberOfLines={1} adjustsFontSizeToFit>
+          {formatHours(valueMinutes)}
+        </AppText>
+        <AppText variant="metadata" tone="metadata">
+          {memberCount}명 기준 · 1인 {formatHours(perPerson(valueMinutes, memberCount))}
+        </AppText>
+      </View>
+
       <View style={styles.row}>
         <RoundButton label="–" onPress={() => step(-1)} disabled={atMin} />
-
-        <View style={styles.value}>
-          <AppText variant="heroNumber" style={styles.number}>
-            {formatHours(valueMinutes)}
-          </AppText>
-          <AppText variant="metadata" tone="metadata">
-            {memberCount}명 기준 · 1인 {formatHours(perPerson(valueMinutes, memberCount))}
-          </AppText>
-        </View>
-
         <RoundButton label="+" onPress={() => step(1)} disabled={atMax} primary />
       </View>
 
@@ -109,11 +118,13 @@ function RoundButton({
       delayLongPress={150}
       style={[styles.circle, disabled && styles.circleDim]}>
       {primary && !disabled && (
+        // 채움에도 같은 반경을 준다. `overflow: 'hidden'`만으로는 모서리가 남아
+        // 원이 팔각형으로 보인다 — 아바타에서 겪은 것과 같은 함정이다.
         <LinearGradient
           colors={gradients.violetToBlue.colors as [string, string]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0.18 }}
-          style={StyleSheet.absoluteFill}
+          style={[StyleSheet.absoluteFill, styles.circleFill]}
         />
       )}
       <AppText variant="cardTitle" tone="body" style={styles.glyph}>
@@ -140,9 +151,9 @@ export function perPerson(minutes: number, memberCount: number): number {
 
 const styles = StyleSheet.create({
   card: { gap: 18, alignItems: 'center' },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 22 },
-  value: { alignItems: 'center', gap: 4, minWidth: 130 },
-  number: { fontSize: 60, lineHeight: 64, letterSpacing: -3 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 26 },
+  value: { alignItems: 'center', gap: 6, alignSelf: 'stretch' },
+  number: { fontSize: 60, lineHeight: 66, letterSpacing: -3, textAlign: 'center' },
   circle: {
     width: 46,
     height: 46,
@@ -154,6 +165,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border.hairlineStrong,
   },
+  circleFill: { borderRadius: 23 },
   circleDim: { opacity: 0.35 },
   glyph: { fontSize: 22, lineHeight: 26 },
   range: { width: '100%', gap: 8 },
