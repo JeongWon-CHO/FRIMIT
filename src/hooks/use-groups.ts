@@ -92,12 +92,20 @@ export function useJoinGroup() {
   });
 }
 
+/**
+ * 그룹에서 나간다.
+ *
+ * **여기서 캐시를 비우지 않는다.** 다른 변경들과 다른 점이다 — 나간 그룹을
+ * 그리고 있던 화면이 아직 화면 위에 있기 때문이다. 목록이 먼저 비면 그 화면이
+ * "그룹을 찾을 수 없음" 꼴로 한 번 다시 그려지고, 사용자는 떠나는 길에 낯선
+ * 화면이 번쩍이는 것을 본다.
+ *
+ * 순서는 부르는 쪽이 지킨다: 나가기 → 화면 정리 → 캐시 비우기
+ * (`useLeaveGroupPrompt`).
+ */
 export function useLeaveGroup() {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: (groupId: string) => leaveGroup(groupId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.allGroups }),
   });
 }
 

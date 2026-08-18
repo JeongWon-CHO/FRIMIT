@@ -1,8 +1,10 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useCallback } from 'react';
 import { Alert } from 'react-native';
 
 import { useLeaveGroup } from '@/hooks/use-groups';
+import { queryKeys } from '@/lib/query';
 import type { GroupMember, MyGroup } from '@/lib/groups';
 
 /**
@@ -26,6 +28,7 @@ import type { GroupMember, MyGroup } from '@/lib/groups';
  */
 export function useLeaveGroupPrompt() {
   const leave = useLeaveGroup();
+  const queryClient = useQueryClient();
 
   const prompt = useCallback(
     (group: MyGroup, members: GroupMember[] | undefined, myProfileId: string | undefined) => {
@@ -53,7 +56,20 @@ export function useLeaveGroupPrompt() {
           onPress: async () => {
             try {
               await leave.mutateAsync(group.id);
-              router.replace('/');
+
+              /*
+                순서가 눈에 보인다.
+
+                `replace`는 스택의 맨 위 한 장만 바꾸므로 오늘 화면이 하나 더
+                쌓인다. `dismissTo`는 이미 있는 오늘 화면이 나올 때까지 걷어내서
+                상세 화면이든 온보딩 사슬이든 통째로 정리한다.
+
+                캐시는 그 **뒤에** 비운다. 먼저 비우면 지금 화면이 자기 그룹을
+                잃고 빈 상태로 한 번 다시 그려진다 — 떠나는 길에 낯선 화면이
+                번쩍이는 것이 그것이다.
+              */
+              router.dismissTo('/');
+              queryClient.invalidateQueries({ queryKey: queryKeys.allGroups });
             } catch (caught) {
               Alert.alert(
                 '접지 못했어요',
@@ -64,7 +80,7 @@ export function useLeaveGroupPrompt() {
         },
       ]);
     },
-    [leave]
+    [leave, queryClient]
   );
 
   return { prompt, isPending: leave.isPending };
