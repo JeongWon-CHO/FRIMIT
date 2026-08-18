@@ -6,6 +6,7 @@ import { BackButton, InviteCodeCard, OnboardingFrame } from '@/components/onboar
 import { AppText, ButtonStack, GradientButton } from '@/components/ui';
 import { colors, gradients } from '@/constants/design-tokens';
 import { useGroupMembers, useMyGroups } from '@/hooks/use-groups';
+import { useScreenGroup } from '@/hooks/use-screen-group';
 import { avatarEmoji } from '@/lib/avatars';
 import { formatShort } from '@/lib/format';
 
@@ -24,7 +25,7 @@ const ORBIT = 250;
 export default function InviteFriendsScreen() {
   const { groupId } = useLocalSearchParams<{ groupId?: string }>();
   const groups = useMyGroups();
-  const group = groups.data?.find((candidate) => candidate.id === groupId) ?? groups.data?.[0];
+  const group = useScreenGroup(groups.data, groupId);
   const members = useGroupMembers(group?.id);
 
   const joined = members.data?.length ?? 1;

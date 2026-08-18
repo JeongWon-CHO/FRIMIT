@@ -22,6 +22,7 @@ import {
 } from '@/hooks/use-groups';
 import { useLeaveGroupPrompt } from '@/hooks/use-leave-group-prompt';
 import { useMyProfile } from '@/hooks/use-profile';
+import { useScreenGroup } from '@/hooks/use-screen-group';
 import { useTrackingState } from '@/hooks/use-tracking';
 import { avatarEmoji } from '@/lib/avatars';
 import { formatShort } from '@/lib/format';
@@ -58,8 +59,7 @@ export default function ReadinessScreen() {
 
   const profile = useMyProfile();
   const groups = useMyGroups();
-  const group =
-    groups.data?.find((candidate) => candidate.id === params.groupId) ?? groups.data?.[0];
+  const group = useScreenGroup(groups.data, params.groupId);
 
   const members = useGroupMembers(group?.id);
   const tracking = useTrackingState(group?.id);
@@ -88,6 +88,25 @@ export default function ReadinessScreen() {
     await armTracking(group.id, group.time_zone);
     router.replace({ pathname: '/started', params: { groupId: group.id } });
   };
+
+  /*
+    그룹이 없으면 아무 분기에도 들어가지 않는다.
+    
+    그룹을 접으면 목록이 비는데 이 화면은 아직 물러나는 중이라 화면 위에 있다.
+    그때 `isDraft`가 false가 되면서 대기실 분기로 떨어지면, 사라지는 그룹의
+    자리에 빈 대기실이 한 번 그려진다. 여기서 조용히 멈추는 편이 맞다.
+  */
+  if (!group) {
+    return (
+      <OnboardingFrame>
+        <View style={styles.navRow}>
+          <BackButton />
+        </View>
+        <View />
+        <View />
+      </OnboardingFrame>
+    );
+  }
 
   // ── 14 · 대기실 ────────────────────────────────────────────────
   if (inWaitingRoom || !isDraft) {

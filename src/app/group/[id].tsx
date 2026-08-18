@@ -19,6 +19,7 @@ import { colors, gradients, radius as radii } from '@/constants/design-tokens';
 import { useGroupMembers, useGroupUsages, useMyGroups } from '@/hooks/use-groups';
 import { useLeaveGroupPrompt } from '@/hooks/use-leave-group-prompt';
 import { useMyProfile } from '@/hooks/use-profile';
+import { useScreenGroup } from '@/hooks/use-screen-group';
 import { useTrackingState } from '@/hooks/use-tracking';
 import { hexToRgba } from '@/lib/color';
 import { formatShort } from '@/lib/format';
@@ -40,7 +41,7 @@ export default function GroupDetailScreen() {
 
   const profile = useMyProfile();
   const groups = useMyGroups();
-  const group = groups.data?.find((candidate) => candidate.id === id);
+  const group = useScreenGroup(groups.data, id);
   const usages = useGroupUsages(group ? [group] : []);
   const members = useGroupMembers(id);
   const tracking = useTrackingState(id);
@@ -76,7 +77,11 @@ export default function GroupDetailScreen() {
         />
       </View>
 
-      {!view ? (
+      {/*
+        그룹이 사라지는 중이면(접고 물러나는 길) 아무것도 그리지 않는다.
+        아직 읽는 중일 때만 그렇게 말한다.
+      */}
+      {!group ? null : !view ? (
         <EmptyState title="읽는 중이에요" body="공동 풀 상태를 불러오고 있어요." />
       ) : (
         <>

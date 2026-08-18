@@ -6,6 +6,7 @@ import { OnboardingFrame } from '@/components/onboarding';
 import { AppText, GradientButton } from '@/components/ui';
 import { colors, gradients } from '@/constants/design-tokens';
 import { useGroupMembers, useGroupUsages, useMyGroups } from '@/hooks/use-groups';
+import { useScreenGroup } from '@/hooks/use-screen-group';
 import { avatarEmoji } from '@/lib/avatars';
 import { formatShort } from '@/lib/format';
 import { markProgress } from '@/lib/onboarding';
@@ -23,7 +24,7 @@ const ORBIT = 300;
 export default function GroupStartedScreen() {
   const { groupId } = useLocalSearchParams<{ groupId?: string }>();
   const groups = useMyGroups();
-  const group = groups.data?.find((candidate) => candidate.id === groupId) ?? groups.data?.[0];
+  const group = useScreenGroup(groups.data, groupId);
   const members = useGroupMembers(group?.id);
   const usages = useGroupUsages(group ? [group] : []);
   const usage = group ? usages.byGroupId.get(group.id) : undefined;
