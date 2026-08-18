@@ -261,7 +261,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
-    paddingHorizontal: 4,
+    paddingHorizontal: 8,
     gap: 12,
     // 인사와 히어로가 붙으면 큰 숫자가 제목의 일부처럼 읽힌다. 둘은 다른
     // 층위라 사이를 벌려 둔다.

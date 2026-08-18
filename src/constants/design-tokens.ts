@@ -171,7 +171,7 @@ export const spacing = {
   screenHorizontal: 20,
   lg: 24,
   /** Vertical gap between stacked sections inside a screen. */
-  sectionGap: 14,
+  sectionGap: 20,
   /** Gap between rows in a list. */
   rowGap: 8,
   /** Gap in the 2-column card grid. */
