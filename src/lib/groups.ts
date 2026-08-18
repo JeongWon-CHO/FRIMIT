@@ -47,18 +47,72 @@ export type MyGroup = {
   name: string;
   status: 'draft' | 'active' | 'archived';
   invite_code: string;
+  icon_key: string;
+  color_key: string;
+  admin_id: string;
+  started_at: string | null;
+  time_zone: string;
 };
 
 /** 내가 속한 그룹. RLS가 알아서 내 것만 준다. */
 export async function listMyGroups(): Promise<MyGroup[]> {
   const { data, error } = await supabase
     .from('groups')
-    .select('id, name, status, invite_code')
+    .select('id, name, status, invite_code, icon_key, color_key, admin_id, started_at, time_zone')
     .neq('status', 'archived')
     .order('created_at', { ascending: true });
 
   if (error) throw new Error(`그룹 목록을 읽지 못했습니다: ${error.message}`);
   return (data ?? []) as MyGroup[];
+}
+
+export type GroupMember = {
+  profile_id: string;
+  role: 'admin' | 'member';
+  is_ready: boolean;
+  effective_from: string | null;
+  effective_until: string | null;
+  nickname: string;
+  avatar_key: string;
+};
+
+/**
+ * 그룹의 멤버들. 같은 그룹 멤버끼리는 서로의 닉네임·아바타가 보인다(0002의 RLS).
+ *
+ * 여기서 나오는 것은 **정원에 잡히는 사람 전부**다 — 아직 첫 오전 6시를 지나지
+ * 않아 집계에는 들어가지 않는 사람도 포함된다. 시작 대기 화면에서 "누가 준비했나"를
+ * 세려면 그 사람들도 보여야 하기 때문이다. 반대로 공동 풀의 분모는 서버가
+ * `group_daily_usage`에서 따로 계산한다(`period_member_ids`).
+ */
+export async function listGroupMembers(groupId: string): Promise<GroupMember[]> {
+  const { data, error } = await supabase
+    .from('group_memberships')
+    .select('profile_id, role, is_ready, effective_from, effective_until, profiles(nickname, avatar_key)')
+    .eq('group_id', groupId)
+    .order('joined_at', { ascending: true });
+
+  if (error) throw new Error(`멤버 목록을 읽지 못했습니다: ${error.message}`);
+
+  type Row = Omit<GroupMember, 'nickname' | 'avatar_key'> & {
+    profiles: { nickname: string; avatar_key: string } | null;
+  };
+
+  // 탈퇴가 이미 반영된 사람만 걸러 낸다. 정원은 8명이라 서버에 조건을 실어
+  // 보낼 이유가 없고, `effective_until.gt.<ISO>` 같은 필터는 값에 특수문자가
+  // 들어가 조용히 어긋날 여지가 있다.
+  const now = Date.now();
+
+  return ((data ?? []) as unknown as Row[])
+    .filter(
+      (row) => row.effective_until === null || new Date(row.effective_until).getTime() > now
+    )
+    .map(({ profiles, ...member }) => ({
+      ...member,
+      // 프로필이 비어 오는 경우는 계정 삭제 직후뿐이다. 그때도 준비 인원 계산은
+      // 계속 맞아야 하므로 행을 버리지 않고 이름만 대체한다.
+      nickname: profiles?.nickname ?? '탈퇴한 멤버',
+      avatar_key: profiles?.avatar_key ?? 'avatar-01',
+    }));
 }
 
 export async function createGroup(name: string): Promise<GroupSnapshot> {
@@ -112,10 +166,27 @@ export async function ensureGroup(name: string): Promise<MyGroup> {
   if (existing.length > 0) return existing[0];
 
   const created = await createGroup(name);
+  return toMyGroup(created);
+}
+
+/** RPC가 돌려준 스냅샷에서 목록용 모양만 뽑는다. */
+export function toMyGroup(snapshot: GroupSnapshot): MyGroup {
   return {
-    id: created.group.id,
-    name: created.group.name,
-    status: created.group.status,
-    invite_code: created.group.invite_code,
+    id: snapshot.group.id,
+    name: snapshot.group.name,
+    status: snapshot.group.status,
+    invite_code: snapshot.group.invite_code,
+    icon_key: snapshot.group.icon_key,
+    color_key: snapshot.group.color_key,
+    admin_id: snapshot.group.admin_id,
+    started_at: snapshot.group.started_at,
+    time_zone: snapshot.group.time_zone,
   };
+}
+
+/** 그룹을 시작하려면 준비된 멤버가 2명 이상이어야 한다(plan.md 33행). */
+export const READY_MEMBERS_TO_START = 2;
+
+export function countReady(members: GroupMember[]): number {
+  return members.filter((member) => member.is_ready).length;
 }
