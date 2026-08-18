@@ -153,6 +153,30 @@ export async function startGroup(groupId: string): Promise<GroupSnapshot> {
 }
 
 /**
+ * 그룹에서 나간다.
+ *
+ * **삭제가 아니라 탈퇴다.** 서버에 하드 삭제는 없다 — 사용량 기록에 보관 기간이
+ * 따로 걸려 있어서(원본 7일, 확정 집계 90일) 행을 지우면 남은 사람들의 지난
+ * 집계가 함께 무너진다.
+ *
+ * 반영 시각이 둘로 갈린다. 시작 전 그룹이면 지금, 집계 중인 그룹이면 **다음
+ * 오전 6시**다. 오늘의 공동 풀은 이미 내 시간을 담고 있어서, 지금 빼면 남은
+ * 사람들의 잔여가 갑자기 늘어난다.
+ *
+ * 남는 사람이 2명 미만이면 서버가 그룹을 그 자리에서 보관 처리한다. 보관된
+ * 그룹은 `listMyGroups`가 걸러 내므로 목록에서 바로 사라진다 — 사용자 눈에는
+ * 그게 "삭제"다.
+ *
+ * 관리자는 살아남을 그룹을 두고 나갈 수 없다. 서버가 `admin_must_transfer`로
+ * 막는다(관리자 없는 그룹이 되기 때문이다).
+ */
+export async function leaveGroup(groupId: string): Promise<GroupSnapshot> {
+  const { data, error } = await supabase.rpc('leave_group', { target_group_id: groupId });
+  if (error) throw new Error(`그룹에서 나가지 못했습니다: ${error.message}`);
+  return data as GroupSnapshot;
+}
+
+/**
  * 준비 상태를 켜고 끈다.
  *
  * 이것만 RPC가 아니라 테이블 UPDATE다. 서버가 authenticated에게 열어 준 유일한

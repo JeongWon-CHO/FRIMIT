@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { OrbitSeats, SharedOrbitRing } from '@/components/orbit';
 import { BackButton, OnboardingFrame, ReadinessRow } from '@/components/onboarding';
@@ -20,6 +20,7 @@ import {
   useSetReady,
   useStartGroup,
 } from '@/hooks/use-groups';
+import { useLeaveGroupPrompt } from '@/hooks/use-leave-group-prompt';
 import { useMyProfile } from '@/hooks/use-profile';
 import { useTrackingState } from '@/hooks/use-tracking';
 import { avatarEmoji } from '@/lib/avatars';
@@ -64,6 +65,7 @@ export default function ReadinessScreen() {
   const tracking = useTrackingState(group?.id);
   const setReady = useSetReady(group?.id);
   const startGroup = useStartGroup();
+  const leave = useLeaveGroupPrompt();
 
   const me = members.data?.find((member) => member.profile_id === profile.data?.id);
   const ready = readyCount(members.data);
@@ -130,7 +132,13 @@ export default function ReadinessScreen() {
               }}
             />
             <StatusPill label={group?.name ?? '…'} dotColor={colors.accent.violetSoft} />
-            <View style={styles.navSpacer} />
+            <LeaveButton
+              disabled={!group || leave.isPending}
+              onPress={() =>
+                group &&
+                leave.prompt(group, members.data?.length ?? 1, isAdmin)
+              }
+            />
           </View>
 
           <AppText variant="greeting" style={styles.center}>
@@ -205,7 +213,10 @@ export default function ReadinessScreen() {
       <View style={styles.top}>
         <View style={styles.navRow}>
           <BackButton />
-          <View style={styles.navSpacer} />
+          <LeaveButton
+            disabled={!group || leave.isPending}
+            onPress={() => group && leave.prompt(group, members.data?.length ?? 1, isAdmin)}
+          />
         </View>
 
         <AppText variant="screenTitle" style={styles.title}>
@@ -252,6 +263,28 @@ export default function ReadinessScreen() {
   );
 }
 
+/**
+ * 그룹을 접는 문.
+ *
+ * 시작 전 그룹은 상세 화면으로 갈 수 없어서(오늘 화면의 카드가 여기로 온다)
+ * 나가는 문이 여기 없으면 만들어 본 그룹을 정리할 방법이 없다.
+ */
+function LeaveButton({ onPress, disabled }: { onPress: () => void; disabled?: boolean }) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel="그룹 나가기"
+      hitSlop={8}
+      disabled={disabled}
+      onPress={onPress}
+      style={({ pressed }) => [styles.moreButton, pressed && styles.morePressed]}>
+      <AppText variant="bodyStrong" tone="body">
+        ···
+      </AppText>
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
   top: { gap: 8 },
   navRow: {
@@ -260,8 +293,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingBottom: 10,
   },
-  // 알약이 가운데에 오도록 오른쪽에 같은 폭을 비워 둔다.
-  navSpacer: { width: 38 },
+  moreButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surface.glass,
+    borderWidth: 1,
+    borderColor: colors.border.hairlineStrong,
+  },
+  morePressed: { opacity: 0.7 },
   title: { fontSize: 30, lineHeight: 38 },
   center: { textAlign: 'center' },
   readyRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 4 },

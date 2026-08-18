@@ -4,6 +4,7 @@ import {
   countReady,
   createGroup,
   joinGroup,
+  leaveGroup,
   listGroupMembers,
   listMyGroups,
   setReady,
@@ -87,6 +88,15 @@ export function useJoinGroup() {
 
   return useMutation({
     mutationFn: async (inviteCode: string) => toMyGroup(await joinGroup(inviteCode)),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.allGroups }),
+  });
+}
+
+export function useLeaveGroup() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (groupId: string) => leaveGroup(groupId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.allGroups }),
   });
 }

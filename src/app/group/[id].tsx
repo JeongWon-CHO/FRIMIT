@@ -17,6 +17,7 @@ import {
 } from '@/components/ui';
 import { colors, gradients, radius as radii } from '@/constants/design-tokens';
 import { useGroupMembers, useGroupUsages, useMyGroups } from '@/hooks/use-groups';
+import { useLeaveGroupPrompt } from '@/hooks/use-leave-group-prompt';
 import { useMyProfile } from '@/hooks/use-profile';
 import { useTrackingState } from '@/hooks/use-tracking';
 import { hexToRgba } from '@/lib/color';
@@ -43,6 +44,7 @@ export default function GroupDetailScreen() {
   const usages = useGroupUsages(group ? [group] : []);
   const members = useGroupMembers(id);
   const tracking = useTrackingState(id);
+  const leave = useLeaveGroupPrompt();
 
   const view = useMemo(
     () =>
@@ -64,8 +66,18 @@ export default function GroupDetailScreen() {
       <View style={styles.navBar}>
         <CircleButton label="←" onPress={() => router.back()} />
         <StatusPill label={group?.name ?? '…'} dotColor={accent.dot} />
-        {/* 그룹 설정은 아직 갈 곳이 없다. 자리만 지켜 두고 비활성으로 남긴다. */}
-        <CircleButton label="···" disabled />
+        <CircleButton
+          label="···"
+          disabled={!group || leave.isPending}
+          onPress={() =>
+            group &&
+            leave.prompt(
+              group,
+              members.data?.length ?? 1,
+              group.admin_id === profile.data?.id
+            )
+          }
+        />
       </View>
 
       {!view ? (
