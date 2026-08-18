@@ -16,6 +16,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 
 import { colors } from '@/constants/design-tokens';
+import { DEV_ROUTE } from '@/lib/dev-route';
 import { TABS_ROUTE, resolveEntryRoute } from '@/lib/onboarding';
 import { queryClient } from '@/lib/query';
 
@@ -91,6 +92,14 @@ function EntryGate() {
   useEffect(() => {
     if (!isNavigationReady || routeSettled) return;
 
+    // 개발용 강제 이동이 걸려 있으면 판정을 아예 돌리지 않는다. 돌리면 몇 백
+    // 밀리초 뒤에 도착한 판정 결과가 우리를 다시 밀어낸다.
+    if (__DEV__ && DEV_ROUTE) {
+      router.replace(DEV_ROUTE as never);
+      setRouteSettled(true);
+      return;
+    }
+
     let cancelled = false;
 
     (async () => {
@@ -115,6 +124,7 @@ function EntryGate() {
   useEffect(() => {
     if (routeSettled && fontsSettled) SplashScreen.hideAsync();
   }, [routeSettled, fontsSettled]);
+
 
   return null;
 }

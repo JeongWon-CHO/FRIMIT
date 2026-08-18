@@ -1,3 +1,4 @@
+import { AVATAR_PRESETS, avatarEmoji } from './avatars';
 import { ensureSession, supabase } from './supabase';
 
 /**
@@ -18,24 +19,8 @@ export const DEFAULT_NICKNAME = '친구';
 
 export const NICKNAME_MAX_LENGTH = 20;
 
-/**
- * 프리셋 아바타.
- *
- * 사용자 업로드 이미지는 MVP 범위 밖이다(plan.md 94행 주석: 신고·검수 부담을
- * 지지 않기 위한 결정). 이미지 파일 대신 이모지를 쓰므로 에셋도 늘지 않는다.
- *
- * 키는 서버의 `avatar_key_format` 제약(`^avatar-[0-9]{2}$`)을 따른다.
- */
-export const AVATAR_PRESETS = [
-  { key: 'avatar-01', emoji: '🐣' },
-  { key: 'avatar-02', emoji: '🦊' },
-  { key: 'avatar-03', emoji: '🐧' },
-  { key: 'avatar-04', emoji: '🐢' },
-  { key: 'avatar-05', emoji: '🦉' },
-  { key: 'avatar-06', emoji: '🐙' },
-  { key: 'avatar-07', emoji: '🦔' },
-  { key: 'avatar-08', emoji: '🐝' },
-] as const;
+/** 아바타 표는 네트워크에 닿지 않는 `avatars.ts`에 있다. 여기서 다시 내보낸다. */
+export { AVATAR_PRESETS, avatarEmoji };
 
 export type Profile = {
   id: string;
@@ -43,10 +28,6 @@ export type Profile = {
   avatar_key: string;
   locale: string;
 };
-
-export function avatarEmoji(avatarKey: string): string {
-  return AVATAR_PRESETS.find((preset) => preset.key === avatarKey)?.emoji ?? '🐣';
-}
 
 /** 내 프로필. 세션이 없으면 익명으로 하나 만든 뒤 읽는다. */
 export async function fetchMyProfile(): Promise<Profile> {

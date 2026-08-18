@@ -1,7 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
 
-import { hexToRgba } from '@/lib/color';
+import { splitColor } from '@/lib/color';
 
 /**
  * 블룸 — 빛 한 덩어리.
@@ -25,6 +25,9 @@ type BloomProps = {
 
 export function Bloom({ color, size, opacity = 1, x, y }: BloomProps) {
   const id = `bloom-${color}-${size}`.replace(/[^a-zA-Z0-9-]/g, '');
+  // 알파는 stopColor가 아니라 stopOpacity로 간다. 섞어 쓰면 빛이 아니라 색면이 된다.
+  const { rgb, alpha } = splitColor(color);
+  const peak = alpha * opacity;
 
   return (
     <View
@@ -33,10 +36,10 @@ export function Bloom({ color, size, opacity = 1, x, y }: BloomProps) {
       <Svg width={size} height={size}>
         <Defs>
           <RadialGradient id={id} cx="50%" cy="50%" r="50%">
-            <Stop offset="0" stopColor={hexToRgba(color, opacity)} />
+            <Stop offset="0" stopColor={rgb} stopOpacity={peak} />
             {/* 0.7에서 이미 거의 사라진다. 가장자리가 원으로 보이면 안 된다. */}
-            <Stop offset="0.7" stopColor={hexToRgba(color, opacity * 0.12)} />
-            <Stop offset="1" stopColor={hexToRgba(color, 0)} />
+            <Stop offset="0.55" stopColor={rgb} stopOpacity={peak * 0.28} />
+            <Stop offset="1" stopColor={rgb} stopOpacity={0} />
           </RadialGradient>
         </Defs>
         <Rect width={size} height={size} fill={`url(#${id})`} />

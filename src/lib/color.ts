@@ -25,3 +25,31 @@ export function hexToRgba(color: string, alpha: number): string {
 
   return `rgba(${(value >> 16) & 255}, ${(value >> 8) & 255}, ${value & 255}, ${clamped})`;
 }
+
+/**
+ * 색과 알파를 갈라 놓는다.
+ *
+ * SVG의 `stopColor`는 알파를 이해하지 못한다 — `rgba(...)`를 넣으면
+ * react-native-svg가 알파를 조용히 버리고 불투명한 색으로 칠한다. 블룸이
+ * 부드러운 빛 대신 딱딱한 사각형으로 보이면 대개 이것이 원인이다.
+ * 알파는 `stopOpacity`로 따로 줘야 한다.
+ */
+export function splitColor(color: string): { rgb: string; alpha: number } {
+  const rgba = color.match(/^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*([\d.]+)\s*)?\)$/i);
+  if (rgba) {
+    const [, r, g, b, a] = rgba;
+    return { rgb: `rgb(${r}, ${g}, ${b})`, alpha: a === undefined ? 1 : Number(a) };
+  }
+
+  const hex = color.replace('#', '');
+  const full = hex.length === 3 ? hex.split('').map((c) => c + c).join('') : hex;
+
+  // 8자리 hex는 뒤 두 자리가 알파다.
+  if (full.length === 8) {
+    const value = Number.parseInt(full.slice(0, 6), 16);
+    const alpha = Number.parseInt(full.slice(6, 8), 16) / 255;
+    return { rgb: `rgb(${(value >> 16) & 255}, ${(value >> 8) & 255}, ${value & 255})`, alpha };
+  }
+
+  return { rgb: `#${full.slice(0, 6)}`, alpha: 1 };
+}
