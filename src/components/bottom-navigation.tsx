@@ -1,6 +1,7 @@
 import type { BottomTabBarProps } from 'expo-router/build/react-navigation/bottom-tabs/types';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/ui';
@@ -60,15 +61,23 @@ export function BottomNavigation({ state, navigation }: BottomTabBarProps) {
                   navigation.navigate(route.name, route.params);
                 }
               }}
-              style={[
-                styles.item,
-                focused && {
-                  backgroundColor: hexToRgba(tab.accent, 0.16),
-                  borderColor: hexToRgba(tab.tint, 0.28),
-                  borderWidth: 1,
-                },
-                focused && Platform.OS === 'ios' && styles.selectedGlow,
-              ]}>
+              style={[styles.item, focused && Platform.OS === 'ios' && styles.selectedGlow]}>
+              {/* 알약은 나타날 때만 움직인다. 사라지는 쪽은 그냥 없어진다 —
+                  두 알약이 동시에 애니메이션하면 어느 쪽이 선택됐는지 흐려진다. */}
+              {focused && (
+                <Animated.View
+                  entering={FadeIn.duration(240)}
+                  pointerEvents="none"
+                  style={[
+                    StyleSheet.absoluteFill,
+                    styles.pill,
+                    {
+                      backgroundColor: hexToRgba(tab.accent, 0.16),
+                      borderColor: hexToRgba(tab.tint, 0.28),
+                    },
+                  ]}
+                />
+              )}
               <View style={!focused && styles.inactive}>
                 <TabIcon name={route.name} color={focused ? tab.tint : colors.text.primary} />
               </View>
@@ -140,11 +149,9 @@ const styles = StyleSheet.create({
     gap: 7,
     paddingVertical: 9,
     paddingHorizontal: 18,
-    borderRadius: radii.navPill,
-    borderWidth: 1,
-    borderColor: 'transparent',
     minHeight: 44,
   },
+  pill: { borderRadius: radii.navPill, borderWidth: 1 },
   selectedGlow: {
     shadowColor: colors.accent.violet,
     shadowOpacity: 0.35,

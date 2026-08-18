@@ -1,8 +1,20 @@
+import { useFocusEffect } from 'expo-router';
+import { useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
+import Animated, {
+  cancelAnimation,
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated';
 
 import { OrbitSeats, SharedOrbitRing } from '@/components/orbit';
 import { AppText, Avatar, Bloom, StatusPill, Surface } from '@/components/ui';
-import { colors, gradients, layout, radius as radii } from '@/constants/design-tokens';
+import { colors, gradients, layout, motion, radius as radii } from '@/constants/design-tokens';
+import { useCountingValue, useReduceMotion } from '@/lib/motion';
+import { formatPoolHeadline, formatUsedPercent } from '@/lib/format';
 import { POOL_VISUALS } from '@/lib/pool-state';
 import { hexToRgba } from '@/lib/color';
 import type { PoolView } from '@/lib/today';
@@ -28,6 +40,60 @@ export function SharedPoolHero({ view, onPress, permissionCta, syncRow }: Shared
   const visual = POOL_VISUALS[view.state];
   const off = view.state === 'permissionOff';
   const accent = colors.groupAccent[view.accent];
+  const reduced = useReduceMotion();
+
+  /**
+   * 숫자를 세어 올린다. 아크와 같은 420ms 위에서 움직여야 둘이 한 동작으로 읽힌다.
+   * 초과 상태에서는 초과분을, 그 외에는 잔여를 센다 — 화면이 부르는 값이 그것이다.
+   */
+  const counted = useCountingValue(view.overSeconds > 0 ? view.overSeconds : view.limitSeconds - view.usedSeconds, reduced);
+  const countedUsed = useCountingValue(view.usedSeconds, reduced);
+
+  const headline = off
+    ? '— —'
+    : formatPoolHeadline(
+        view.overSeconds > 0 ? 0 : Math.max(0, counted),
+        view.overSeconds > 0 ? Math.max(0, counted) : 0
+      );
+
+  const percentLabel = off
+    ? 'NO DATA'
+    : formatUsedPercent(Math.max(0, countedUsed), view.limitSeconds, view.stale);
+
+  /**
+   * 블룸 호흡. **화면에 하나뿐이어야 하고 blur에서 멈춰야 한다** — 세 화면이
+   * 뒤에서 함께 뛰면 그 자체로 프레임을 먹는다.
+   */
+  const pulse = useSharedValue(1);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (reduced || off) return;
+
+      const period =
+        view.state === 'approaching'
+          ? motion.loop.approachingPulseMs
+          : view.state === 'complete'
+            ? motion.loop.calmPulseMs
+            : motion.loop.heroPulseMs;
+
+      pulse.value = withRepeat(
+        withTiming(1.06, { duration: period / 2, easing: Easing.inOut(Easing.sin) }),
+        -1,
+        true
+      );
+
+      return () => cancelAnimation(pulse);
+      // 공유값은 참조가 고정이라 의존성에 넣지 않는다 — 넣으면 훅에 넘긴 값을
+      // 다시 바꾼다는 경고가 뜬다.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [reduced, off, view.state])
+  );
+
+  const bloomStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pulse.value }],
+    opacity: 0.85 + (pulse.value - 1) * 2.5,
+  }));
 
   // 동기화 줄이 들어오면 게이지 상자만 줄어든다. 나머지는 움직이지 않는다.
   const gaugeBoxHeight = syncRow ? 166 : layout.heroGaugeBoxHeight;
@@ -43,20 +109,22 @@ export function SharedPoolHero({ view, onPress, permissionCta, syncRow }: Shared
       onPress={onPress}
       bloom={
         visual.heroBloom.size > 0 ? (
-          <Bloom
-            color={visual.heroBloom.color}
-            size={visual.heroBloom.size}
-            opacity={visual.heroBloom.opacity}
-            x={175}
-            y={visual.heroBloom.y}
-          />
+          <Animated.View style={[StyleSheet.absoluteFill, bloomStyle]} pointerEvents="none">
+            <Bloom
+              color={visual.heroBloom.color}
+              size={visual.heroBloom.size}
+              opacity={visual.heroBloom.opacity}
+              x={175}
+              y={visual.heroBloom.y}
+            />
+          </Animated.View>
         ) : undefined
       }>
       <View style={styles.body}>
         <View style={styles.pillRow}>
           <StatusPill label={view.groupName} dotColor={off ? colors.text.disabled : accent.dot} />
           <AppText variant="numericLabel" style={{ color: visual.chip }}>
-            {view.percentLabel}
+            {percentLabel}
           </AppText>
         </View>
 
@@ -79,12 +147,28 @@ export function SharedPoolHero({ view, onPress, permissionCta, syncRow }: Shared
               limitSeconds={view.limitSeconds}
               glow={off ? 'none' : 'soft'}
               staleRing={view.stale}>
-              <AppText variant="heroNumberSm" tone={visual.numberTone}>
-                {off ? '— —' : view.headline}
-              </AppText>
-              <AppText variant="metadata" tone={view.stale ? 'stale' : 'metadata'}>
-                {off ? 'Screen Time 권한 필요' : view.stale ? 'may be less' : view.sublabel}
-              </AppText>
+              {/*
+                링 안쪽 폭에 묶어 둔다. `42m over`처럼 긴 값은 36px에서 지름을 넘어
+                아바타 아래로 삐져나간다 — 그때는 글자가 줄어드는 편이 맞다.
+                숫자가 잘리면 이 화면이 존재하는 이유가 사라진다.
+              */}
+              <View style={styles.center}>
+                <AppText
+                  variant="heroNumberSm"
+                  tone={visual.numberTone}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.7}>
+                  {headline}
+                </AppText>
+                <AppText
+                  variant="metadata"
+                  tone={view.stale ? 'stale' : 'metadata'}
+                  numberOfLines={2}
+                  style={styles.sublabel}>
+                  {off ? 'Screen Time 권한 필요' : view.stale ? 'may be less' : view.sublabel}
+                </AppText>
+              </View>
             </SharedOrbitRing>
 
             {/* 권한이 없으면 아바타도 걸지 않는다. 우리 숫자가 아니기 때문이다. */}
@@ -159,6 +243,9 @@ const styles = StyleSheet.create({
     height: 30,
   },
   gaugeBox: { alignItems: 'center', justifyContent: 'center' },
+  // 162 링에서 안쪽 지름은 약 133이다. 아바타와 부딪히지 않게 그보다 좁게 잡는다.
+  center: { width: 124, alignItems: 'center' },
+  sublabel: { textAlign: 'center' },
   footer: {
     flexDirection: 'row',
     alignItems: 'center',

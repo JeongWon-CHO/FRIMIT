@@ -1,10 +1,19 @@
-import type { ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated, { Easing, useAnimatedProps, withTiming } from 'react-native-reanimated';
+import Animated, {
+  Easing,
+  cancelAnimation,
+  useAnimatedProps,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated';
 import Svg, { Circle, Defs, G, LinearGradient, Stop } from 'react-native-svg';
 
 import { borders, colors, motion } from '@/constants/design-tokens';
 import { hexToRgba } from '@/lib/color';
+import { useReduceMotion } from '@/lib/motion';
 import { overshootDegrees, ringRadius, ringStroke, segmentsFor } from '@/lib/orbit';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
@@ -121,18 +130,6 @@ export function SharedOrbitRing({
           />
         )}
 
-        {staleRing && (
-          <Circle
-            cx={center}
-            cy={center}
-            r={size / 2 + 3}
-            stroke={hexToRgba(colors.state.staleSync, 0.4)}
-            strokeWidth={1}
-            strokeDasharray="4 5"
-            fill="none"
-          />
-        )}
-
         <G rotation={-90} origin={`${center}, ${center}`}>
           {/* 남은 시간 */}
           <Circle
@@ -225,10 +222,55 @@ export function SharedOrbitRing({
         <OvershootArc size={size} degrees={overshootDegrees(overSeconds, limitSeconds)} />
       )}
 
+      {staleRing && <StaleRing size={size} />}
+
       <View style={[StyleSheet.absoluteFill, styles.center]} pointerEvents="none">
         {children}
       </View>
     </View>
+  );
+}
+
+/**
+ * 동기화가 늦은 사람이 있을 때의 호박색 점선.
+ *
+ * 12초에 한 바퀴 — **앱에서 유일한 연속 회전**이고, 이 속도라야 "로딩 중"이 아니라
+ * "기다리는 중"으로 읽힌다. 동작 줄이기가 켜져 있으면 돌지 않고 그냥 서 있는다.
+ */
+function StaleRing({ size }: { size: number }) {
+  const reduced = useReduceMotion();
+  const spin = useSharedValue(0);
+  const box = size + 12;
+
+  useEffect(() => {
+    if (reduced) return;
+    spin.value = withRepeat(withTiming(360, { duration: 12000, easing: Easing.linear }), -1, false);
+    return () => cancelAnimation(spin);
+    // 공유값은 참조가 고정이라 의존성에서 뺀다.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reduced]);
+
+  const style = useAnimatedStyle(() => ({ transform: [{ rotate: `${spin.value}deg` }] }));
+
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={[
+        { position: 'absolute', left: (size - box) / 2, top: (size - box) / 2, width: box, height: box },
+        style,
+      ]}>
+      <Svg width={box} height={box}>
+        <Circle
+          cx={box / 2}
+          cy={box / 2}
+          r={box / 2 - 1}
+          stroke={hexToRgba(colors.state.staleSync, 0.4)}
+          strokeWidth={1}
+          strokeDasharray="4 5"
+          fill="none"
+        />
+      </Svg>
+    </Animated.View>
   );
 }
 

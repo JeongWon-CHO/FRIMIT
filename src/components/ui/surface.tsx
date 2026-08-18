@@ -1,15 +1,11 @@
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-  Easing,
-} from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { DotTexture } from '@/components/ui/dot-texture';
 import { colors, motion, radius as radii } from '@/constants/design-tokens';
+import { EASE } from '@/lib/motion';
 
 /**
  * 카드 한 장.
@@ -51,9 +47,13 @@ export function Surface({
   const pressed = useSharedValue(0);
 
   const pressStyle = useAnimatedStyle(() => ({
-    transform: [
-      { scale: 1 - pressed.value * (1 - motion.press.scale) },
-    ],
+    transform: [{ scale: 1 - pressed.value * (1 - motion.press.scale) }],
+  }));
+
+  // 깊이를 elevation으로 만들지 않는다 — 검정 위에서는 회색 상자가 된다.
+  // 흰색을 4%만 덮는 것이 "가라앉았다"의 전부다.
+  const overlayStyle = useAnimatedStyle(() => ({
+    opacity: pressed.value * motion.press.overlayOpacity,
   }));
 
   const box: ViewStyle = {
@@ -93,20 +93,19 @@ export function Surface({
       <Pressable
         onPress={onPress}
         onPressIn={() => {
-          pressed.value = withTiming(1, {
-            duration: motion.duration.fast,
-            easing: Easing.bezier(...(motion.easing.press as [number, number, number, number])),
-          });
+          pressed.value = withTiming(1, { duration: motion.duration.fast, easing: EASE.press });
         }}
         onPressOut={() => {
-          pressed.value = withTiming(0, {
-            duration: motion.duration.fast,
-            easing: Easing.bezier(...(motion.easing.press as [number, number, number, number])),
-          });
+          pressed.value = withTiming(0, { duration: 160, easing: EASE.press });
         }}
         style={[box, style]}>
         {body}
+        <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.press, overlayStyle]} />
       </Pressable>
     </Animated.View>
   );
 }
+
+const styles = StyleSheet.create({
+  press: { backgroundColor: '#FFFFFF' },
+});
