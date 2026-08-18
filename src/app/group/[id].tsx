@@ -183,30 +183,39 @@ export default function GroupDetailScreen() {
 /**
  * 1등 — 오늘 가장 적게 쓴 사람.
  *
- * 화면에서 발광하는 멤버는 이 한 명뿐이다. 왕관·라벨·링 셋이 함께 나오고,
- * 꼴찌에게는 어떤 표시도 붙지 않는다.
+ * 등수는 아래 행들과 **같은 숫자로** 센다. 1을 빼고 왕관 같은 것으로 대신하면
+ * 목록이 2부터 시작해서 셈이 끊긴다. 자리와 폭도 행과 같아 아바타가 세로로 맞는다.
+ *
+ * 표면은 보라 그라데이션이고, 성취를 말하는 것들(테두리·링·배지)은 금색이다.
+ * 왕관만 걷어냈다 — 배지가 이미 하는 말이라 다섯 번째 신호였다.
+ *
+ * ⚠️ 이 카드는 강조색 둘을 함께 쓴다. 보라는 이 화면에서 **그룹 정체색**이기도
+ * 해서(`groupAccent`), 시안·분홍 그룹에 들어가면 1등 카드만 혼자 보라로 뜬다.
+ * 색을 하나로 모으려면 표면을 중립(`surface.elevated`)으로 두면 되고, 그때 금색
+ * 셋만 남는다. 지금은 보라 표면을 쓰기로 한 선택이다.
+ *
+ * 꼴찌에게는 여전히 아무 표시도 붙지 않는다.
  */
 function RankOneCard({ member }: { member: RankedMember }) {
   return (
     <Surface
       fill={['#161029', '#0B0B12']}
-      border={colors.border.violet}
+      border={hexToRgba(colors.state.achievement, 0.27)}
       cornerRadius={24}
       padding={14}
       style={styles.memberCard}>
-      <View style={styles.crownBox}>
-        <Avatar
-          id={member.id}
-          name={member.name}
-          emoji={member.emoji}
-          size="lg"
-          ring="achievement"
-          borderColor="#12101F"
-        />
-        <AppText variant="cardTitle" style={styles.crown}>
-          👑
-        </AppText>
-      </View>
+      <AppText variant="numericLabel" tone="muted" style={styles.rankNumeral}>
+        1
+      </AppText>
+
+      <Avatar
+        id={member.id}
+        name={member.name}
+        emoji={member.emoji}
+        size="lg"
+        ring="achievement"
+        borderColor="#12101F"
+      />
 
       <View style={styles.memberText}>
         <AppText variant="cardTitle">
@@ -377,8 +386,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
   },
   memberCard: { flexDirection: 'row', alignItems: 'center', gap: 13 },
-  crownBox: { position: 'relative' },
-  crown: { position: 'absolute', top: -8, right: -6 },
   memberText: { flex: 1, gap: 2 },
   memberRight: { alignItems: 'flex-end', gap: 3 },
   rankList: { gap: 7 },

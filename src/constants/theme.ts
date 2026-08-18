@@ -11,8 +11,6 @@
  * 갈라지는 호출부가 남아 있어도 밝은 화면이 나올 수 없게 하기 위해서다.
  */
 
-import '@/global.css';
-
 import { colors, gradients, radius, spacing } from '@/constants/design-tokens';
 
 const palette = {
