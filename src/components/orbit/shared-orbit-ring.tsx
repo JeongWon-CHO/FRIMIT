@@ -54,6 +54,11 @@ type SharedOrbitRingProps = {
   /** 동기화가 늦은 멤버가 있을 때의 호박색 점선 원 */
   staleRing?: boolean;
   strokeRatio?: number;
+  /**
+   * 아크가 한 바퀴 도는 데 걸리는 시간(초). 값이 있으면 링이 천천히 자전한다.
+   * 숫자를 읽어야 하는 화면에서는 쓰지 않는다 — 움직이는 게이지는 읽히지 않는다.
+   */
+  spinSeconds?: number;
 };
 
 export function SharedOrbitRing({
@@ -71,7 +76,26 @@ export function SharedOrbitRing({
   children,
   staleRing,
   strokeRatio = borders.orbitStrokeRatio,
+  spinSeconds,
 }: SharedOrbitRingProps) {
+  const reduced = useReduceMotion();
+  const spin = useSharedValue(0);
+
+  useEffect(() => {
+    if (!spinSeconds || reduced) return;
+    spin.value = withRepeat(
+      withTiming(360, { duration: spinSeconds * 1000, easing: Easing.linear }),
+      -1,
+      false
+    );
+    return () => cancelAnimation(spin);
+    // 공유값은 참조가 고정이라 의존성에서 뺀다.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [spinSeconds, reduced]);
+
+  const spinStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${spin.value}deg` }],
+  }));
   const stroke = ringStroke(size, strokeRatio);
   const r = ringRadius(size, stroke);
   const circumference = 2 * Math.PI * r;
@@ -99,7 +123,13 @@ export function SharedOrbitRing({
 
   return (
     <View style={{ width: size, height: size }}>
-      <Svg width={box} height={box} style={{ position: 'absolute', left: -pad, top: -pad }}>
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          { position: 'absolute', left: -pad, top: -pad, width: box, height: box },
+          spinSeconds ? spinStyle : null,
+        ]}>
+      <Svg width={box} height={box}>
         <Defs>
           {/*
             conic 그라데이션이 없으므로 선형으로 근사한다. 축을 뒤집어 두는 이유는
@@ -215,7 +245,8 @@ export function SharedOrbitRing({
               />
             ))}
         </G>
-      </Svg>
+        </Svg>
+      </Animated.View>
 
       {/* 초과분은 링 밖의 별도 아크가 진다. 두 바퀴 도는 링은 고장으로 읽힌다. */}
       {variant === 'overshoot' && overSeconds > 0 && (

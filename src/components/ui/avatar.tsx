@@ -60,11 +60,13 @@ export function Avatar({
         dimmed && { opacity: 0.85 },
       ]}>
       {ring !== 'pending' && (
+        // 채움에도 같은 반경을 준다. `overflow: 'hidden'`만 믿으면 테두리가
+        // 투명할 때 그라데이션이 모서리로 삐져나와 원이 팔각형으로 보인다.
         <LinearGradient
           colors={[from, to]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFill}
+          style={[StyleSheet.absoluteFill, { borderRadius: diameter / 2 }]}
         />
       )}
 

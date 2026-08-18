@@ -132,7 +132,14 @@ export function SharedPoolHero({ view, onPress, permissionCta, syncRow }: Shared
           <View>
             <SharedOrbitRing
               size={layout.heroGaugeSize}
-              progress={view.progress}
+              /*
+                새 하루에는 아직 쓴 시간이 없지만 링을 완전히 비워 두면 "아직
+                시작 안 됨"이나 "고장"으로 읽힌다. 상태 스펙 A는 12시에 5~8°
+                틱을 남기라고 하는데, 그 자리에는 내 아바타가 앉아 있어서
+                (32px / 반지름 73.7 ≈ ±12°) 그 길이로는 통째로 가려진다.
+                아바타 뒤에서 겨우 빠져나오는 18°가 실기기에서 보이는 최소값이다.
+              */
+              progress={view.state === 'fresh' ? Math.max(view.progress, 18 / 360) : view.progress}
               variant={
                 off
                   ? 'empty'

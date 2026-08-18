@@ -41,7 +41,12 @@ export const GroupTile = memo(function GroupTile({ view, wide, onPress }: GroupT
       style={{
         height: wide ? layout.groupCardWideHeight : layout.groupCardHeight,
         ...(wide
-          ? { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 18 }
+          ? {
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              paddingHorizontal: 18,
+            }
           : { justifyContent: 'space-between' }),
       }}
       bloom={<Bloom color={accent.bloom} size={220} opacity={0.45} {...position} />}>
@@ -71,7 +76,12 @@ export const GroupTile = memo(function GroupTile({ view, wide, onPress }: GroupT
   );
 });
 
-/** 아직 시작하지 않은 그룹. 숫자 자리에 무엇을 해야 하는지를 넣는다. */
+/**
+ * 아직 시작하지 않은 그룹.
+ *
+ * 넓은 카드에서는 알약과 이름을 좌우로 갈라 놓는다. 88px 안에 셋을 세로로
+ * 쌓으면 서로 붙어서 한 덩어리로 보인다.
+ */
 export function DraftTile({
   name,
   wide,
@@ -85,23 +95,45 @@ export function DraftTile({
     <Surface
       fill={colors.surface.cardNeutral}
       cornerRadius={radii.groupCard}
-      padding={14}
+      padding={wide ? 18 : 16}
       onPress={onPress}
-      style={{
-        height: wide ? layout.groupCardWideHeight : layout.groupCardHeight,
-        justifyContent: 'space-between',
-      }}>
-      <StatusPill label="시작 대기" tone="amber" />
-      <View style={styles.text}>
-        <AppText variant="cardTitle">{name}</AppText>
-        <AppText variant="metadata" tone="muted">
-          친구를 기다리는 중
-        </AppText>
-      </View>
+      style={
+        wide
+          ? {
+              height: layout.groupCardWideHeight,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 14,
+            }
+          : { height: layout.groupCardHeight, justifyContent: 'space-between' }
+      }>
+      {wide ? (
+        <>
+          <View style={styles.draftText}>
+            <AppText variant="cardTitle">{name}</AppText>
+            <AppText variant="metadata" tone="muted">
+              친구를 기다리는 중
+            </AppText>
+          </View>
+          <StatusPill label="시작 대기" tone="amber" />
+        </>
+      ) : (
+        <>
+          <StatusPill label="시작 대기" tone="amber" />
+          <View style={styles.draftText}>
+            <AppText variant="cardTitle">{name}</AppText>
+            <AppText variant="metadata" tone="muted">
+              친구를 기다리는 중
+            </AppText>
+          </View>
+        </>
+      )}
     </Surface>
   );
 }
 
 const styles = StyleSheet.create({
-  text: { gap: 2 },
+  text: { gap: 3 },
+  draftText: { gap: 5, flexShrink: 1 },
 });

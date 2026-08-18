@@ -154,8 +154,10 @@ export function buildPoolView(
       id: member.id,
       name: member.name,
       emoji: member.emoji,
-      // 아직 한 번도 올리지 않은 사람은 빈 자리다 — 초대장이지 망신이 아니다.
-      pending: member.lastCollectedAt === null,
+      // 빈 자리는 **아직 그룹에 없는 사람**의 자리다. "오늘 아직 안 올렸다"는
+      // 그것과 다르다 — 아침에는 전원이 그 상태이고, 그때 링을 점선 넷으로
+      // 그리면 다 모인 그룹이 텅 빈 것처럼 보인다. 늦은 동기화는 호박색 점선
+      // 링과 히어로 안의 한 줄이 따로 말한다.
       ring: member.isMe ? ('activity' as const) : ('none' as const),
     })),
     highlight:

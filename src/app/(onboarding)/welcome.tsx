@@ -48,11 +48,19 @@ export default function WelcomeScreen() {
           </ButtonStack>
         </View>
       }>
-      <AppText variant="numericLabel" tone="muted" style={styles.wordmark}>
-        FRIMIT
-      </AppText>
+      <View style={styles.head}>
+        <AppText variant="numericLabel" tone="muted" style={styles.wordmark}>
+          FRIMIT
+        </AppText>
+      </View>
 
       <View style={styles.orbitBox}>
+        {/*
+          아직 사람이 없는 화면이라 링이 정지해 있으면 그림이 아니라 도형으로
+          보인다. 24초에 한 바퀴 — 눈이 좇을 수 없을 만큼 느려서 "돌고 있다"가
+          아니라 "살아 있다"로 읽힌다. 빛 넷은 함께 돌지 않는다. 자리는 고정이고
+          그 위를 시간이 지나가는 것이 이 그래픽이 하려는 말이다.
+        */}
         <SharedOrbitRing
           size={ORBIT}
           progress={0.92}
@@ -60,6 +68,7 @@ export default function WelcomeScreen() {
           showTrackDashes
           strokeRatio={0.14}
           glow="soft"
+          spinSeconds={24}
         />
 
         {LIGHTS.map((light) => {
@@ -89,8 +98,11 @@ export default function WelcomeScreen() {
 }
 
 const styles = StyleSheet.create({
+  // 워드마크는 붙박이고, 링은 그 아래 남은 공간의 가운데에 뜬다. 아래 블록이
+  // 무거운 화면이라 그래픽까지 아래로 쏠리면 위쪽이 텅 빈다.
+  head: { paddingBottom: 4 },
   wordmark: { letterSpacing: 3 },
-  orbitBox: { width: ORBIT, height: ORBIT, alignSelf: 'center' },
+  orbitBox: { width: ORBIT, height: ORBIT, alignSelf: 'center', marginTop: -24 },
   light: {
     position: 'absolute',
     shadowOpacity: 0.9,

@@ -91,9 +91,11 @@ function MiniOrbit() {
 }
 
 const styles = StyleSheet.create({
-  top: { gap: 9 },
+  // 제목은 프레임의 공통 헤더가 아니라 이 화면이 직접 그리는 블록이다.
+  // 카드가 가운데를 차지하므로 제목은 그 위에서 조금 내려와 앉는다.
+  top: { gap: 9, paddingTop: 12 },
   title: { fontSize: 30, lineHeight: 38 },
-  cards: { gap: 14, flex: 1, justifyContent: 'center' },
+  cards: { gap: 14, flex: 1, justifyContent: 'center', paddingBottom: 8 },
   miniRing: {
     position: 'absolute',
     borderWidth: 1,

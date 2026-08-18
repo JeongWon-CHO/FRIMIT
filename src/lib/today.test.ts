@@ -113,7 +113,7 @@ describe('buildPoolView', () => {
     expect(view.seats[0].ring).toBe('activity');
   });
 
-  it('한 번도 안 올린 사람은 빈 자리다', () => {
+  it('오늘 아직 안 올린 사람도 자리에 앉아 있다 — 아침에는 전원이 그 상태다', () => {
     const view = buildPoolView(
       group(),
       usage({
@@ -126,8 +126,8 @@ describe('buildPoolView', () => {
       options
     )!;
 
-    expect(view.seats.find((seat) => seat.id === 'minji')?.pending).toBe(true);
-    // 안 올린 사람은 "늦은" 것이 아니다.
+    expect(view.seats.find((seat) => seat.id === 'minji')?.pending).toBeUndefined();
+    // 안 올린 사람은 "늦은" 것도 아니다.
     expect(view.stale).toBe(false);
   });
 

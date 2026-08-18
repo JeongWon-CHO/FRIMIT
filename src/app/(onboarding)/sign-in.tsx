@@ -4,7 +4,7 @@ import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { SharedOrbitRing } from '@/components/orbit';
 import { OnboardingFrame } from '@/components/onboarding';
-import { AppText, ButtonStack } from '@/components/ui';
+import { AppText } from '@/components/ui';
 import { colors, gradients, radius as radii } from '@/constants/design-tokens';
 import { ensureSession } from '@/lib/supabase';
 
@@ -41,7 +41,9 @@ export default function SignInScreen() {
     <OnboardingFrame
       ambient={{ color: colors.accent.violet, size: 380, opacity: 0.34, x: 169, y: 100 }}
       footer={
-        <ButtonStack>
+        // 흰 버튼 둘이 붙어 있으면 한 덩어리로 뭉쳐서 아래가 무거워진다.
+        // 사이를 벌리고 법적 문구 앞에 한 칸 더 둔다.
+        <View style={styles.actions}>
           {error && (
             <AppText variant="metadata" tone="over">
               {error}
@@ -61,7 +63,7 @@ export default function SignInScreen() {
           <AppText variant="metadata" tone="faint" style={styles.legal}>
             계속하면 서비스 약관과 개인정보 처리방침에 동의하게 돼요.
           </AppText>
-        </ButtonStack>
+        </View>
       }>
       <View style={styles.top}>
         <View style={styles.mark}>
@@ -117,9 +119,10 @@ function WhiteButton({
 
 const styles = StyleSheet.create({
   top: { gap: 10 },
-  mark: { marginTop: 26, marginBottom: 16 },
-  title: { fontSize: 32, lineHeight: 38 },
-  body: { fontSize: 15, lineHeight: 22 },
+  mark: { marginTop: 40, marginBottom: 22, alignSelf: 'center' },
+  actions: { gap: 14 },
+  title: { fontSize: 32, lineHeight: 38, textAlign: 'center' },
+  body: { fontSize: 15, lineHeight: 22, textAlign: 'center' },
   white: {
     backgroundColor: '#FFFFFF',
     borderRadius: radii.button,
@@ -131,5 +134,5 @@ const styles = StyleSheet.create({
   dim: { opacity: 0.9 },
   appleLabel: { color: '#050507' },
   googleLabel: { color: '#1F1F1F' },
-  legal: { textAlign: 'center', lineHeight: 17 },
+  legal: { textAlign: 'center', lineHeight: 17, paddingTop: 6 },
 });

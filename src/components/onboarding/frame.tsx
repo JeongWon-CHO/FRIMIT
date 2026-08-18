@@ -30,6 +30,9 @@ export function OnboardingFrame({
       style={styles.fill}>
       <ScreenFrame
         horizontal={26}
+        // 노치가 있는 기기에서 목업의 70은 제목을 상태바에 붙여 놓는다.
+        // 온보딩은 제목이 화면의 첫 마디라 숨 쉴 자리를 더 준다.
+        topSpace={28}
         bottomInset={24}
         texture={texture}
         ambient={ambient}

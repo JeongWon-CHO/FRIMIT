@@ -19,6 +19,8 @@ type ScreenFrameProps = {
   children: ReactNode;
   /** 온보딩은 26, 코어 화면은 20 */
   horizontal?: number;
+  /** 안전영역 위에 더 얹는 여백. 목업의 70은 54px 상태바를 전제한 값이다. */
+  topSpace?: number;
   /** 하단 네비가 없는 화면(그룹 상세, 온보딩)은 여백을 줄인다. */
   bottomInset?: number;
   texture?: 'screen' | 'calm' | 'none';
@@ -36,6 +38,7 @@ type ScreenFrameProps = {
 export function ScreenFrame({
   children,
   horizontal = spacing.screenHorizontal,
+  topSpace = 10,
   bottomInset = spacing.contentBottom,
   texture = 'screen',
   ambient = null,
@@ -48,7 +51,7 @@ export function ScreenFrame({
   const insets = useSafeAreaInsets();
 
   const padding = {
-    paddingTop: insets.top + 10,
+    paddingTop: insets.top + topSpace,
     paddingHorizontal: horizontal,
     paddingBottom: bottomInset + (footer ? 0 : insets.bottom),
   };
@@ -60,6 +63,9 @@ export function ScreenFrame({
       // "위 블록 · 가운데 그림 · 아래 CTA" 리듬이 전부 이것에 걸려 있다.
       contentContainerStyle={[padding, styles.content, fill && styles.grow]}
       showsVerticalScrollIndicator={false}
+      // 내용이 화면 안에 들어가는 화면에서 고무줄처럼 튀면 스크롤할 것이 있는
+      // 줄 알고 계속 당겨 보게 된다.
+      alwaysBounceVertical={!fill}
       keyboardShouldPersistTaps="handled"
       refreshControl={
         onRefresh ? (

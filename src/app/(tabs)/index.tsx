@@ -124,7 +124,7 @@ export default function TodayScreen() {
           <View style={styles.sectionTitle}>
             <AppText variant="sectionTitle">Your groups</AppText>
             <AppText variant="metadata" tone="metadata">
-              {groups.data?.length}
+              {others.length}
             </AppText>
           </View>
 
@@ -263,6 +263,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 4,
     gap: 12,
+    // 인사와 히어로가 붙으면 큰 숫자가 제목의 일부처럼 읽힌다. 둘은 다른
+    // 층위라 사이를 벌려 둔다.
+    marginBottom: 10,
   },
   headerText: { gap: 5, flexShrink: 1 },
   flatAvatar: {
