@@ -38,6 +38,11 @@ export function GradientButton({
   // 정확히 같은 값이고, 더 줄여도 minHeight에 걸려 아무 일도 일어나지 않는다.
   const padding = size === 'lg' ? 16 : 12;
 
+  // 라운드는 토큰(18)을 그대로 쓰지 않는다. 그 값은 화면 폭을 다 쓰는 온보딩
+  // CTA에서 나온 것이라, 44px 높이의 짧은 버튼에 그대로 걸면 거의 알약이 되어
+  // 덩어리처럼 읽힌다. 토큰을 고치면 온보딩 전체가 함께 움직이므로 여기서만 낮춘다.
+  const corner = size === 'lg' ? radii.button : 14;
+
   if (variant === 'tertiary') {
     return (
       <Pressable
@@ -61,7 +66,7 @@ export function GradientButton({
       onPress={onPress}
       style={({ pressed }) => [
         styles.box,
-        { paddingVertical: padding, paddingHorizontal: padding + 8 },
+        { paddingVertical: padding, paddingHorizontal: padding + 16, borderRadius: corner },
         variant === 'primary' ? styles.primaryHalo : styles.secondary,
         pressed && styles.dim,
         inactive && styles.disabled,
@@ -94,7 +99,7 @@ export function ButtonStack({ children }: { children: React.ReactNode }) {
 }
 
 /*
- * 좌우 패딩은 위아래와 함께 인라인으로 준다(size에 따라 갈리기 때문이다).
+ * 좌우 패딩과 라운드는 위아래와 함께 인라인으로 준다(size에 따라 갈리기 때문이다).
  * 이 버튼은 대개 전체 폭으로 늘어나 있어서 좌우가 없어도 오래 티가 나지 않았는데,
  * `EmptyState`처럼 가운데 정렬된 자리에 놓이면 글자 폭까지 쪼그라들어 라벨이
  * 줄바꿈된다.

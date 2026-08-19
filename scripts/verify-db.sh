@@ -890,6 +890,84 @@ rpc 4 live_goal "{\"target_group_id\":\"$GROUP_B\"}"
 check "살아 있는 목표 헬퍼는 미노출"       403 "$CURL_CODE"
 
 # ============================================================================
+section "활동 내역 — 사건은 트리거가 만든다"
+#
+# 여기까지 오는 동안 GROUP_B에서 실제로 일어난 일들이 그대로 쌓여 있어야 한다.
+# 이 스크립트 전체가 이 섹션의 준비물이다 — 그룹 시작, 네 명의 가입, 한도 초과,
+# 규칙 변경, 목표 하나와 그 기록들.
+#
+# 개수를 정확히 세지 않고 "있는가 / 한 번만 있는가"를 본다. 앞 섹션이 늘어나면
+# 개수는 흔들리지만 사건의 성격은 흔들리지 않는다.
+# ============================================================================
+
+kinds() { # kinds <kind> → 그 종류의 사건 수
+  svc GET "activity_events?group_id=eq.$GROUP_B&kind=eq.$1&select=id"
+  jq -r 'length' <<< "$CURL_BODY"
+}
+
+check "그룹 시작이 남았다"                 1 "$(kinds group_started)"
+
+svc GET "activity_events?group_id=eq.$GROUP_B&kind=eq.member_joined&select=actor_id"
+check "가입한 네 명이 남았다"              4 "$(jq -r 'length' <<< "$CURL_BODY")"
+# 관리자의 첫 멤버십은 create_group이 만드는 행이다. "내가 만든 그룹에 내가
+# 들어왔어요"는 사건이 아니다.
+check "그룹을 만든 사람은 가입 사건이 없다" no "$(jq -r --arg me "$(uid 4)" 'if any(.[]; .actor_id == $me) then "yes" else "no" end' <<< "$CURL_BODY")"
+
+rpc 8 leave_group "{\"target_group_id\":\"$GROUP_B\"}" > /dev/null
+check "탈퇴도 사건이다"                    1 "$(kinds member_left)"
+
+svc GET "activity_events?group_id=eq.$GROUP_B&kind=eq.rule_changed&select=payload"
+check "규칙 변경은 한 번만 (1번 버전은 사건이 아니다)" 1 "$(jq -r 'length' <<< "$CURL_BODY")"
+check "바뀔 값이 payload에 있다"           10800 "$(jq -r '.[0].payload.daily_limit_seconds' <<< "$CURL_BODY")"
+
+# 스냅샷은 몇 분마다 올라온다. 조건만 보면 같은 사건이 하루 종일 반복된다.
+svc GET "activity_events?group_id=eq.$GROUP_B&kind=eq.pool_threshold&select=payload"
+check "세 단계가 각각 한 번씩"             "[75,90,100]" "$(jq -c '[.[].payload.threshold] | sort' <<< "$CURL_BODY")"
+check "초과도 하루 한 번"                  1 "$(kinds pool_over)"
+
+svc GET "activity_events?group_id=eq.$GROUP_B&kind=eq.pool_over&select=payload"
+check "넘긴 만큼이 payload에 있다"         150 "$(jq -r '.[0].payload.over_seconds' <<< "$CURL_BODY")"
+
+check "목표를 건 것"                       2 "$(kinds goal_created)"
+check "기록한 것"                          4 "$(kinds goal_entry)"
+check "지운 것"                            1 "$(kinds goal_cleared)"
+check "그만둔 것"                          1 "$(kinds goal_cancelled)"
+
+svc GET "activity_events?group_id=eq.$GROUP_B&kind=eq.goal_entry&select=payload,actor_id&order=created_at.desc&limit=1"
+check "기록 사건에 목표 제목이 실린다"     "이번 주 5번 운동하기" "$(jq -r '.[0].payload.title' <<< "$CURL_BODY")"
+check "누가 적었는지도 남는다"             "$(uid 5)" "$(jq -r '.[0].actor_id' <<< "$CURL_BODY")"
+
+# 한도 사건에는 주인이 없다. 많이 쓴 사람을 지목하는 순간 이 제품의 톤이 무너진다.
+svc GET "activity_events?group_id=eq.$GROUP_B&kind=eq.pool_threshold&select=actor_id"
+check "한도 사건에는 주인이 없다"          null "$(jq -r '.[0].actor_id' <<< "$CURL_BODY")"
+
+# ============================================================================
+section "활동 내역 — 직접 쓰기와 노출 범위"
+# ============================================================================
+
+post 4 activity_events "{\"group_id\":\"$GROUP_B\",\"actor_id\":\"$(uid 4)\",\"kind\":\"pool_over\",\"payload\":{}}"
+check "사건 직접 insert 차단"              403 "$CURL_CODE"
+patch 4 "activity_events?group_id=eq.$GROUP_B" '{"kind":"goal_entry"}'
+check "사건 직접 수정 차단"                403 "$CURL_CODE"
+call DELETE "$SB_URL/rest/v1/activity_events?group_id=eq.$GROUP_B" "$(jwt 4)" "$SB_ANON"
+check "사건 직접 삭제 차단"                403 "$CURL_CODE"
+
+call GET "$SB_URL/rest/v1/activity_events?group_id=eq.$GROUP_B&select=id" "$(jwt 5)" "$SB_ANON"
+check "멤버는 활동을 봄"                   yes "$([ "$(jq -r 'length' <<< "$CURL_BODY")" -gt 0 ] && echo yes || echo no)"
+call GET "$SB_URL/rest/v1/activity_events?select=id" "$(jwt 9)" "$SB_ANON"
+check "비멤버에게는 보이지 않음"           0 "$(jq -r 'length' <<< "$CURL_BODY")"
+
+# 화면이 문장을 만들려면 그룹 이름과 사람 이름이 같이 와야 한다. RPC 없이
+# 임베드로 가져오는 경로가 실제로 열려 있는지 확인한다.
+call GET "$SB_URL/rest/v1/activity_events?group_id=eq.$GROUP_B&select=id,kind,groups(name),profiles(nickname)&limit=1" "$(jwt 5)" "$SB_ANON"
+check "그룹·사람 임베드가 열려 있다"       경계확인 "$(jq -r '.[0].groups.name' <<< "$CURL_BODY")"
+
+rpc 4 log_activity "{\"target_group_id\":\"$GROUP_B\",\"actor\":null,\"event_kind\":\"pool_over\"}"
+check "사건 기록 헬퍼는 미노출"            403 "$CURL_CODE"
+rpc 4 purge_expired_activity
+check "보관 정리는 예약 작업 전용"         403 "$CURL_CODE"
+
+# ============================================================================
 printf '\n'
 # ${VAR} 형태로 감쌀 것. `$PASS개`처럼 쓰면 bash가 한글 바이트까지 변수명으로 읽는다.
 if [ "$FAIL" -eq 0 ]; then

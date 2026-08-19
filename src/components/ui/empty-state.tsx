@@ -44,7 +44,8 @@ const styles = StyleSheet.create({
     borderColor: colors.border.dashed,
     backgroundColor: hexToRgba('#FFFFFF', 0.025),
     alignItems: 'center',
-    gap: 10,
+    // 요소가 넷(점선 원·제목·본문·버튼)이라 간격이 좁으면 한 덩어리로 뭉쳐 읽힌다.
+    gap: 14,
   },
   circle: {
     width: 52,

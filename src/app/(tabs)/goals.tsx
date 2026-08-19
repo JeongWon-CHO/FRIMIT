@@ -1,16 +1,26 @@
-import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
-import { Alert, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { router } from "expo-router";
+import { useMemo, useState } from "react";
+import { Alert, Pressable, StyleSheet, TextInput, View } from "react-native";
 
-import { GoalHeroCard, GoalTile } from '@/components/goal-card';
-import { TitleRow } from '@/components/title-row';
-import { AppText, EmptyState, GradientButton, ScreenFrame } from '@/components/ui';
-import { colors, radius as radii, spacing } from '@/constants/design-tokens';
-import { useCancelGoal, useDeleteGoalEntry, useGroupGoals, useRecordGoalEntry } from '@/hooks/use-goals';
-import { useMyGroups } from '@/hooks/use-groups';
-import { useMyProfile } from '@/hooks/use-profile';
-import { hexToRgba } from '@/lib/color';
-import { buildGoalView, pickHeroGoal, type GoalView } from '@/lib/goal-view';
+import { GoalHeroCard, GoalTile } from "@/components/goal-card";
+import { TitleRow } from "@/components/title-row";
+import {
+  AppText,
+  EmptyState,
+  GradientButton,
+  ScreenFrame,
+} from "@/components/ui";
+import { colors, radius as radii, spacing } from "@/constants/design-tokens";
+import {
+  useCancelGoal,
+  useDeleteGoalEntry,
+  useGroupGoals,
+  useRecordGoalEntry,
+} from "@/hooks/use-goals";
+import { useMyGroups } from "@/hooks/use-groups";
+import { useMyProfile } from "@/hooks/use-profile";
+import { hexToRgba } from "@/lib/color";
+import { buildGoalView, pickHeroGoal, type GoalView } from "@/lib/goal-view";
 
 /**
  * 목표 탭.
@@ -32,30 +42,45 @@ export default function GoalsScreen() {
   const views = useMemo(
     () =>
       (groups.data ?? [])
-        .map((group) => buildGoalView(group, goals.byGroupId.get(group.id), profile.data?.id))
+        .map((group) =>
+          buildGoalView(group, goals.byGroupId.get(group.id), profile.data?.id),
+        )
         .filter((view): view is GoalView => Boolean(view)),
-    [groups.data, goals.byGroupId, profile.data?.id]
+    [groups.data, goals.byGroupId, profile.data?.id],
   );
 
   const hero = pickHeroGoal(views, preferredGroupId);
   const others = views.filter((view) => view.goalId !== hero?.goalId);
 
-  const heroGroup = (groups.data ?? []).find((group) => group.id === hero?.groupId);
+  const heroGroup = (groups.data ?? []).find(
+    (group) => group.id === hero?.groupId,
+  );
   const canCancel =
-    hero && (hero.createdBy === profile.data?.id || heroGroup?.admin_id === profile.data?.id);
+    hero &&
+    (hero.createdBy === profile.data?.id ||
+      heroGroup?.admin_id === profile.data?.id);
 
-  const startedGroups = (groups.data ?? []).filter((group) => group.status === 'active');
+  const startedGroups = (groups.data ?? []).filter(
+    (group) => group.status === "active",
+  );
   const cancel = useCancelGoal();
 
   return (
     <ScreenFrame
-      ambient={{ color: colors.accent.indigo, size: 380, opacity: 0.26, x: 60, y: 140 }}
-      onRefresh={() => groups.refetch()}>
+      ambient={{
+        color: colors.accent.indigo,
+        size: 380,
+        opacity: 0.26,
+        x: 60,
+        y: 140,
+      }}
+      onRefresh={() => groups.refetch()}
+    >
       <TitleRow
         title="Goals"
         right={
           startedGroups.length > 0 ? (
-            <AddButton onPress={() => router.push('/goal/new')} />
+            <AddButton onPress={() => router.push("/goal/new")} />
           ) : undefined
         }
       />
@@ -66,14 +91,25 @@ export default function GoalsScreen() {
         <EmptyState
           title="먼저 그룹을 시작해요"
           body="공동 목표는 시작한 그룹에만 걸 수 있어요. 친구 한 명만 준비되면 시작할 수 있어요."
-          action={<GradientButton label="그룹 만들기" size="md" onPress={() => router.push('/group')} />}
+          action={
+            <GradientButton
+              label="그룹 만들기"
+              size="md"
+              onPress={() => router.push("/group")}
+            />
+          }
         />
       ) : !hero ? (
         <EmptyState
           title="아직 목표가 없어요"
-          body="그룹 하나에 공동 목표 하나를 걸고 7·14·30일 중에 기간을 골라요. 진행률은 각자의 달성률을 100%에서 끊어 평균한 값이에요."
+          body="그룹 하나에 공동 목표 하나를 걸고 7·14·30일 중에 기간을 골라요.
+진행률은 각자의 달성률을 100%에서 끊어 평균한 값이에요."
           action={
-            <GradientButton label="목표 만들기" size="md" onPress={() => router.push('/goal/new')} />
+            <GradientButton
+              label="목표 만들기"
+              size="md"
+              onPress={() => router.push("/goal/new")}
+            />
           }
         />
       ) : (
@@ -84,7 +120,10 @@ export default function GoalsScreen() {
             <View style={styles.grid}>
               {others.map((view) => (
                 <View key={view.goalId} style={styles.half}>
-                  <GoalTile view={view} onPress={() => setPreferredGroupId(view.groupId)} />
+                  <GoalTile
+                    view={view}
+                    onPress={() => setPreferredGroupId(view.groupId)}
+                  />
                 </View>
               ))}
             </View>
@@ -96,16 +135,16 @@ export default function GoalsScreen() {
               variant="tertiary"
               onPress={() =>
                 Alert.alert(
-                  '목표를 그만둘까요?',
-                  '지금까지의 기록이 함께 사라져요. 그룹은 그대로예요.',
+                  "목표를 그만둘까요?",
+                  "지금까지의 기록이 함께 사라져요. 그룹은 그대로예요.",
                   [
-                    { text: '아니요', style: 'cancel' },
+                    { text: "아니요", style: "cancel" },
                     {
-                      text: '그만두기',
-                      style: 'destructive',
+                      text: "그만두기",
+                      style: "destructive",
                       onPress: () => cancel.mutate(hero.goalId),
                     },
-                  ]
+                  ],
                 )
               }
             />
@@ -115,7 +154,9 @@ export default function GoalsScreen() {
 
       {goals.error && (
         <AppText variant="metadata" tone="stale" style={styles.center}>
-          {goals.error instanceof Error ? goals.error.message : String(goals.error)}
+          {goals.error instanceof Error
+            ? goals.error.message
+            : String(goals.error)}
         </AppText>
       )}
     </ScreenFrame>
@@ -138,15 +179,15 @@ function RecordRow({ view }: { view: GoalView }) {
       <View style={styles.footer}>
         <AppText variant="metadata" tone="faint" style={styles.center}>
           {view.started
-            ? '이 목표의 참여자가 아니에요. 다음 목표부터 함께해요.'
-            : '내일 오전 6시부터 기록할 수 있어요.'}
+            ? "이 목표의 참여자가 아니에요. 다음 목표부터 함께해요."
+            : "내일 오전 6시부터 기록할 수 있어요."}
         </AppText>
       </View>
     );
   }
 
   const recorded = view.myAmountToday;
-  const value = draft ?? (recorded === null ? '' : String(recorded));
+  const value = draft ?? (recorded === null ? "" : String(recorded));
   const amount = Number(value);
   const valid = Number.isFinite(amount) && amount > 0;
 
@@ -173,7 +214,7 @@ function RecordRow({ view }: { view: GoalView }) {
         </AppText>
         <View style={styles.submit}>
           <GradientButton
-            label={recorded === null ? '오늘 기록' : '수정'}
+            label={recorded === null ? "오늘 기록" : "수정"}
             size="md"
             disabled={!valid}
             loading={record.isPending}
@@ -183,7 +224,10 @@ function RecordRow({ view }: { view: GoalView }) {
       </View>
 
       {recorded !== null && (
-        <Pressable onPress={() => remove.mutate(view.goalId)} disabled={remove.isPending}>
+        <Pressable
+          onPress={() => remove.mutate(view.goalId)}
+          disabled={remove.isPending}
+        >
           <AppText variant="metadata" tone="faint" style={styles.center}>
             오늘 기록 지우기
           </AppText>
@@ -192,7 +236,9 @@ function RecordRow({ view }: { view: GoalView }) {
 
       {record.error && (
         <AppText variant="metadata" tone="stale" style={styles.center}>
-          {record.error instanceof Error ? record.error.message : String(record.error)}
+          {record.error instanceof Error
+            ? record.error.message
+            : String(record.error)}
         </AppText>
       )}
     </View>
@@ -206,16 +252,17 @@ function AddButton({ onPress }: { onPress: () => void }) {
       accessibilityRole="button"
       accessibilityLabel="목표 만들기"
       onPress={onPress}
-      style={({ pressed }) => [styles.add, pressed && { opacity: 0.6 }]}>
+      style={({ pressed }) => [styles.add, pressed && { opacity: 0.6 }]}
+    >
       <AppText variant="cardTitle">+</AppText>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.gridGap },
-  half: { width: '48%', flexGrow: 1 },
-  center: { textAlign: 'center' },
+  grid: { flexDirection: "row", flexWrap: "wrap", gap: spacing.gridGap },
+  half: { width: "48%", flexGrow: 1 },
+  center: { textAlign: "center" },
   footer: {
     marginTop: 18,
     paddingTop: 18,
@@ -223,26 +270,26 @@ const styles = StyleSheet.create({
     borderTopColor: colors.border.hairline,
     gap: 10,
   },
-  inputRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  inputRow: { flexDirection: "row", alignItems: "center", gap: 10 },
   input: {
     flex: 1,
     height: 46,
     borderRadius: radii.button,
     paddingHorizontal: 16,
-    backgroundColor: hexToRgba('#FFFFFF', 0.05),
+    backgroundColor: hexToRgba("#FFFFFF", 0.05),
     borderWidth: 1,
     borderColor: colors.border.hairline,
     color: colors.text.primary,
     fontSize: 19,
-    fontWeight: '800',
+    fontWeight: "800",
   },
   submit: { minWidth: 96 },
   add: {
     width: 38,
     height: 38,
     borderRadius: 19,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     backgroundColor: colors.surface.glass,
     borderWidth: 1,
     borderColor: colors.border.hairlineStrong,

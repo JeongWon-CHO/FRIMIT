@@ -58,12 +58,16 @@ export function formatClock(iso: string, timeZone: string = DEFAULT_TIME_ZONE): 
  */
 export function formatSyncAge(iso: string | null, now: Date = new Date()): string {
   if (!iso) return '아직 동기화 안 됨';
+  return `${formatSince(iso, now)} 동기화`;
+}
 
+/** "방금", "12분 전", "3시간 전", "2일 전". 활동 내역의 시각 라벨. */
+export function formatSince(iso: string, now: Date = new Date()): string {
   const elapsed = Math.floor((now.getTime() - new Date(iso).getTime()) / 1000);
-  if (elapsed < 60) return '방금 동기화';
-  if (elapsed < 3600) return `${Math.floor(elapsed / 60)}분 전 동기화`;
-  if (elapsed < 86400) return `${Math.floor(elapsed / 3600)}시간 전 동기화`;
-  return `${Math.floor(elapsed / 86400)}일 전 동기화`;
+  if (elapsed < 60) return '방금';
+  if (elapsed < 3600) return `${Math.floor(elapsed / 60)}분 전`;
+  if (elapsed < 86400) return `${Math.floor(elapsed / 3600)}시간 전`;
+  return `${Math.floor(elapsed / 86400)}일 전`;
 }
 
 /** "8월 17일". Frimit 일자 라벨(YYYY-MM-DD)을 사람 문장으로 옮긴다. */
