@@ -1,24 +1,36 @@
 import { router } from 'expo-router';
+import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Button } from '@/components/button';
-import { Card } from '@/components/card';
-import { GroupCard } from '@/components/group-card';
-import { Screen } from '@/components/screen';
-import { ThemedText } from '@/components/themed-text';
-import { Spacing } from '@/constants/theme';
-import { useGroupUsages, useMyGroups } from '@/hooks/use-groups';
+import { DraftTile, GroupTile } from '@/components/group-tile';
+import { SharedPoolHero, SyncRow } from '@/components/shared-pool-hero';
+import {
+  AppText,
+  Avatar,
+  EmptyState,
+  GradientButton,
+  ScreenFrame,
+  StatusPill,
+} from '@/components/ui';
+import { colors, spacing } from '@/constants/design-tokens';
+import { useGroupMembers, useGroupUsages, useMyGroups } from '@/hooks/use-groups';
 import { useMyProfile } from '@/hooks/use-profile';
+import { useTrackingState } from '@/hooks/use-tracking';
 import { useUsageSync } from '@/hooks/use-usage-sync';
-import { formatDateKey } from '@/lib/format';
-import { DEFAULT_TIME_ZONE, frimitDateKey } from '@/lib/frimit-day';
+import { DEV_POOL_STATE, devPoolView } from '@/lib/dev-preview';
+import { POOL_VISUALS } from '@/lib/pool-state';
+import { isUsable, requestPermission } from '@/lib/tracking';
+import { buildPoolView, pickHeroGroup } from '@/lib/today';
 
 /**
  * 오늘 화면.
  *
- * 모든 그룹의 공동 풀을 카드로 늘어놓는다(plan.md 75행). 화면이 하는 일의 순서가
- * 중요하다 — **먼저 올리고, 그다음 읽는다**(`useUsageSync`). 반대로 하면 내가 방금
- * 쓴 시간만 빠진 값이 그려진다.
+ * 순서가 중요하다 — **먼저 올리고, 그다음 읽는다**(`useUsageSync`). 반대로 하면
+ * 내가 방금 쓴 시간만 빠진 값이 그려진다. 그 규칙은 훅에 이미 들어 있고 여기서는
+ * 건드리지 않는다.
+ *
+ * 화면의 여덟 모습은 전부 `poolState()` 하나에서 갈린다. 이 파일에 임계값이
+ * 다시 나타나면 안 된다.
  */
 export default function TodayScreen() {
   const profile = useMyProfile();
@@ -26,100 +38,273 @@ export default function TodayScreen() {
   const usages = useGroupUsages(groups.data);
   const sync = useUsageSync();
 
+  // 개발용 상태 미리보기가 켜져 있으면 그룹이 없어도 히어로를 그린다.
+  const devPreview = __DEV__ && DEV_POOL_STATE ? DEV_POOL_STATE : null;
+
+  const [preferredGroupId, setPreferredGroupId] = useState<string | null>(null);
+  const hero = pickHeroGroup(groups.data ?? [], preferredGroupId);
+  const members = useGroupMembers(hero?.id);
+  const tracking = useTrackingState(hero?.id);
+
+  const heroView = useMemo(
+    () =>
+      // 개발용 상태 미리보기. `dev-preview.ts`를 한 줄 고치면 여덟 상태를 돈다.
+      devPreview
+        ? devPoolView(devPreview)
+        : hero
+        ? buildPoolView(hero, usages.byGroupId.get(hero.id), members.data, {
+            permission: isUsable(tracking.permission),
+            myProfileId: profile.data?.id,
+          })
+        : null,
+    [devPreview, hero, usages.byGroupId, members.data, tracking.permission, profile.data?.id]
+  );
+
+  const others = (groups.data ?? []).filter((group) => group.id !== hero?.id);
+
   const refresh = async () => {
     await sync.sync();
     await groups.refetch();
   };
 
-  return (
-    <Screen onRefresh={refresh} refreshing={sync.isSyncing || usages.isFetching}>
-      <View style={styles.header}>
-        <View style={styles.headerTop}>
-          <ThemedText type="label" themeColor="accent">
-            오늘
-          </ThemedText>
-          <ThemedText type="code" themeColor="textSecondary">
-            {sync.isSyncing ? '동기화 중…' : (sync.lastError ?? sync.lastMessage ?? '')}
-          </ThemedText>
-        </View>
+  const visual = heroView ? POOL_VISUALS[heroView.state] : POOL_VISUALS.normal;
 
-        <ThemedText type="subtitle">{formatDateKey(frimitDateKey(new Date(), DEFAULT_TIME_ZONE))}</ThemedText>
-        <ThemedText type="small" themeColor="textSecondary">
-          하루는 오전 6시에 새로 시작해요
-        </ThemedText>
-      </View>
+  return (
+    <ScreenFrame
+      texture={visual.texture}
+      ambient={
+        visual.ambient
+          ? { ...visual.ambient, x: heroView?.state === 'fresh' ? 330 : 60, y: 120 }
+          : null
+      }
+      onRefresh={refresh}
+      refreshing={sync.isSyncing || usages.isFetching}>
+      <Header
+        nickname={profile.data?.nickname}
+        avatarKey={profile.data?.avatar_key}
+        profileId={profile.data?.id}
+        view={heroView}
+      />
 
       {groups.isPending ? (
-        <ThemedText type="small" themeColor="textSecondary">
-          그룹을 읽고 있어요
-        </ThemedText>
+        <HeroSkeleton />
       ) : groups.error ? (
-        <FailureCard
-          message={groups.error instanceof Error ? groups.error.message : String(groups.error)}
-          onRetry={() => groups.refetch()}
+        <EmptyState
+          title="공동 풀을 읽지 못했어요"
+          body={groups.error instanceof Error ? groups.error.message : String(groups.error)}
+          action={<GradientButton label="다시 시도" size="md" onPress={() => groups.refetch()} />}
         />
-      ) : groups.data.length === 0 ? (
-        <EmptyGroups />
+      ) : !hero && !heroView ? (
+        <EmptyState
+          title="아직 그룹이 없어요"
+          body="친구 한 명만 있으면 공동 시간을 시작할 수 있어요."
+          action={<GradientButton label="그룹 만들기" size="md" onPress={() => router.push('/group')} />}
+        />
+      ) : !heroView ? (
+        <HeroSkeleton />
       ) : (
-        groups.data.map((group) => (
-          <GroupCard
-            key={group.id}
-            group={group}
-            usage={usages.byGroupId.get(group.id)}
-            myProfileId={profile.data?.id}
-            // 시작 대기 카드만 갈 곳이 있다. 활성 그룹의 상세 화면은 아직 없으므로
-            // 눌러도 아무 일 없는 카드를 만들지 않는다.
-            onPress={
-              group.status === 'draft'
-                ? () => router.push({ pathname: '/ready', params: { groupId: group.id } })
-                : undefined
-            }
-          />
-        ))
+        <SharedPoolHero
+          view={heroView}
+          onPress={() => router.push({ pathname: '/group/[id]', params: { id: heroView.groupId } })}
+          syncRow={
+            heroView.stale && heroView.staleMembers[0] ? (
+              <SyncRow member={heroView.staleMembers[0]} />
+            ) : undefined
+          }
+          permissionCta={
+            heroView.state === 'permissionOff' ? (
+              <PermissionCTA onPrimary={() => requestPermission().finally(tracking.refresh)} />
+            ) : undefined
+          }
+        />
       )}
-    </Screen>
+
+      {others.length > 0 && (
+        <>
+          <View style={styles.sectionTitle}>
+            <AppText variant="sectionTitle">Your groups</AppText>
+            <AppText variant="metadata" tone="metadata">
+              {others.length}
+            </AppText>
+          </View>
+
+          <View style={styles.grid}>
+            {others.map((group, index) => {
+              // 홀수 번째 남은 카드는 두 칸을 차지한다. 그리드에 빈 칸이 남으면
+              // 화면이 미완성으로 보인다.
+              const wide = index === others.length - 1 && others.length % 2 === 1;
+              const view = buildPoolView(group, usages.byGroupId.get(group.id), undefined, {
+                permission: true,
+                myProfileId: profile.data?.id,
+              });
+
+              const press = () =>
+                group.status === 'draft'
+                  ? router.push({ pathname: '/ready', params: { groupId: group.id } })
+                  : setPreferredGroupId(group.id);
+
+              return (
+                <View key={group.id} style={wide ? styles.wide : styles.half}>
+                  {group.status === 'draft' || !view ? (
+                    <DraftTile name={group.name} wide={wide} onPress={press} />
+                  ) : (
+                    <GroupTile view={view} wide={wide} onPress={press} />
+                  )}
+                </View>
+              );
+            })}
+          </View>
+        </>
+      )}
+    </ScreenFrame>
   );
 }
 
 /**
- * 그룹이 없을 때.
+ * 인사와 나.
  *
- * 빈 화면은 분위기를 잡는 자리가 아니라 다음 행동을 부르는 자리다. 온보딩을 마친
- * 사람이 마지막 그룹에서 탈퇴하면 여기로 오게 된다.
+ * 문구는 상태를 따라간다 — 한도를 다 쓴 날과 넘긴 날에는 인사 대신 사실을 말한다.
+ * 다만 어느 쪽도 비난이 아니다.
  */
-function EmptyGroups() {
+function Header({
+  nickname,
+  avatarKey,
+  profileId,
+  view,
+}: {
+  nickname?: string;
+  avatarKey?: string;
+  profileId?: string;
+  view: ReturnType<typeof buildPoolView>;
+}) {
+  const greeting = greetingFor(new Date());
+  const off = view?.state === 'permissionOff';
+
+  const [title, subline] =
+    view?.state === 'over'
+      ? [`${view.headline.replace(' over', '')} 초과했어요`, '내일은 조금 더 여유롭게']
+      : view?.state === 'complete'
+        ? ['오늘 몫은 다 썼어요', '내일 다시 채워져요.']
+        : off
+          ? [`${greeting}, ${nickname ?? '친구'}`, '아직 우리 시간에 참여하지 못했어요']
+          : view?.state === 'fresh'
+            ? [`${greeting}, ${nickname ?? '친구'}`, '화면 밖의 하루가 널 기다리고 있어']
+            : view?.state === 'tightening'
+              ? ['우리 시간이 조금 남았어요', '같이 아껴봐요.']
+              : view?.state === 'approaching'
+                ? ['오늘 남은 시간이 얼마 없어요', '같이 아껴봐요.']
+                : [
+                    `${greeting}, ${nickname ?? '친구'}`,
+                    "우리의 일상을 위한 시간도 남겨두자",
+                  ];
+
   return (
-    <Card>
-      <ThemedText type="metric">아직 그룹이 없어요</ThemedText>
-      <ThemedText type="small" themeColor="textSecondary">
-        공동 풀은 혼자서는 만들 수 없어요. 그룹을 만들어 친구에게 초대 코드를 보내거나, 받은
-        코드로 참여해 보세요.
-      </ThemedText>
-      <Button label="그룹 만들기" onPress={() => router.push('/group')} />
-    </Card>
+    <View style={styles.header}>
+      <View style={styles.headerText}>
+        <AppText variant="greeting">{title}</AppText>
+        <AppText variant="body" tone="muted">
+          {subline}
+        </AppText>
+      </View>
+
+      {/* 권한이 꺼져 있으면 내 아바타도 색을 잃는다. 나도 아직 이 시간의 일부가 아니다. */}
+      {off ? (
+        <View style={styles.flatAvatar} />
+      ) : (
+        <Avatar
+          id={profileId ?? 'me'}
+          name={nickname}
+          emoji={avatarKey ? undefined : undefined}
+          size={44}
+          ring="activity"
+        />
+      )}
+    </View>
   );
 }
 
-function FailureCard({ message, onRetry }: { message: string; onRetry: () => void }) {
+/**
+ * 권한을 되찾는 자리.
+ *
+ * 이 버튼의 그라데이션이 권한 꺼짐 화면에서 **유일하게 채도 있는 요소**다.
+ * 게이지는 회색으로 남는다.
+ */
+function PermissionCTA({ onPrimary }: { onPrimary: () => void }) {
   return (
-    <Card>
-      <ThemedText type="metric">공동 풀을 읽지 못했어요</ThemedText>
-      <ThemedText type="small" themeColor="textSecondary">
-        {message}
-      </ThemedText>
-      <Button label="다시 시도" variant="quiet" onPress={onRetry} />
-    </Card>
+    <View style={styles.cta}>
+      <AppText variant="body" tone="muted" style={styles.ctaBody}>
+        권한을 켜면 내 사용 시간이 우리 공동 시간에 합산돼요.
+      </AppText>
+      <GradientButton label="Screen Time 권한 켜기" size="md" onPress={onPrimary} />
+    </View>
   );
+}
+
+function HeroSkeleton() {
+  return (
+    <View style={styles.skeleton}>
+      <StatusPill label="읽는 중" />
+      <View style={styles.skeletonRing} />
+    </View>
+  );
+}
+
+function greetingFor(now: Date): string {
+  const hour = now.getHours();
+  if (hour < 12) return 'Good morning';
+  if (hour < 18) return 'Good afternoon';
+  return 'Good evening';
 }
 
 const styles = StyleSheet.create({
   header: {
-    gap: Spacing.one,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    paddingHorizontal: 8,
+    gap: 12,
+    // 인사와 히어로가 붙으면 큰 숫자가 제목의 일부처럼 읽힌다. 둘은 다른
+    // 층위라 사이를 벌려 둔다.
+    marginBottom: 10,
   },
-  headerTop: {
+  headerText: { gap: 5, flexShrink: 1 },
+  flatAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.10)',
+  },
+  sectionTitle: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: Spacing.two,
+    paddingHorizontal: 6,
+    paddingTop: 2,
+  },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.gridGap,
+  },
+  half: { width: '48%', flexGrow: 1 },
+  wide: { width: '100%' },
+  cta: { gap: 12, paddingTop: 12 },
+  ctaBody: { lineHeight: 21 },
+  skeleton: {
+    height: 290,
+    borderRadius: 32,
+    backgroundColor: colors.surface.cardNeutral,
+    borderWidth: 1,
+    borderColor: colors.border.hairline,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 16,
+  },
+  skeletonRing: {
+    width: 162,
+    height: 162,
+    borderRadius: 81,
+    borderWidth: 15,
+    borderColor: 'rgba(255,255,255,0.055)',
   },
 });

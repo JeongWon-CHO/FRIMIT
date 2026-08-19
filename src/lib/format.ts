@@ -82,3 +82,43 @@ export function formatUntilReset(periodEnd: string, now: Date = new Date()): str
   const remaining = Math.max(0, Math.floor((new Date(periodEnd).getTime() - now.getTime()) / 1000));
   return `${formatDuration(remaining)} 후 초기화`;
 }
+
+/**
+ * 디자인 표기의 시간 — `"3h 42m"`, `"48m"`, `"8h"`.
+ *
+ * 위의 한국어 서식과 나란히 두는 이유는 둘이 쓰이는 자리가 다르기 때문이다.
+ * 큰 숫자와 라벨은 승인된 디자인 카피를 따르고(핸드오프: 카피는 최종),
+ * 문장 안에 들어가는 시간은 한국어 서식을 그대로 쓴다. **한 화면에서 두 표기를
+ * 섞지 않는 것**이 규칙이다 — 히어로가 "3h 42m"이면 그 화면의 시간은 전부 그 꼴이다.
+ */
+export function formatShort(seconds: number): string {
+  const safe = Math.max(0, Math.floor(seconds));
+  const hours = Math.floor(safe / 3600);
+  const minutes = Math.floor((safe % 3600) / 60);
+
+  if (hours > 0 && minutes > 0) return `${hours}h ${String(minutes).padStart(2, '0')}m`;
+  if (hours > 0) return `${hours}h`;
+  return `${minutes}m`;
+}
+
+/**
+ * 히어로의 큰 숫자.
+ *
+ * 잔여는 0에서 멈추고 초과분이 따로 오른다 — 한도를 넘겨도 차단하지 않는다는
+ * 규칙이 서버 계산에 이미 들어 있고, 화면은 그 두 값을 다르게 부른다.
+ */
+export function formatPoolHeadline(remainingSeconds: number, overSeconds: number): string {
+  if (overSeconds > 0) return `${formatShort(overSeconds)} over`;
+  return formatShort(remainingSeconds);
+}
+
+/** `"54% USED"`. 늦은 멤버가 있으면 `~`가 붙는다 — 값이 더 낮을 수 있다는 뜻. */
+export function formatUsedPercent(
+  usedSeconds: number,
+  limitSeconds: number,
+  stale = false
+): string {
+  if (limitSeconds <= 0) return 'NO DATA';
+  const percent = Math.round((usedSeconds / limitSeconds) * 100);
+  return `${stale ? '~' : ''}${percent}% USED`;
+}

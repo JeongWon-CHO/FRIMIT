@@ -1,24 +1,29 @@
-import { Card } from '@/components/card';
-import { Screen } from '@/components/screen';
-import { ThemedText } from '@/components/themed-text';
+import { AppText, EmptyState, ScreenFrame } from '@/components/ui';
+import { colors } from '@/constants/design-tokens';
+
+import { TitleRow } from '@/components/title-row';
 
 /**
- * 목표 탭 — 자리표시자.
+ * 목표 탭.
  *
- * plan.md 6단계(공동 목표)에서 채운다. 지금 여기 있는 이유는 탭 구조를 먼저
- * 확정하기 위해서다. 채워질 것을 적어 두는 것이 "준비 중"보다 정직하다.
+ * 껍데기만 새 디자인이고 안은 비어 있다 — **서버에 `goals` 테이블이 없다.**
+ * 목표 카드, 기한, 멤버별 진행률은 전부 그릴 데이터가 없으므로 화면을 지어내는
+ * 대신 무엇이 여기 들어올지 적어 둔다. 스키마는 이번 범위 밖이다.
  */
 export default function GoalsScreen() {
   return (
-    <Screen>
-      <ThemedText type="subtitle">목표</ThemedText>
-      <Card>
-        <ThemedText type="metric">아직 만들지 않았어요</ThemedText>
-        <ThemedText type="small" themeColor="textSecondary">
-          그룹 하나에 공동 목표 하나를 걸고, 7·14·30일 중에 기간을 고르는 화면이 여기에 들어와요.
-          진행률은 각자의 달성률을 100%에서 끊어 평균한 값이에요.
-        </ThemedText>
-      </Card>
-    </Screen>
+    <ScreenFrame
+      ambient={{ color: colors.accent.indigo, size: 380, opacity: 0.26, x: 60, y: 140 }}>
+      <TitleRow title="Goals" />
+
+      <EmptyState
+        title="아직 목표가 없어요"
+        body="그룹 하나에 공동 목표 하나를 걸고 7·14·30일 중에 기간을 골라요. 진행률은 각자의 달성률을 100%에서 끊어 평균한 값이에요."
+      />
+
+      <AppText variant="metadata" tone="faint" style={{ textAlign: 'center' }}>
+        곧 만들 수 있어요
+      </AppText>
+    </ScreenFrame>
   );
 }

@@ -3,6 +3,9 @@ import { describe, expect, it } from 'vitest';
 import {
   formatDateKey,
   formatDuration,
+  formatPoolHeadline,
+  formatShort,
+  formatUsedPercent,
   formatSyncAge,
   formatUntilReset,
   splitDuration,
@@ -76,5 +79,49 @@ describe('formatDateKey', () => {
   it('0을 떼고 사람 문장으로 옮긴다', () => {
     expect(formatDateKey('2026-08-17')).toBe('8월 17일');
     expect(formatDateKey('2026-01-01')).toBe('1월 1일');
+  });
+});
+
+describe('formatShort · 디자인 표기', () => {
+  it('시와 분을 함께 쓸 때 분을 두 자리로 맞춘다 — 숫자 폭이 흔들리지 않게', () => {
+    expect(formatShort(3 * 3600 + 42 * 60)).toBe('3h 42m');
+    expect(formatShort(3 * 3600 + 4 * 60)).toBe('3h 04m');
+  });
+
+  it('한 시간 미만이면 시를 떨어뜨린다', () => {
+    expect(formatShort(48 * 60)).toBe('48m');
+    expect(formatShort(0)).toBe('0m');
+  });
+
+  it('분이 0이면 시만 남긴다', () => {
+    expect(formatShort(8 * 3600)).toBe('8h');
+  });
+
+  it('음수는 0으로 본다', () => {
+    expect(formatShort(-100)).toBe('0m');
+  });
+});
+
+describe('formatPoolHeadline', () => {
+  it('평소에는 잔여를 보여준다', () => {
+    expect(formatPoolHeadline(3 * 3600 + 42 * 60, 0)).toBe('3h 42m');
+  });
+
+  it('초과하면 초과분을 보여준다 — 잔여는 0에서 멈춰 있다', () => {
+    expect(formatPoolHeadline(0, 42 * 60)).toBe('42m over');
+  });
+});
+
+describe('formatUsedPercent', () => {
+  it('반올림한다', () => {
+    expect(formatUsedPercent(15552, 28800)).toBe('54% USED');
+  });
+
+  it('늦은 멤버가 있으면 ~를 붙인다', () => {
+    expect(formatUsedPercent(15552, 28800, true)).toBe('~54% USED');
+  });
+
+  it('한도가 없으면 퍼센트가 성립하지 않는다', () => {
+    expect(formatUsedPercent(100, 0)).toBe('NO DATA');
   });
 });

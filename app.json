@@ -6,8 +6,8 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "frimit",
-    "userInterfaceStyle": "automatic",
-    "primaryColor": "#208AEF",
+    "userInterfaceStyle": "dark",
+    "primaryColor": "#7C4DFF",
     "ios": {
       "icon": "./assets/expo.icon",
       "bundleIdentifier": "com.frimit.app",
@@ -28,7 +28,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
+          "backgroundColor": "#050507",
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }
@@ -43,6 +43,7 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "backgroundColor": "#050507"
   }
 }
