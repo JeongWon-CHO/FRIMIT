@@ -34,7 +34,9 @@ export function GradientButton({
   size = 'lg',
 }: ButtonProps) {
   const inactive = disabled || loading;
-  const padding = size === 'lg' ? 16 : 14;
+  // md는 12가 바닥이다. 글자 lineHeight가 20이라 12+20+12 = 44 — 아래의 minHeight와
+  // 정확히 같은 값이고, 더 줄여도 minHeight에 걸려 아무 일도 일어나지 않는다.
+  const padding = size === 'lg' ? 16 : 12;
 
   if (variant === 'tertiary') {
     return (
