@@ -182,20 +182,20 @@ function Header({
 
   const [title, subline] =
     view?.state === 'over'
-      ? [`${view.headline.replace(' over', '')} 초과했어요`, '내일은 조금 더 여유롭게.']
+      ? [`${view.headline.replace(' over', '')} 초과했어요`, '내일은 조금 더 여유롭게']
       : view?.state === 'complete'
         ? ['오늘 몫은 다 썼어요', '내일 다시 채워져요.']
         : off
-          ? [`${greeting}, ${nickname ?? '친구'}`, '아직 우리 시간에 참여하지 못했어요.']
+          ? [`${greeting}, ${nickname ?? '친구'}`, '아직 우리 시간에 참여하지 못했어요']
           : view?.state === 'fresh'
-            ? [`${greeting}, ${nickname ?? '친구'}`, 'A whole day of real life ahead.']
+            ? [`${greeting}, ${nickname ?? '친구'}`, '화면 밖의 하루가 널 기다리고 있어']
             : view?.state === 'tightening'
               ? ['우리 시간이 조금 남았어요', '같이 아껴봐요.']
               : view?.state === 'approaching'
                 ? ['오늘 남은 시간이 얼마 없어요', '같이 아껴봐요.']
                 : [
                     `${greeting}, ${nickname ?? '친구'}`,
-                    "Let's keep some time for real life.",
+                    "우리의 일상을 위한 시간도 남겨두자",
                   ];
 
   return (
