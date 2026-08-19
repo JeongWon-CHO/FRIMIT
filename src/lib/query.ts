@@ -29,6 +29,7 @@ export const queryKeys = {
   myGroups: ['groups', 'mine'] as const,
   groupMembers: (groupId: string) => ['groups', groupId, 'members'] as const,
   groupUsage: (groupId: string) => ['groups', groupId, 'usage'] as const,
+  groupGoal: (groupId: string) => ['groups', groupId, 'goal'] as const,
   /** 사용량 관련 전부. 동기화 직후 이 접두사로 한 번에 무효화한다. */
   allGroups: ['groups'] as const,
 };

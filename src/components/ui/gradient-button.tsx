@@ -59,7 +59,7 @@ export function GradientButton({
       onPress={onPress}
       style={({ pressed }) => [
         styles.box,
-        { paddingVertical: padding },
+        { paddingVertical: padding, paddingHorizontal: padding + 8 },
         variant === 'primary' ? styles.primaryHalo : styles.secondary,
         pressed && styles.dim,
         inactive && styles.disabled,
@@ -91,6 +91,12 @@ export function ButtonStack({ children }: { children: React.ReactNode }) {
   return <View style={styles.stack}>{children}</View>;
 }
 
+/*
+ * 좌우 패딩은 위아래와 함께 인라인으로 준다(size에 따라 갈리기 때문이다).
+ * 이 버튼은 대개 전체 폭으로 늘어나 있어서 좌우가 없어도 오래 티가 나지 않았는데,
+ * `EmptyState`처럼 가운데 정렬된 자리에 놓이면 글자 폭까지 쪼그라들어 라벨이
+ * 줄바꿈된다.
+ */
 const styles = StyleSheet.create({
   box: {
     borderRadius: radii.button,

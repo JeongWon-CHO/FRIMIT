@@ -740,6 +740,156 @@ rpc 4 latest_rule "{\"target_group_id\":\"$GROUP_B\"}"
 check "최신 규칙 헬퍼는 미노출"            403 "$CURL_CODE"
 
 # ============================================================================
+section "공동 목표 — 만들기"
+#
+# GROUP_B를 그대로 쓴다. 지금 멤버는 t4(관리자)·t5·t6·t7·t8 다섯이고, t7·t8은
+# 다음 오전 6시부터 반영된다. 목표도 같은 경계에서 시작하므로 **다섯 명 전부**가
+# 참여자가 되어야 한다 — 그게 "시작 시점의 멤버로 고정"의 실제 의미다.
+# ============================================================================
+
+rpc 9 create_goal "{\"target_group_id\":\"$GROUP_B\",\"goal_title\":\"침입\",\"target_amount\":5,\"goal_unit\":\"번\",\"duration_days\":7}"
+check "비멤버는 목표 생성 불가"            not_a_member "$(hint)"
+
+svc GET "groups?admin_id=eq.$(uid 9)&status=eq.draft&select=id&limit=1"
+DRAFT_GROUP=$(jq -r '.[0].id' <<< "$CURL_BODY")
+rpc 9 create_goal "{\"target_group_id\":\"$DRAFT_GROUP\",\"goal_title\":\"시작전\",\"target_amount\":5,\"goal_unit\":\"번\",\"duration_days\":7}"
+check "시작 전 그룹에는 목표 불가"         group_not_active "$(hint)"
+
+rpc 4 create_goal "{\"target_group_id\":\"$GROUP_B\",\"goal_title\":\"운동\",\"target_amount\":5,\"goal_unit\":\"번\",\"duration_days\":10}"
+check "7·14·30일 아닌 기간 거부"           invalid_duration "$(hint)"
+rpc 4 create_goal "{\"target_group_id\":\"$GROUP_B\",\"goal_title\":\"운동\",\"target_amount\":0,\"goal_unit\":\"번\",\"duration_days\":7}"
+check "0 이하의 목표량 거부"               invalid_target_amount "$(hint)"
+rpc 4 create_goal "{\"target_group_id\":\"$GROUP_B\",\"goal_title\":\"   \",\"target_amount\":5,\"goal_unit\":\"번\",\"duration_days\":7}"
+check "공백뿐인 이름 거부"                 invalid_title "$(hint)"
+rpc 4 create_goal "{\"target_group_id\":\"$GROUP_B\",\"goal_title\":\"운동\",\"target_amount\":5,\"goal_unit\":\"\",\"duration_days\":7}"
+check "빈 단위 거부"                       invalid_unit "$(hint)"
+
+rpc 4 create_goal "{\"target_group_id\":\"$GROUP_B\",\"goal_title\":\"이번 주 5번 운동하기\",\"target_amount\":5,\"goal_unit\":\"번\",\"duration_days\":7}"
+GOAL=$(field .goal.id)
+STARTS_AT=$(field .goal.starts_at)
+check "목표 생성 성공"                     "이번 주 5번 운동하기" "$(field .goal.title)"
+check "아직 시작하지 않음"                 false "$(field .started)"
+check "진행률 0"                           0 "$(jq -r '.group_progress * 100 | round' <<< "$CURL_BODY")"
+check "참여자 5명 (내일 오는 t7·t8 포함)"  5 "$(jq -r '.participants | length' <<< "$CURL_BODY")"
+check "아무도 아직 적지 않음"              "" "$(field .my_entry)"
+
+rpc 4 frimit_next_period_start "{\"at_time\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",\"time_zone\":\"Asia/Seoul\",\"reset_hour\":6}"
+check "시작은 다음 오전 6시"               "$(jq -r . <<< "$CURL_BODY")" "$STARTS_AT"
+svc GET "goals?id=eq.$GOAL&select=ends_at"
+check "7일 뒤 오전 6시에 끝남"             "$(shift_days "$STARTS_AT" 7)" "$(jq -r '.[0].ends_at' <<< "$CURL_BODY")"
+
+rpc 5 create_goal "{\"target_group_id\":\"$GROUP_B\",\"goal_title\":\"두 번째\",\"target_amount\":5,\"goal_unit\":\"번\",\"duration_days\":7}"
+check "그룹당 살아 있는 목표는 하나"       goal_already_exists "$(hint)"
+
+rpc 4 record_goal_entry "{\"target_goal_id\":\"$GOAL\",\"entry_amount\":1}"
+check "시작 전에는 기록 불가"              goal_not_started "$(hint)"
+
+# ============================================================================
+section "공동 목표 — 기록"
+#
+# 시작 시각을 어제로 당겨 진행 중으로 만든다. 하루를 기다릴 수는 없고, 이
+# 스키마에는 목표를 시작시켜 줄 예약 작업이 없다(시각 비교가 전부다).
+# ============================================================================
+
+svc PATCH "goals?id=eq.$GOAL" "{\"starts_at\":\"$(shift_days "$STARTS_AT" -2)\"}"
+
+rpc 9 record_goal_entry "{\"target_goal_id\":\"$GOAL\",\"entry_amount\":1}"
+check "참여자가 아니면 기록 불가"          not_a_participant "$(hint)"
+rpc 4 record_goal_entry "{\"target_goal_id\":\"$GOAL\",\"entry_amount\":0}"
+check "0 이하의 기록 거부"                 invalid_amount "$(hint)"
+rpc 4 record_goal_entry "{\"target_goal_id\":\"$GOAL\",\"entry_amount\":1,\"entry_note\":\"$(printf 'ㄱ%.0s' $(seq 41))\"}"
+check "41자 메모 거부"                     note_too_long "$(hint)"
+
+rpc 4 record_goal_entry "{\"target_goal_id\":\"$GOAL\",\"entry_amount\":3,\"entry_note\":\"아침 러닝\"}"
+check "기록 성공"                          3 "$(jq -r '.my_entry.amount * 1' <<< "$CURL_BODY")"
+check "메모도 함께"                        "아침 러닝" "$(field .my_entry.note)"
+check "내 달성률 60%"                      60 "$(jq -r '[.participants[] | select(.ratio > 0)][0].ratio * 100 | round' <<< "$CURL_BODY")"
+check "그룹 진행률은 다섯 명의 평균 12%"   12 "$(jq -r '.group_progress * 100 | round' <<< "$CURL_BODY")"
+
+rpc 4 record_goal_entry "{\"target_goal_id\":\"$GOAL\",\"entry_amount\":2}"
+check "같은 날 다시 적으면 덮어쓴다"       2 "$(jq -r '.my_entry.amount * 1' <<< "$CURL_BODY")"
+check "메모도 함께 지워짐"                 "" "$(field .my_entry.note)"
+
+# 한 사람이 열 배를 해도 나머지의 0을 메울 수 없다. 자르고 나서 평균이다.
+rpc 4 record_goal_entry "{\"target_goal_id\":\"$GOAL\",\"entry_amount\":50}"
+check "개인 달성률은 100%에서 잘린다"      100 "$(jq -r '[.participants[] | select(.ratio > 0)][0].ratio * 100 | round' <<< "$CURL_BODY")"
+check "그래도 그룹은 20%"                  20 "$(jq -r '.group_progress * 100 | round' <<< "$CURL_BODY")"
+
+rpc 5 record_goal_entry "{\"target_goal_id\":\"$GOAL\",\"entry_amount\":5}"
+check "둘이 채우면 40%"                    40 "$(jq -r '.group_progress * 100 | round' <<< "$CURL_BODY")"
+
+rpc 6 current_goal "{\"target_group_id\":\"$GROUP_B\"}"
+check "남의 기록은 내 칸에 안 들어옴"      "" "$(field .my_entry)"
+check "진행률은 누가 보든 같다"            40 "$(jq -r '.group_progress * 100 | round' <<< "$CURL_BODY")"
+
+rpc 5 delete_goal_entry "{\"target_goal_id\":\"$GOAL\"}"
+check "오늘 기록 삭제"                     "" "$(field .my_entry)"
+check "삭제하면 진행률도 되돌아감"         20 "$(jq -r '.group_progress * 100 | round' <<< "$CURL_BODY")"
+
+svc GET "goal_entries?goal_id=eq.$GOAL&select=date_key,amount"
+check "하루에 한 사람 한 줄"               1 "$(jq -r 'length' <<< "$CURL_BODY")"
+rpc 4 frimit_date_key "{\"at_time\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",\"time_zone\":\"Asia/Seoul\",\"reset_hour\":6}"
+DATE_KEY=$(jq -r . <<< "$CURL_BODY")
+svc GET "goal_entries?goal_id=eq.$GOAL&select=date_key"
+check "날짜는 자정이 아니라 오전 6시로 잘림" "$DATE_KEY" "$(jq -r '.[0].date_key' <<< "$CURL_BODY")"
+
+# ============================================================================
+section "공동 목표 — 끝, 취소, 조회"
+# ============================================================================
+
+rpc 4 current_goal "{\"target_group_id\":\"$GROUP_B\"}"
+check "진행 중인 목표 조회"                "$GOAL" "$(field .goal.id)"
+check "조회에도 시작 여부가 실린다"        true "$(field .started)"
+rpc 9 current_goal "{\"target_group_id\":\"$GROUP_B\"}"
+check "비멤버는 조회 불가"                 not_a_member "$(hint)"
+
+svc PATCH "goals?id=eq.$GOAL" "{\"ends_at\":\"$(shift_days "$STARTS_AT" -1)\"}"
+rpc 4 record_goal_entry "{\"target_goal_id\":\"$GOAL\",\"entry_amount\":1}"
+check "끝난 목표에는 기록 불가"            goal_ended "$(hint)"
+rpc 4 current_goal "{\"target_group_id\":\"$GROUP_B\"}"
+check "끝난 목표는 조회에서 빠짐"          "" "$(field .goal.id)"
+
+rpc 5 create_goal "{\"target_group_id\":\"$GROUP_B\",\"goal_title\":\"물 마시기\",\"target_amount\":2,\"goal_unit\":\"L\",\"duration_days\":30}"
+GOAL2=$(field .goal.id)
+check "끝난 목표는 자리를 막지 않는다"     "물 마시기" "$(field .goal.title)"
+
+rpc 6 cancel_goal "{\"target_goal_id\":\"$GOAL2\"}"
+check "만든 사람도 관리자도 아니면 취소 불가" not_goal_owner "$(hint)"
+rpc 4 cancel_goal "{\"target_goal_id\":\"$GOAL2\"}"
+check "관리자는 취소 가능"                 yes "$([ -n "$(field .goal.cancelled_at)" ] && echo yes || echo no)"
+rpc 4 current_goal "{\"target_group_id\":\"$GROUP_B\"}"
+check "취소된 목표도 조회에서 빠짐"        "" "$(field .goal.id)"
+rpc 4 record_goal_entry "{\"target_goal_id\":\"$GOAL2\",\"entry_amount\":1}"
+check "취소된 목표에는 기록 불가"          goal_cancelled "$(hint)"
+
+# ============================================================================
+section "공동 목표 — 직접 쓰기와 노출 범위"
+# ============================================================================
+
+post 4 goals "{\"group_id\":\"$GROUP_B\",\"created_by\":\"$(uid 4)\",\"title\":\"몰래\",\"target_amount\":1,\"unit\":\"번\",\"duration_days\":7,\"starts_at\":\"2030-01-01T00:00:00Z\",\"ends_at\":\"2030-01-08T00:00:00Z\"}"
+check "목표 직접 insert 차단"              403 "$CURL_CODE"
+post 4 goal_participants "{\"goal_id\":\"$GOAL\",\"profile_id\":\"$(uid 9)\"}"
+check "참여자 직접 추가 차단"              403 "$CURL_CODE"
+post 4 goal_entries "{\"goal_id\":\"$GOAL\",\"profile_id\":\"$(uid 4)\",\"amount\":99,\"date_key\":\"2020-01-01\"}"
+check "기록 직접 insert 차단"              403 "$CURL_CODE"
+patch 4 "goals?id=eq.$GOAL" '{"target_amount":1}'
+check "목표량 직접 수정 차단"              403 "$CURL_CODE"
+patch 4 "goal_entries?goal_id=eq.$GOAL" '{"amount":999}'
+check "기록 직접 수정 차단"                403 "$CURL_CODE"
+
+call GET "$SB_URL/rest/v1/goals?group_id=eq.$GROUP_B&select=id" "$(jwt 5)" "$SB_ANON"
+check "멤버는 목표를 봄"                   yes "$([ "$(jq -r 'length' <<< "$CURL_BODY")" -gt 0 ] && echo yes || echo no)"
+call GET "$SB_URL/rest/v1/goals?select=id" "$(jwt 9)" "$SB_ANON"
+check "비멤버에게는 보이지 않음"           0 "$(jq -r 'length' <<< "$CURL_BODY")"
+call GET "$SB_URL/rest/v1/goal_entries?select=id" "$(jwt 9)" "$SB_ANON"
+check "남의 기록도 비멤버에게는 안 보임"   0 "$(jq -r 'length' <<< "$CURL_BODY")"
+
+rpc 4 goal_snapshot "{\"target_goal_id\":\"$GOAL\",\"viewer_id\":\"$(uid 4)\"}"
+check "목표 스냅샷 헬퍼는 미노출"          403 "$CURL_CODE"
+rpc 4 live_goal "{\"target_group_id\":\"$GROUP_B\"}"
+check "살아 있는 목표 헬퍼는 미노출"       403 "$CURL_CODE"
+
+# ============================================================================
 printf '\n'
 # ${VAR} 형태로 감쌀 것. `$PASS개`처럼 쓰면 bash가 한글 바이트까지 변수명으로 읽는다.
 if [ "$FAIL" -eq 0 ]; then
