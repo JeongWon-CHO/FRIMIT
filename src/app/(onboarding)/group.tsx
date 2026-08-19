@@ -59,7 +59,7 @@ export default function CreateGroupScreen() {
                 {create.error instanceof Error ? create.error.message : String(create.error)}
               </AppText>
             )}
-            <GradientButton label="Create group" onPress={submit} loading={create.isPending} />
+            <GradientButton label="그룹 만들기" onPress={submit} loading={create.isPending} />
           </>
         )
       }>

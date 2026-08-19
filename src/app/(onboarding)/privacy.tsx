@@ -16,7 +16,7 @@ export default function PrivacyIntroScreen() {
   return (
     <OnboardingFrame
       texture="calm"
-      footer={<GradientButton label="Continue" onPress={() => router.push('/permission')} />}>
+      footer={<GradientButton label="다음" onPress={() => router.push('/permission')} />}>
       <View style={styles.top}>
         <StepProgress total={3} current={3} />
 

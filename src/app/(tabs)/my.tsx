@@ -85,10 +85,6 @@ export default function MyScreen() {
         </Surface>
       )}
 
-      <AppText variant="eyebrow" tone="faint" style={styles.sectionTitle}>
-        MY GROUPS
-      </AppText>
-
       <View style={styles.rows}>
         {(groups.data ?? []).map((group) => {
           const usage = usages.byGroupId.get(group.id);
@@ -205,7 +201,6 @@ const styles = StyleSheet.create({
   statBottom: { gap: 2 },
   statValue: { fontSize: 26, lineHeight: 30 },
   permission: { gap: 10 },
-  sectionTitle: { paddingHorizontal: 6, paddingTop: 4 },
   rows: { gap: 8 },
   row: {
     flexDirection: 'row',

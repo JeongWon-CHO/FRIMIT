@@ -43,7 +43,7 @@ export default function InviteFriendsScreen() {
       ambient={{ color: colors.accent.violet, size: 400, opacity: 0.32, x: 169, y: 200 }}
       footer={
         <ButtonStack>
-          <GradientButton label="Share invite" onPress={share} />
+          <GradientButton label="초대 보내기" onPress={share} />
           <GradientButton
             label="다음"
             variant="secondary"

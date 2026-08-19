@@ -41,11 +41,7 @@ export default function GroupStartedScreen() {
   return (
     <OnboardingFrame
       ambient={{ color: colors.accent.violet, size: 560, opacity: 0.5, x: 169, y: 330 }}
-      footer={<GradientButton label="See today" onPress={finish} />}>
-      <AppText variant="numericLabel" tone="faint" style={styles.eyebrow}>
-        POOL ACTIVE
-      </AppText>
-
+      footer={<GradientButton label="오늘 보기" onPress={finish} />}>
       <View style={styles.orbitBox}>
         <SharedOrbitRing
           size={ORBIT}
@@ -87,7 +83,6 @@ export default function GroupStartedScreen() {
 }
 
 const styles = StyleSheet.create({
-  eyebrow: { alignSelf: 'center' },
   orbitBox: { width: ORBIT, height: ORBIT, alignSelf: 'center' },
   number: { fontSize: 52, lineHeight: 56, letterSpacing: -2.6 },
   copy: { gap: 8 },

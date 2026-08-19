@@ -28,8 +28,8 @@ export default function NotificationIntroScreen() {
       ambient={{ color: colors.accent.violet, size: 380, opacity: 0.3, x: 100, y: 120 }}
       footer={
         <ButtonStack>
-          <GradientButton label="Turn on notifications" onPress={advance} />
-          <GradientButton label="Not now" variant="tertiary" onPress={advance} />
+          <GradientButton label="알림 켜기" onPress={advance} />
+          <GradientButton label="나중에" variant="tertiary" onPress={advance} />
         </ButtonStack>
       }>
       <View style={styles.top}>

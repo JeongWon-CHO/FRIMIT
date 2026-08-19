@@ -117,7 +117,7 @@ export default function ReadinessScreen() {
           <ButtonStack>
             {isDraft && isAdmin ? (
               <GradientButton
-                label="Start our pool"
+                label="우리 시간 시작하기"
                 onPress={start}
                 disabled={!canStart}
                 loading={startGroup.isPending}
@@ -127,7 +127,7 @@ export default function ReadinessScreen() {
                 관리자가 시작하기를 기다리는 중
               </AppText>
             ) : (
-              <GradientButton label="See today" onPress={() => router.replace('/')} />
+              <GradientButton label="오늘 보기" onPress={() => router.replace('/')} />
             )}
             {isDraft && !canStart && (
               <AppText variant="metadata" tone="faint" style={styles.note}>
@@ -220,7 +220,7 @@ export default function ReadinessScreen() {
             />
           )}
           <GradientButton
-            label="Go to waiting room"
+            label="대기실로 가기"
             variant={me?.is_ready && !blockedReason ? 'primary' : 'secondary'}
             onPress={() => setInWaitingRoom(true)}
           />

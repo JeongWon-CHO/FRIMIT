@@ -72,9 +72,9 @@ export default function WelcomeScreen() {
           </View>
 
           <ButtonStack>
-            <GradientButton label="Get started" onPress={() => router.push('/sign-in')} />
+            <GradientButton label="시작하기" onPress={() => router.push('/sign-in')} />
             <GradientButton
-              label="I have an invite"
+              label="초대 코드가 있어요"
               variant="secondary"
               onPress={() => router.push('/start')}
             />

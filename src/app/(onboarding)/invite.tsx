@@ -49,7 +49,7 @@ export default function InvitationPreviewScreen() {
               {join.error instanceof Error ? join.error.message : String(join.error)}
             </AppText>
           )}
-          <GradientButton label="Join the group" onPress={accept} loading={join.isPending} />
+          <GradientButton label="그룹 참여하기" onPress={accept} loading={join.isPending} />
           <GradientButton
             label="먼저 둘러볼게요"
             variant="tertiary"

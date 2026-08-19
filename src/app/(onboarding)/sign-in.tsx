@@ -50,12 +50,12 @@ export default function SignInScreen() {
             </AppText>
           )}
           <WhiteButton
-            label="Continue with Apple"
+            label="Apple로 계속하기"
             loading={busy === 'apple'}
             onPress={signIn('apple')}
           />
           <WhiteButton
-            label="Continue with Google"
+            label="Google로 계속하기"
             loading={busy === 'google'}
             onPress={signIn('google')}
             google
@@ -78,7 +78,7 @@ export default function SignInScreen() {
         </View>
 
         <AppText variant="screenTitle" style={styles.title}>
-          시작해볼까요
+          시작해 볼까요
         </AppText>
         <AppText variant="body" tone="muted" style={styles.body}>
           계정으로 로그인하면 친구들과{'\n'}같은 시간 풀에 연결돼요.

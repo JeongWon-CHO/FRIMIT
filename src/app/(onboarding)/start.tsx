@@ -45,16 +45,16 @@ export default function CreateOrJoinScreen() {
       <View style={styles.cards}>
         <ChoiceCard
           emphasis="primary"
-          title="Create a group"
-          caption="Start a shared pool with friends"
+          title="그룹 만들기"
+          caption="친구들과 하나의 시간을 시작해요"
           onPress={() => router.push('/group')}
           figure={<MiniOrbit />}
         />
 
         <ChoiceCard
           emphasis="secondary"
-          title="Join with invite"
-          caption="Enter a 6-digit code"
+          title="초대로 참여하기"
+          caption="6자리 코드를 입력해요"
           onPress={() => setJoining(true)}
           figure={<CodeEntryField value={code} onChange={setCode} />}
         />

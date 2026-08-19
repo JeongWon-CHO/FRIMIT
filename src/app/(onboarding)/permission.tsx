@@ -64,9 +64,9 @@ export default function PermissionScreen() {
         ring={<SharedOrbitRing size={104} progress={1} gradient={gradients.sharedPool.colors} strokeRatio={0.16}>
           <AppText variant="screenTitle" tone="cyan">✓</AppText>
         </SharedOrbitRing>}
-        title="You're connected."
+        title="권한이 연결됐어요"
         body="이제 공동 시간에 참여할 수 있어요."
-        primary={{ label: 'Continue', onPress: next }}
+        primary={{ label: '다음', onPress: next }}
       />
     );
   }
@@ -80,8 +80,8 @@ export default function PermissionScreen() {
         </SharedOrbitRing>}
         title="아직 참여 전이에요"
         body="둘러보는 건 괜찮아요. 공동 시간 집계는 권한을 켠 뒤부터 시작돼요."
-        primary={{ label: blocked ? '설정에서 켜기' : 'Try again', onPress: ask }}
-        secondary={{ label: 'Continue for now', onPress: next }}
+        primary={{ label: blocked ? '설정에서 켜기' : '다시 시도', onPress: ask }}
+        secondary={{ label: '일단 넘어가기', onPress: next }}
       />
     );
   }
@@ -91,8 +91,8 @@ export default function PermissionScreen() {
       texture="calm"
       footer={
         <ButtonStack>
-          <GradientButton label="Enable Screen Time" onPress={ask} loading={busy} />
-          <GradientButton label="Continue for now" variant="tertiary" onPress={next} />
+          <GradientButton label="Screen Time 권한 켜기" onPress={ask} loading={busy} />
+          <GradientButton label="일단 넘어가기" variant="tertiary" onPress={next} />
           <AppText variant="metadata" tone="faint" style={styles.note}>
             다음 화면은 {Platform.OS === 'ios' ? 'iOS' : 'Android'} 시스템 시트예요.
           </AppText>

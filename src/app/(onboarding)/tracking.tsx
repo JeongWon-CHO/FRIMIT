@@ -120,12 +120,12 @@ export default function TrackingScreen() {
       <OnboardingFrame
         footer={
           <ButtonStack>
-            <GradientButton label="Looks good" onPress={() => router.push('/ready')} />
             <GradientButton
-              label="Change selection"
+              label="다시 고르기"
               variant="secondary"
               onPress={Platform.OS === 'ios' ? openPicker : () => setSelectionAgain(tracking.refresh)}
             />
+            <GradientButton label="이대로 좋아요" onPress={() => router.push('/ready')} />
           </ButtonStack>
         }>
         <AppText variant="numericLabel" tone="faint">
@@ -169,7 +169,7 @@ export default function TrackingScreen() {
           )}
           {Platform.OS === 'ios' ? (
             <GradientButton
-              label="Choose apps"
+              label="앱 고르기"
               onPress={openPicker}
               loading={busy}
               disabled={!group}

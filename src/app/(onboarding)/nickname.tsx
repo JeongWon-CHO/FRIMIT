@@ -50,7 +50,7 @@ export default function ProfileSetupScreen() {
     <OnboardingFrame
       footer={
         <GradientButton
-          label="Continue"
+          label="다음"
           onPress={save}
           disabled={tooLong}
           loading={update.isPending}
@@ -79,9 +79,6 @@ export default function ProfileSetupScreen() {
           />
         </View>
 
-        <AppText variant="eyebrow" tone="faint">
-          NICKNAME
-        </AppText>
         <TextInput
           value={nickname}
           onChangeText={(value) => setDraft({ nickname: value, avatarKey })}
@@ -134,8 +131,14 @@ export default function ProfileSetupScreen() {
 const styles = StyleSheet.create({
   top: { gap: 14 },
   navRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
-  title: { fontSize: 30, lineHeight: 38 },
-  preview: { alignItems: 'center', paddingVertical: 8 },
+  title: { 
+    fontSize: 30,
+    lineHeight: 38,
+  },
+  preview: { 
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
   field: {
     borderRadius: radii.button,
     paddingVertical: 16,
