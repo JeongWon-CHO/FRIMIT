@@ -959,7 +959,7 @@ check "비멤버에게는 보이지 않음"           0 "$(jq -r 'length' <<< "$
 
 # 화면이 문장을 만들려면 그룹 이름과 사람 이름이 같이 와야 한다. RPC 없이
 # 임베드로 가져오는 경로가 실제로 열려 있는지 확인한다.
-call GET "$SB_URL/rest/v1/activity_events?group_id=eq.$GROUP_B&select=id,kind,groups(name),profiles(nickname)&limit=1" "$(jwt 5)" "$SB_ANON"
+call GET "$SB_URL/rest/v1/activity_events?group_id=eq.$GROUP_B&select=id,kind,groups(name),profiles!activity_events_actor_id_fkey(nickname)&limit=1" "$(jwt 5)" "$SB_ANON"
 check "그룹·사람 임베드가 열려 있다"       경계확인 "$(jq -r '.[0].groups.name' <<< "$CURL_BODY")"
 
 rpc 4 log_activity "{\"target_group_id\":\"$GROUP_B\",\"actor\":null,\"event_kind\":\"pool_over\"}"
@@ -1012,6 +1012,116 @@ check "남의 토큰은 건드릴 수 없다"         403 "$CURL_CODE"
 
 call GET "$SB_URL/rest/v1/devices?select=expo_push_token" "$(jwt 5)" "$SB_ANON"
 check "토큰은 본인 것만 보인다"            1 "$(jq -r 'length' <<< "$CURL_BODY")"
+
+# ============================================================================
+section "반응 — 사람당 하나, 정해진 세트"
+# ============================================================================
+
+svc GET "activity_events?group_id=eq.$GROUP_B&kind=eq.goal_entry&select=id&limit=1"
+REACT_EVENT=$(jq -r '.[0].id' <<< "$CURL_BODY")
+
+rpc 9 react_to_event "{\"target_event_id\":\"$REACT_EVENT\",\"reaction_emoji\":\"👏\"}"
+check "비멤버는 반응 불가"                 event_not_visible "$(hint)"
+rpc 5 react_to_event "{\"target_event_id\":\"$REACT_EVENT\",\"reaction_emoji\":\"💩\"}"
+check "정해진 세트 밖은 거부"              emoji_not_allowed "$(hint)"
+
+rpc 5 react_to_event "{\"target_event_id\":\"$REACT_EVENT\",\"reaction_emoji\":\"👏\"}"
+check "반응 성공"                          👏 "$(field .emoji)"
+rpc 5 react_to_event "{\"target_event_id\":\"$REACT_EVENT\",\"reaction_emoji\":\"🔥\"}"
+check "다른 걸 누르면 바뀐다"              🔥 "$(field .emoji)"
+svc GET "reactions?event_id=eq.$REACT_EVENT&select=emoji"
+check "사람당 한 줄"                       1 "$(jq -r 'length' <<< "$CURL_BODY")"
+
+rpc 5 react_to_event "{\"target_event_id\":\"$REACT_EVENT\",\"reaction_emoji\":\"🔥\"}"
+check "같은 걸 또 누르면 취소"             "" "$(field .emoji)"
+svc GET "reactions?event_id=eq.$REACT_EVENT&select=emoji"
+check "취소하면 줄도 사라진다"             0 "$(jq -r 'length' <<< "$CURL_BODY")"
+
+rpc 4 react_to_event "{\"target_event_id\":\"$REACT_EVENT\",\"reaction_emoji\":\"👀\"}" > /dev/null
+post 5 reactions "{\"event_id\":\"$REACT_EVENT\",\"profile_id\":\"$(uid 5)\",\"emoji\":\"👏\"}"
+check "반응 직접 insert 차단"              403 "$CURL_CODE"
+call GET "$SB_URL/rest/v1/reactions?select=emoji" "$(jwt 9)" "$SB_ANON"
+check "비멤버에게는 보이지 않음"           0 "$(jq -r 'length' <<< "$CURL_BODY")"
+
+# 반응은 사건을 만들지 않는다. 만들면 세 사람이 한 번씩 누른 순간 피드가 반응으로 덮인다.
+svc GET "activity_events?group_id=eq.$GROUP_B&select=id&kind=eq.nudge"
+check "반응은 피드에 줄을 만들지 않는다"   0 "$(jq -r 'length' <<< "$CURL_BODY")"
+
+# ============================================================================
+section "콕 찌르기 — 상한은 서버가 센다"
+#
+# 지금 GROUP_B의 활성 멤버는 t4·t5뿐이다. t6~t8은 내일 6시부터라 아직 오늘의
+# 공동 풀에 없고, 그래서 찌를 수도 없다.
+# ============================================================================
+
+rpc 4 send_nudge "{\"target_group_id\":\"$GROUP_B\",\"target_profile_id\":\"$(uid 4)\"}"
+check "자기 자신은 못 찌른다"              self_nudge "$(hint)"
+rpc 9 send_nudge "{\"target_group_id\":\"$GROUP_B\",\"target_profile_id\":\"$(uid 5)\"}"
+check "비멤버는 못 찌른다"                 not_a_member "$(hint)"
+rpc 4 send_nudge "{\"target_group_id\":\"$GROUP_B\",\"target_profile_id\":\"$(uid 9)\"}"
+check "그룹에 없는 사람은 못 찌른다"       recipient_not_member "$(hint)"
+rpc 4 send_nudge "{\"target_group_id\":\"$GROUP_B\",\"target_profile_id\":\"$(uid 6)\"}"
+check "내일 오는 사람도 아직은 못 찌른다"  recipient_not_member "$(hint)"
+
+rpc 4 send_nudge "{\"target_group_id\":\"$GROUP_B\",\"target_profile_id\":\"$(uid 5)\"}"
+check "찌르기 성공"                        9 "$(field .remaining_today)"
+rpc 4 send_nudge "{\"target_group_id\":\"$GROUP_B\",\"target_profile_id\":\"$(uid 5)\"}"
+check "30분 쿨다운"                        nudge_cooldown "$(hint)"
+
+svc GET "activity_events?group_id=eq.$GROUP_B&kind=eq.nudge&select=actor_id,target_id,payload"
+check "사건이 남는다"                      1 "$(jq -r 'length' <<< "$CURL_BODY")"
+check "받는 사람이 표시된다"               "$(uid 5)" "$(jq -r '.[0].target_id' <<< "$CURL_BODY")"
+check "그때의 이름이 박힌다"               yes "$(jq -r '.[0].payload | if has("sender_nickname") then "yes" else "no" end' <<< "$CURL_BODY")"
+
+# 쿨다운을 지나게 하려면 기다리는 수밖에 없으므로 기록을 과거로 옮긴다.
+svc PATCH "nudges?sender_id=eq.$(uid 4)&recipient_id=eq.$(uid 5)" '{"created_at":"2026-08-20T00:00:00Z"}'
+rpc 4 send_nudge "{\"target_group_id\":\"$GROUP_B\",\"target_profile_id\":\"$(uid 5)\"}"
+check "쿨다운이 지나면 다시 된다"          8 "$(field .remaining_today)"
+
+# 하루 10회. 쿨다운 검사가 먼저 걸리므로 지금까지의 기록을 전부 과거로 민 뒤,
+# 오늘 몫을 여덟 번 더 채워 열 번을 만든다. 옮기는 시각은 오늘 오전 6시 이후여야
+# 한다 — 그 전으로 밀면 어제 것이 되어 오늘로 세지 않는다. 구간 시작 직후로 두면
+# 둘 다 만족한다(지금은 그로부터 몇 시간 뒤다).
+OLD_NUDGE=$(shift_days "$PERIOD" 0.01)
+svc PATCH "nudges?sender_id=eq.$(uid 4)&recipient_id=eq.$(uid 5)" "{\"created_at\":\"$OLD_NUDGE\"}"
+svc POST "nudges" "$(jq -cn --arg g "$GROUP_B" --arg s "$(uid 4)" --arg r "$(uid 5)" --arg t "$OLD_NUDGE" \
+  '[range(8) | {group_id: $g, sender_id: $s, recipient_id: $r, created_at: $t}]')"
+svc GET "nudges?sender_id=eq.$(uid 4)&recipient_id=eq.$(uid 5)&select=id"
+check "오늘 열 번을 채웠다"                10 "$(jq -r 'length' <<< "$CURL_BODY")"
+rpc 4 send_nudge "{\"target_group_id\":\"$GROUP_B\",\"target_profile_id\":\"$(uid 5)\"}"
+check "상대별 하루 10회"                   nudge_daily_limit "$(hint)"
+
+post 4 nudges "{\"group_id\":\"$GROUP_B\",\"sender_id\":\"$(uid 4)\",\"recipient_id\":\"$(uid 5)\"}"
+check "찌르기 직접 insert 차단"            403 "$CURL_CODE"
+call GET "$SB_URL/rest/v1/nudges?select=id" "$(jwt 6)" "$SB_ANON"
+check "남이 주고받은 것은 안 보인다"       0 "$(jq -r 'length' <<< "$CURL_BODY")"
+
+# ============================================================================
+section "콕 찌르기 — 푸시는 받는 사람에게만"
+# ============================================================================
+
+svc PATCH "devices?id=eq.$DEV4" '{"expo_push_token":"ExponentPushToken[sender-test]"}'
+svc PATCH "devices?id=eq.$DEV5" '{"expo_push_token":"ExponentPushToken[recipient-test]"}'
+
+svc POST "rpc/claim_push_batch" '{"max_events":50}'
+NUDGE=$(jq -c '[.[] | select(.kind == "nudge")]' <<< "$CURL_BODY")
+check "콕 찌르기도 발송 대상"              2 "$(jq -r 'length' <<< "$NUDGE")"
+check "받는 사람에게만 간다"               '["ExponentPushToken[recipient-test]"]' "$(jq -c '[.[0].tokens[]]' <<< "$NUDGE")"
+
+# 음소거는 콕 찌르기에만 걸린다. 한도 알림은 그룹의 사정이라 개인이 끄지 않는다.
+svc POST "rpc/release_push_batch" "{\"event_ids\":$(jq -c '[.[].event_id]' <<< "$NUDGE")}" > /dev/null
+patch 5 "group_memberships?group_id=eq.$GROUP_B&profile_id=eq.$(uid 5)" '{"notifications_muted":true}'
+check "본인 음소거는 직접 켤 수 있다"      204 "$CURL_CODE"
+# RLS는 조용히 0행을 고친다(에러가 아니다). 그러므로 응답이 아니라 값을 본다.
+patch 5 "group_memberships?group_id=eq.$GROUP_B&profile_id=eq.$(uid 4)" '{"notifications_muted":true}'
+svc GET "group_memberships?group_id=eq.$GROUP_B&profile_id=eq.$(uid 4)&select=notifications_muted"
+check "남의 음소거는 못 켠다"              false "$(jq -r '.[0].notifications_muted' <<< "$CURL_BODY")"
+
+svc POST "rpc/claim_push_batch" '{"max_events":50}'
+check "음소거하면 안 간다"                 '[]' "$(jq -c '[.[] | select(.kind == "nudge")][0].tokens' <<< "$CURL_BODY")"
+
+svc PATCH "devices?id=eq.$DEV4" '{"expo_push_token":null}'
+svc PATCH "devices?id=eq.$DEV5" '{"expo_push_token":null}'
 
 # ============================================================================
 printf '\n'

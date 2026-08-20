@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, View } from 'react-native';
 
 import { OrbitSeats, SharedOrbitRing } from '@/components/orbit';
 import {
@@ -18,6 +18,7 @@ import {
 import { colors, gradients, radius as radii } from '@/constants/design-tokens';
 import { useGroupMembers, useGroupUsages, useMyGroups } from '@/hooks/use-groups';
 import { useLeaveGroupPrompt } from '@/hooks/use-leave-group-prompt';
+import { useNudge } from '@/hooks/use-nudge';
 import { useMyProfile } from '@/hooks/use-profile';
 import { useScreenGroup } from '@/hooks/use-screen-group';
 import { useTrackingState } from '@/hooks/use-tracking';
@@ -46,6 +47,23 @@ export default function GroupDetailScreen() {
   const members = useGroupMembers(id);
   const tracking = useTrackingState(id);
   const leave = useLeaveGroupPrompt();
+  const nudge = useNudge();
+
+  /**
+   * 콕 찌르기.
+   *
+   * 성공해도 조용하다 — 찌른 사람에게 필요한 확인은 활동 내역에 줄이 하나 생기는
+   * 것으로 충분하고, 매번 뜨는 확인창은 장난스러운 동작을 무겁게 만든다.
+   * 거절만 말한다(쿨다운, 하루 10회). 서버 문구가 이미 사용자에게 하는 말이다.
+   */
+  const poke = (memberId: string) => {
+    if (!group) return;
+    nudge
+      .mutateAsync({ groupId: group.id, profileId: memberId })
+      .catch((error: unknown) =>
+        Alert.alert('지금은 못 찔러요', error instanceof Error ? error.message : String(error))
+      );
+  };
 
   const view = useMemo(
     () =>
@@ -164,10 +182,15 @@ export default function GroupDetailScreen() {
             />
           ) : (
             <>
-              {rankOne && <RankOneCard member={rankOne} />}
+              {rankOne && <RankOneCard member={rankOne} onNudge={() => poke(rankOne.id)} />}
               <View style={styles.rankList}>
                 {rest.map((member, index) => (
-                  <RankingItem key={member.id} rank={index + 2} member={member} />
+                  <RankingItem
+                    key={member.id}
+                    rank={index + 2}
+                    member={member}
+                    onNudge={() => poke(member.id)}
+                  />
                 ))}
               </View>
             </>
@@ -196,7 +219,7 @@ export default function GroupDetailScreen() {
  *
  * 꼴찌에게는 여전히 아무 표시도 붙지 않는다.
  */
-function RankOneCard({ member }: { member: RankedMember }) {
+function RankOneCard({ member, onNudge }: { member: RankedMember; onNudge: () => void }) {
   return (
     <Surface
       fill={['#161029', '#0B0B12']}
@@ -231,12 +254,22 @@ function RankOneCard({ member }: { member: RankedMember }) {
           LEAST TODAY
         </AppText>
       </View>
+
+      <NudgeButton member={member} onPress={onNudge} />
     </Surface>
   );
 }
 
 /** 2등 이하. 전부 같은 중립 표면이다 — 색으로 등수를 매기지 않는다. */
-function RankingItem({ rank, member }: { rank: number; member: RankedMember }) {
+function RankingItem({
+  rank,
+  member,
+  onNudge,
+}: {
+  rank: number;
+  member: RankedMember;
+  onNudge: () => void;
+}) {
   return (
     <View style={styles.rankRow}>
       <AppText variant="numericLabel" tone="muted" style={styles.rankNumeral}>
@@ -260,7 +293,33 @@ function RankingItem({ rank, member }: { rank: number; member: RankedMember }) {
       </View>
 
       <AppText variant="memberNumber">{member.usageLabel}</AppText>
+
+      <NudgeButton member={member} onPress={onNudge} />
     </View>
+  );
+}
+
+/**
+ * 콕 찌르기 단추.
+ *
+ * 나에게는 나타나지 않는다. 자리를 비워 두지도 않는다 — 내 줄에만 빈 칸이 생기면
+ * 그게 더 눈에 띈다.
+ *
+ * 아이콘은 눈(👀)이다. 손가락이나 종은 "재촉"으로 읽히는데, 이 제품에서 콕
+ * 찌르기는 채근이 아니라 "보고 있어"에 가깝다.
+ */
+function NudgeButton({ member, onPress }: { member: RankedMember; onPress: () => void }) {
+  if (member.isMe) return null;
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`${member.name} 콕 찌르기`}
+      onPress={onPress}
+      hitSlop={8}
+      style={({ pressed }) => [styles.nudge, pressed && { opacity: 0.5 }]}>
+      <AppText variant="body">👀</AppText>
+    </Pressable>
   );
 }
 
@@ -401,6 +460,17 @@ const styles = StyleSheet.create({
     borderColor: colors.border.subtle,
   },
   rankNumeral: { width: 22 },
+  nudge: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surface.glass,
+    borderWidth: 1,
+    borderColor: colors.border.hairline,
+    marginLeft: 10,
+  },
   syncLine: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   myShare: { gap: 9, marginTop: 2 },
   myShareTop: {

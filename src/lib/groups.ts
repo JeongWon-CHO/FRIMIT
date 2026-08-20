@@ -197,6 +197,52 @@ export async function setReady(groupId: string, isReady: boolean): Promise<void>
 }
 
 /**
+ * 내 멤버십의 개인 설정.
+ *
+ * 그룹 목록과 따로 읽는다. 멤버십에는 남에게 보이는 값(역할·준비)과 나만의
+ * 값(음소거)이 섞여 있는데, 화면이 필요로 하는 것은 후자뿐이고 그룹마다 멤버
+ * 목록을 통째로 불러올 이유가 없다.
+ */
+export async function listMyMemberships(): Promise<
+  { group_id: string; notifications_muted: boolean }[]
+> {
+  const { data: session } = await supabase.auth.getSession();
+  const profileId = session.session?.user.id;
+  if (!profileId) throw new Error('로그인 세션이 없습니다.');
+
+  const { data, error } = await supabase
+    .from('group_memberships')
+    .select('group_id, notifications_muted')
+    .eq('profile_id', profileId);
+
+  if (error) throw new Error(`알림 설정을 읽지 못했습니다: ${error.message}`);
+  return data ?? [];
+}
+
+/**
+ * 그룹별 콕 찌르기 음소거.
+ *
+ * `setReady`와 같이 RPC가 아니라 테이블 UPDATE다. 본인 행의 본인 설정이라 서버가
+ * 검사할 규칙이 없고, 남의 행은 RLS가 막는다.
+ *
+ * 한도 알림은 이 스위치와 무관하다(plan.md 58행). 공동 풀은 그룹의 사정이라
+ * 개인이 끄는 대상이 아니다.
+ */
+export async function setMuted(groupId: string, muted: boolean): Promise<void> {
+  const { data: session } = await supabase.auth.getSession();
+  const profileId = session.session?.user.id;
+  if (!profileId) throw new Error('로그인 세션이 없습니다.');
+
+  const { error } = await supabase
+    .from('group_memberships')
+    .update({ notifications_muted: muted })
+    .eq('group_id', groupId)
+    .eq('profile_id', profileId);
+
+  if (error) throw new Error(`알림 설정을 바꾸지 못했습니다: ${error.message}`);
+}
+
+/**
  * 스파이크 화면이 쓸 그룹 하나를 보장한다.
  *
  * 이미 속한 그룹이 있으면 그것을, 없으면 새로 만든다. 실기기 검증을 시작할 때

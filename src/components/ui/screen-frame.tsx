@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useCallback, useState, type ReactNode } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -29,8 +29,8 @@ type ScreenFrameProps = {
   scroll?: boolean;
   /** 내용이 짧아도 화면 높이를 채운다. 온보딩의 `space-between` 리듬에 필요하다. */
   fill?: boolean;
-  onRefresh?: () => void;
-  refreshing?: boolean;
+  /** 당겨서 새로고침. 인디케이터는 이 프레임이 직접 관리한다(아래 설명). */
+  onRefresh?: () => void | Promise<unknown>;
   /** 아래에 고정되는 CTA 블록. 온보딩의 `space-between` 리듬이 여기서 나온다. */
   footer?: ReactNode;
 };
@@ -45,10 +45,32 @@ export function ScreenFrame({
   scroll = true,
   fill = false,
   onRefresh,
-  refreshing,
   footer,
 }: ScreenFrameProps) {
   const insets = useSafeAreaInsets();
+
+  /*
+   * 인디케이터는 **사용자가 당겼을 때만** 돈다.
+   *
+   * 화면이 쓰는 쿼리의 `isFetching`을 그대로 넘기면, 사람이 손도 대지 않은
+   * 백그라운드 갱신에도 목록이 아래로 끌려 내려간다. 활동 탭에서 이모지 하나를
+   * 누를 때마다 화면이 덜컹인 것이 그 때문이었다.
+   *
+   * 그래서 상태를 화면에서 받지 않고 여기서 만든다. 넘겨받는 값이 없으면 잘못
+   * 넘길 수도 없다.
+   */
+  const [pulling, setPulling] = useState(false);
+
+  const pull = useCallback(async () => {
+    if (!onRefresh) return;
+
+    setPulling(true);
+    try {
+      await onRefresh();
+    } finally {
+      setPulling(false);
+    }
+  }, [onRefresh]);
 
   const padding = {
     paddingTop: insets.top + topSpace,
@@ -70,8 +92,8 @@ export function ScreenFrame({
       refreshControl={
         onRefresh ? (
           <RefreshControl
-            refreshing={Boolean(refreshing)}
-            onRefresh={onRefresh}
+            refreshing={pulling}
+            onRefresh={pull}
             tintColor={colors.text.secondary}
           />
         ) : undefined

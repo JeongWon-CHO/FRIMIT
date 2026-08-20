@@ -77,8 +77,7 @@ export default function TodayScreen() {
           ? { ...visual.ambient, x: heroView?.state === 'fresh' ? 330 : 60, y: 120 }
           : null
       }
-      onRefresh={refresh}
-      refreshing={sync.isSyncing || usages.isFetching}>
+      onRefresh={refresh}>
       <Header
         nickname={profile.data?.nickname}
         avatarKey={profile.data?.avatar_key}

@@ -28,6 +28,7 @@ export const queryKeys = {
   profile: ['profile'] as const,
   myGroups: ['groups', 'mine'] as const,
   groupMembers: (groupId: string) => ['groups', groupId, 'members'] as const,
+  myMemberships: ['groups', 'memberships'] as const,
   groupUsage: (groupId: string) => ['groups', groupId, 'usage'] as const,
   groupGoal: (groupId: string) => ['groups', groupId, 'goal'] as const,
   /** 활동은 그룹 통합이라 키가 하나뿐이다. 접두사는 일괄 무효화를 위해 맞춘다. */

@@ -5,7 +5,7 @@ import { ActivityItem, DayDivider } from '@/components/activity-item';
 import { TitleRow } from '@/components/title-row';
 import { AppText, EmptyState, GradientButton, ScreenFrame } from '@/components/ui';
 import { colors } from '@/constants/design-tokens';
-import { useActivity } from '@/hooks/use-activity';
+import { useActivity, useReact } from '@/hooks/use-activity';
 import { useMyProfile } from '@/hooks/use-profile';
 import { groupByDay } from '@/lib/activity-view';
 
@@ -21,14 +21,14 @@ import { groupByDay } from '@/lib/activity-view';
 export default function ActivityScreen() {
   const profile = useMyProfile();
   const activity = useActivity();
+  const react = useReact();
 
   const days = groupByDay(activity.data ?? [], profile.data?.id);
 
   return (
     <ScreenFrame
       ambient={{ color: colors.accent.cyan, size: 380, opacity: 0.22, x: 330, y: 140 }}
-      onRefresh={() => activity.refetch()}
-      refreshing={activity.isFetching}>
+      onRefresh={() => activity.refetch()}>
       <TitleRow title="Activity" />
 
       {activity.isPending ? (
@@ -50,7 +50,11 @@ export default function ActivityScreen() {
             <Fragment key={day.label}>
               <DayDivider label={day.label} />
               {day.rows.map((row) => (
-                <ActivityItem key={row.id} row={row} />
+                <ActivityItem
+                  key={row.id}
+                  row={row}
+                  onReact={(emoji) => react.mutate({ eventId: row.id, emoji })}
+                />
               ))}
             </Fragment>
           ))}

@@ -1,6 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { listActivity } from '@/lib/activity';
+import { listActivity, reactToEvent } from '@/lib/activity';
 import { queryKeys } from '@/lib/query';
 
 /**
@@ -14,5 +14,22 @@ export function useActivity() {
   return useQuery({
     queryKey: queryKeys.activity,
     queryFn: () => listActivity(),
+  });
+}
+
+/**
+ * 반응 하나.
+ *
+ * 서버가 토글까지 판단하므로(같은 이모지를 다시 보내면 취소) 여기서는 결과를
+ * 받아 목록만 다시 읽는다. 낙관적 갱신을 넣지 않은 이유는 칩 하나가 늘고 줄 뿐이라
+ * 왕복 한 번이 눈에 띄지 않기 때문이다.
+ */
+export function useReact() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: { eventId: string; emoji: string }) =>
+      reactToEvent(input.eventId, input.emoji),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.activity }),
   });
 }

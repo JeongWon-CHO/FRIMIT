@@ -27,6 +27,8 @@ export type ActivityRow = {
   timeLabel: string;
   /** 공동 풀 사건은 보라 배경으로 한 겹 들린다(COMPONENT_SPEC §11). */
   emphasis: 'none' | 'violet';
+  /** 같은 이모지끼리 접은 칩. 개수 많은 순. */
+  reactions: { emoji: string; count: number; mine: boolean }[];
 };
 
 export type ActivityDay = {
@@ -87,10 +89,33 @@ export function toRow(event: ActivityEvent, myProfileId?: string, now: Date = ne
           emoji: avatarEmoji(event.actor?.avatar_key ?? 'avatar-01'),
         }
       : null,
-    text: describe(event, subject),
+    text: describe(event, subject, myProfileId),
     timeLabel: formatSince(event.created_at, now),
     emphasis: event.kind === 'pool_threshold' || event.kind === 'pool_over' ? 'violet' : 'none',
+    reactions: foldReactions(event.reactions, myProfileId),
   };
+}
+
+/**
+ * 같은 이모지끼리 접는다.
+ *
+ * 사람당 반응은 하나라(0011) 한 사람이 두 칩에 걸리는 일은 없다. `mine`은 그
+ * 칩을 강조해 "내가 누른 것"을 보여주는 데 쓰고, 다시 누르면 취소된다.
+ */
+function foldReactions(
+  reactions: { emoji: string; profile_id: string }[],
+  myProfileId?: string
+): { emoji: string; count: number; mine: boolean }[] {
+  const counts = new Map<string, { emoji: string; count: number; mine: boolean }>();
+
+  for (const reaction of reactions) {
+    const chip = counts.get(reaction.emoji) ?? { emoji: reaction.emoji, count: 0, mine: false };
+    chip.count += 1;
+    chip.mine = chip.mine || reaction.profile_id === myProfileId;
+    counts.set(reaction.emoji, chip);
+  }
+
+  return [...counts.values()].sort((a, b) => b.count - a.count || a.emoji.localeCompare(b.emoji));
 }
 
 /**
@@ -100,7 +125,7 @@ export function toRow(event: ActivityEvent, myProfileId?: string, now: Date = ne
  * 이름 끝의 받침에 따라 이/가를 고르지 않으려는 것이고, 존대가 한 겹 붙는 편이
  * 서로를 부르는 톤에도 맞는다.
  */
-function describe(event: ActivityEvent, subject: string): string {
+function describe(event: ActivityEvent, subject: string, myProfileId?: string): string {
   const p = event.payload ?? {};
 
   switch (event.kind) {
@@ -131,5 +156,19 @@ function describe(event: ActivityEvent, subject: string): string {
       return `${subject} 오늘 기록을 지웠어요`;
     case 'goal_cancelled':
       return `목표를 그만뒀어요 · ${p.title ?? ''}`;
+
+    case 'nudge':
+      // 받는 사람 입장에서는 "나를"이 먼저 읽혀야 한다. 이 줄은 그 사람에게
+      // 푸시로도 갔으므로, 피드에서 같은 사건을 다시 알아볼 수 있어야 한다.
+      return p.recipient_id === myProfileId
+        ? `${subject} 나를 콕 찔렀어요 👀`
+        : `${subject} ${p.recipient_nickname ?? '친구'} 님을 콕 찔렀어요 👀`;
   }
+
+  /*
+   * 여기 닿으면 종류를 더하면서 문장을 빠뜨린 것이다. `never`에 넣어 두면
+   * 컴파일이 먼저 막는다 — 화면에 undefined가 뜨고 나서 알게 되지 않는다.
+   */
+  const unhandled: never = event.kind;
+  return unhandled;
 }

@@ -11,7 +11,7 @@ import {
   Surface,
 } from '@/components/ui';
 import { colors, radius as radii } from '@/constants/design-tokens';
-import { useGroupUsages, useMyGroups } from '@/hooks/use-groups';
+import { useGroupUsages, useMyGroups, useMyMemberships, useSetMuted } from '@/hooks/use-groups';
 import { useMyProfile } from '@/hooks/use-profile';
 import { useTrackingState } from '@/hooks/use-tracking';
 import { hexToRgba } from '@/lib/color';
@@ -36,6 +36,8 @@ export default function MyScreen() {
   const profile = useMyProfile();
   const groups = useMyGroups();
   const usages = useGroupUsages(groups.data);
+  const memberships = useMyMemberships();
+  const setMuted = useSetMuted();
   const tracking = useTrackingState(groups.data?.[0]?.id);
 
   const granted = isUsable(tracking.permission);
@@ -95,26 +97,47 @@ export default function MyScreen() {
           const usage = usages.byGroupId.get(group.id);
           const accent = colors.groupAccent[groupAccent(group)];
 
+          const muted = Boolean(
+            memberships.data?.find((row) => row.group_id === group.id)?.notifications_muted
+          );
+
           return (
-            <Pressable
-              key={group.id}
-              accessibilityRole="button"
-              onPress={() =>
-                group.status === 'draft'
-                  ? router.push({ pathname: '/ready', params: { groupId: group.id } })
-                  : router.push({ pathname: '/group/[id]', params: { id: group.id } })
-              }
-              style={styles.row}>
-              <StatusDot color={accent.dot} size={10} />
-              <AppText variant="bodyStrong" style={styles.rowName}>
-                {group.name}
-              </AppText>
-              <AppText variant="metadata" tone="muted" font="mono">
-                {usage
-                  ? `${formatShort(usage.daily_limit_seconds)} · ${usage.member_count}`
-                  : '시작 대기'}
-              </AppText>
-            </Pressable>
+            <View key={group.id} style={styles.row}>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() =>
+                  group.status === 'draft'
+                    ? router.push({ pathname: '/ready', params: { groupId: group.id } })
+                    : router.push({ pathname: '/group/[id]', params: { id: group.id } })
+                }
+                style={styles.rowMain}>
+                <StatusDot color={accent.dot} size={10} />
+                <AppText variant="bodyStrong" style={styles.rowName}>
+                  {group.name}
+                </AppText>
+                <AppText variant="metadata" tone="muted" font="mono">
+                  {usage
+                    ? `${formatShort(usage.daily_limit_seconds)} · ${usage.member_count}`
+                    : '시작 대기'}
+                </AppText>
+              </Pressable>
+
+              {/*
+                콕 찌르기 음소거. 한도 알림은 여기에 걸리지 않는다 — 공동 풀은
+                그룹의 사정이라 개인이 끄는 대상이 아니다(plan.md 58행).
+              */}
+              <Pressable
+                accessibilityRole="switch"
+                accessibilityState={{ checked: muted }}
+                accessibilityLabel={`${group.name} 콕 찌르기 알림`}
+                hitSlop={8}
+                onPress={() => setMuted.mutate({ groupId: group.id, muted: !muted })}
+                style={({ pressed }) => [styles.bell, pressed && { opacity: 0.5 }]}>
+                <AppText variant="metadata" tone={muted ? 'faint' : 'body'}>
+                  {muted ? '🔕' : '🔔'}
+                </AppText>
+              </Pressable>
+            </View>
           );
         })}
 
@@ -283,7 +306,6 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 13,
     borderRadius: radii.listRow,
     paddingVertical: 12,
     paddingHorizontal: 16,
@@ -291,6 +313,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border.subtle,
   },
+  rowMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 13 },
+  bell: { paddingLeft: 12 },
   rowName: { flex: 1 },
   settingRow: {
     flexDirection: 'row',

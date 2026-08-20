@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import type { ActivityEvent, ActivityKind, ActivityPayload } from './activity';
+import { ACTIVITY_KINDS, type ActivityKind } from './activity-kinds';
+import type { ActivityEvent, ActivityPayload } from './activity';
 import { groupByDay, toRow } from './activity-view';
 
 // 서울 기준 2026-08-19 14:00. Frimit 일자로는 8월 19일.
@@ -20,6 +21,7 @@ function event(
     created_at: '2026-08-19T04:00:00.000Z',
     group: { name: '밤샘 금지단', color_key: 'color-02' },
     actor: { nickname: '지호', avatar_key: 'avatar-03' },
+    reactions: [],
     ...overrides,
   };
 }
@@ -62,21 +64,20 @@ describe('문장', () => {
     );
   });
 
+  it('콕 찌르기는 받는 사람 쪽에서 다르게 읽힌다', () => {
+    const poke = event('nudge', { recipient_nickname: '도형', recipient_id: 'other' });
+    expect(text(poke, 'me')).toBe('내가 도형 님을 콕 찔렀어요 👀');
+
+    const toMe = event('nudge', { recipient_nickname: '나', recipient_id: 'me' }, { actor_id: 'x' });
+    expect(text(toMe, 'me')).toBe('지호 님이 나를 콕 찔렀어요 👀');
+  });
+
+  // 종류를 더하면서 문장을 빠뜨리는 것을 막는다. 목록을 여기 다시 적지 않는 것이
+  // 핵심이다 — 그러면 목록 두 개가 어긋난다.
   it('모든 종류에 문장이 있다', () => {
-    const kinds: ActivityKind[] = [
-      'group_started',
-      'member_joined',
-      'member_left',
-      'rule_changed',
-      'pool_threshold',
-      'pool_over',
-      'goal_created',
-      'goal_entry',
-      'goal_cleared',
-      'goal_cancelled',
-    ];
-    for (const kind of kinds) {
-      expect(text(event(kind))).not.toBe('');
+    for (const kind of ACTIVITY_KINDS) {
+      const sentence = text(event(kind));
+      expect(sentence, kind).toBeTruthy();
     }
   });
 });
@@ -89,6 +90,34 @@ describe('아바타와 강조', () => {
   it('공동 풀 사건만 보라로 들린다', () => {
     expect(toRow(event('pool_threshold'), 'me', NOW).emphasis).toBe('violet');
     expect(toRow(event('goal_entry'), 'me', NOW).emphasis).toBe('none');
+  });
+});
+
+describe('반응 접기', () => {
+  const withReactions = (reactions: { emoji: string; profile_id: string }[]) =>
+    toRow(event('goal_entry', {}, { reactions }), 'me', NOW).reactions;
+
+  it('같은 이모지끼리 접고 개수 많은 순으로', () => {
+    expect(
+      withReactions([
+        { emoji: '👏', profile_id: 'a' },
+        { emoji: '🔥', profile_id: 'b' },
+        { emoji: '👏', profile_id: 'c' },
+      ])
+    ).toEqual([
+      { emoji: '👏', count: 2, mine: false },
+      { emoji: '🔥', count: 1, mine: false },
+    ]);
+  });
+
+  it('내가 누른 칩을 표시한다', () => {
+    expect(withReactions([{ emoji: '👀', profile_id: 'me' }])).toEqual([
+      { emoji: '👀', count: 1, mine: true },
+    ]);
+  });
+
+  it('없으면 빈 배열', () => {
+    expect(withReactions([])).toEqual([]);
   });
 });
 

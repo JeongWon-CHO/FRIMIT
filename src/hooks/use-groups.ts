@@ -7,6 +7,8 @@ import {
   leaveGroup,
   listGroupMembers,
   listMyGroups,
+  listMyMemberships,
+  setMuted,
   setReady,
   startGroup,
   toMyGroup,
@@ -54,6 +56,24 @@ export function useGroupUsages(groups: MyGroup[] | undefined) {
       /** 하나라도 실패했으면 첫 사유만 올린다. 다섯 개를 나열해 봐야 원인은 대개 하나다. */
       error: results.find((result) => result.error)?.error ?? null,
     }),
+  });
+}
+
+/** 내 멤버십의 개인 설정(지금은 음소거 하나). 그룹 목록과 따로 읽는다. */
+export function useMyMemberships() {
+  return useQuery({
+    queryKey: queryKeys.myMemberships,
+    queryFn: listMyMemberships,
+  });
+}
+
+export function useSetMuted() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: { groupId: string; muted: boolean }) =>
+      setMuted(input.groupId, input.muted),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.myMemberships }),
   });
 }
 

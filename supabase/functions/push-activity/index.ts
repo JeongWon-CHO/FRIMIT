@@ -24,12 +24,13 @@ const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
 
 type Claimed = {
   event_id: string;
-  kind: 'pool_threshold' | 'pool_over';
+  kind: 'pool_threshold' | 'pool_over' | 'nudge';
   payload: {
     threshold?: number;
     total_seconds?: number;
     limit_seconds?: number;
     over_seconds?: number;
+    sender_nickname?: string;
   };
   group_name: string;
   tokens: string[];
@@ -53,6 +54,11 @@ function formatDuration(seconds: number): string {
  * 읽혀야 하고, 넘긴 뒤에 90%였다는 얘기는 아무 쓸모가 없다.
  */
 function body(event: Claimed): string {
+  // 콕 찌르기는 받는 사람 한 명에게만 간다. 누가 찔렀는지가 이 알림의 전부다.
+  if (event.kind === 'nudge') {
+    return `${event.payload.sender_nickname ?? '친구'} 님이 콕 찔렀어요 👀`;
+  }
+
   if (event.kind === 'pool_over') {
     return `${formatDuration(event.payload.over_seconds ?? 0)} 넘겼어요`;
   }
