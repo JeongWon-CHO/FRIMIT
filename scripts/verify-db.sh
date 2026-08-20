@@ -129,6 +129,15 @@ check() { # check <설명> <기대> <실제>
 
 section() { printf '\n▸ %s\n' "$1"; }
 
+# 발송 큐는 운영 Cron(1분 주기)과 공유한다. 그쪽이 먼저 집어 가면 검증이 빈손이
+# 되므로, 확인할 사건만 대기로 되돌린 직후에 집는다. `release_push_batch`가
+# 원래 그런 용도다(발송 실패 복구).
+reclaim() { # reclaim <PostgREST 조건> → CURL_BODY에 claim 결과가 담긴다
+  svc GET "activity_events?group_id=eq.$GROUP_B&$1&select=id"
+  svc POST "rpc/release_push_batch" "{\"event_ids\":$(jq -c '[.[].id]' <<< "$CURL_BODY")}" > /dev/null
+  svc POST "rpc/claim_push_batch" '{"max_events":100}'
+}
+
 # ============================================================================
 # 준비와 정리
 # ============================================================================
@@ -979,7 +988,7 @@ section "푸시 발송 — 집고 표시하기"
 # (t6~t8은 내일 6시부터다) 그중 t5에게만 토큰을 심는다.
 svc PATCH "devices?id=eq.$DEV5" '{"expo_push_token":"ExponentPushToken[verify-db-test]"}'
 
-svc POST "rpc/claim_push_batch" '{"max_events":50}'
+reclaim "kind=in.(pool_threshold,pool_over)"
 BATCH=$(jq -c --arg g 경계확인 '[.[] | select(.group_name == $g)]' <<< "$CURL_BODY")
 check "한도 사건 넷이 집힌다"              4 "$(jq -r 'length' <<< "$BATCH")"
 check "단계 셋과 초과 하나"                '["pool_over","pool_threshold"]' "$(jq -c '[.[].kind] | unique' <<< "$BATCH")"
@@ -1103,13 +1112,12 @@ section "콕 찌르기 — 푸시는 받는 사람에게만"
 svc PATCH "devices?id=eq.$DEV4" '{"expo_push_token":"ExponentPushToken[sender-test]"}'
 svc PATCH "devices?id=eq.$DEV5" '{"expo_push_token":"ExponentPushToken[recipient-test]"}'
 
-svc POST "rpc/claim_push_batch" '{"max_events":50}'
+reclaim "kind=eq.nudge"
 NUDGE=$(jq -c '[.[] | select(.kind == "nudge")]' <<< "$CURL_BODY")
 check "콕 찌르기도 발송 대상"              2 "$(jq -r 'length' <<< "$NUDGE")"
 check "받는 사람에게만 간다"               '["ExponentPushToken[recipient-test]"]' "$(jq -c '[.[0].tokens[]]' <<< "$NUDGE")"
 
 # 음소거는 콕 찌르기에만 걸린다. 한도 알림은 그룹의 사정이라 개인이 끄지 않는다.
-svc POST "rpc/release_push_batch" "{\"event_ids\":$(jq -c '[.[].event_id]' <<< "$NUDGE")}" > /dev/null
 patch 5 "group_memberships?group_id=eq.$GROUP_B&profile_id=eq.$(uid 5)" '{"notifications_muted":true}'
 check "본인 음소거는 직접 켤 수 있다"      204 "$CURL_CODE"
 # RLS는 조용히 0행을 고친다(에러가 아니다). 그러므로 응답이 아니라 값을 본다.
@@ -1117,11 +1125,101 @@ patch 5 "group_memberships?group_id=eq.$GROUP_B&profile_id=eq.$(uid 4)" '{"notif
 svc GET "group_memberships?group_id=eq.$GROUP_B&profile_id=eq.$(uid 4)&select=notifications_muted"
 check "남의 음소거는 못 켠다"              false "$(jq -r '.[0].notifications_muted' <<< "$CURL_BODY")"
 
-svc POST "rpc/claim_push_batch" '{"max_events":50}'
+reclaim "kind=eq.nudge"
 check "음소거하면 안 간다"                 '[]' "$(jq -c '[.[] | select(.kind == "nudge")][0].tokens' <<< "$CURL_BODY")"
 
 svc PATCH "devices?id=eq.$DEV4" '{"expo_push_token":null}'
 svc PATCH "devices?id=eq.$DEV5" '{"expo_push_token":null}'
+
+# ============================================================================
+section "계정 삭제 — 관리자 자동 이전과 집계 보존"
+#
+# 되돌릴 수 없는 동작이라 확인할 것이 셋이다. 인증 정보가 실제로 사라지는가,
+# 남은 사람들의 지난 집계가 그대로인가, 관리자 자리가 비지 않는가.
+#
+# GROUP_B의 관리자 t4를 지운다. 좌석이 셋(t5·t6·t7) 남으므로 보관되지 않고,
+# 가장 먼저 들어온 t5에게 관리자가 넘어가야 한다.
+# ============================================================================
+
+rpc_anon delete_my_account
+check "토큰 없이는 호출 불가"              401 "$CURL_CODE"
+
+svc GET "daily_member_usage?group_id=eq.$GROUP_B&select=profile_id,cumulative_seconds"
+BEFORE_TOTAL=$(jq -r '[.[].cumulative_seconds] | add' <<< "$CURL_BODY")
+DEAD=$(uid 4)
+
+rpc 4 delete_my_account
+check "삭제 성공"                          200 "$CURL_CODE"
+# t4는 GROUP_A(정원 시험에서 가입)와 GROUP_B 둘에 걸려 있다.
+check "걸려 있던 그룹 둘을 정리"           2 "$(field .groups)"
+check "관리자를 넘겼다"                    1 "$(field .transferred)"
+check "보관된 그룹은 없다"                 0 "$(field .archived)"
+
+svc GET "groups?id=eq.$GROUP_B&select=admin_id,status"
+check "가장 먼저 들어온 사람이 관리자"     "$(uid 5)" "$(jq -r '.[0].admin_id' <<< "$CURL_BODY")"
+check "그룹은 그대로 살아 있다"            active "$(jq -r '.[0].status' <<< "$CURL_BODY")"
+svc GET "group_memberships?group_id=eq.$GROUP_B&profile_id=eq.$(uid 5)&select=role"
+check "물려받은 사람의 역할도 바뀐다"      admin "$(jq -r '.[0].role' <<< "$CURL_BODY")"
+
+# 오늘의 공동 풀은 이미 그 사람의 시간을 담고 있다. 지금 빼면 남은 사람들의
+# 잔여가 갑자기 늘어난다.
+svc GET "daily_member_usage?group_id=eq.$GROUP_B&select=cumulative_seconds"
+check "지난 집계는 한 줄도 사라지지 않는다" "$BEFORE_TOTAL" "$(jq -r '[.[].cumulative_seconds] | add' <<< "$CURL_BODY")"
+rpc 5 group_daily_usage "{\"target_group_id\":\"$GROUP_B\"}"
+check "남은 사람이 보는 합계도 그대로"     "$BEFORE_TOTAL" "$(field .total_seconds)"
+svc GET "group_memberships?group_id=eq.$GROUP_B&profile_id=eq.$DEAD&select=effective_until"
+check "탈퇴는 다음 오전 6시로 예약"        yes "$(jq -r '.[0].effective_until | if . == null then "no" else "yes" end' <<< "$CURL_BODY")"
+
+# 비석 — 행은 남지만 사람은 남지 않는다.
+svc GET "profiles?id=eq.$DEAD&select=nickname,avatar_key,deleted_at"
+check "프로필은 비석으로 남는다"           1 "$(jq -r 'length' <<< "$CURL_BODY")"
+check "이름이 지워진다"                    "탈퇴한 멤버" "$(jq -r '.[0].nickname' <<< "$CURL_BODY")"
+check "아바타도 기본값으로"                avatar-01 "$(jq -r '.[0].avatar_key' <<< "$CURL_BODY")"
+check "지운 시각이 남는다"                 yes "$(jq -r '.[0].deleted_at | if . == null then "no" else "yes" end' <<< "$CURL_BODY")"
+
+# 개인을 가리키는 것들은 남기지 않는다.
+svc GET "devices?profile_id=eq.$DEAD&select=id"
+check "기기는 지워진다"                    0 "$(jq -r 'length' <<< "$CURL_BODY")"
+svc GET "usage_snapshots?profile_id=eq.$DEAD&select=id"
+check "기기가 보낸 원본도 지워진다"        0 "$(jq -r 'length' <<< "$CURL_BODY")"
+svc GET "reactions?profile_id=eq.$DEAD&select=id"
+check "반응도 지워진다"                    0 "$(jq -r 'length' <<< "$CURL_BODY")"
+svc GET "nudges?or=(sender_id.eq.$DEAD,recipient_id.eq.$DEAD)&select=id"
+check "콕 찌르기 기록도 지워진다"          0 "$(jq -r 'length' <<< "$CURL_BODY")"
+
+# 인증 정보.
+curl -s "$SB_URL/auth/v1/admin/users?per_page=1000" \
+  -H "apikey: $SB_SECRET" -H "Authorization: Bearer $SB_SECRET" \
+  | jq -r '[.users[]? | select(.email == "t4@frimit.test")] | length' > "$TOKEN_DIR/t4-exists"
+check "인증 정보가 사라진다"               0 "$(cat "$TOKEN_DIR/t4-exists")"
+
+LOGIN=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$SB_URL/auth/v1/token?grant_type=password" \
+  -H "apikey: $SB_ANON" -H 'Content-Type: application/json' \
+  -d "{\"email\":\"t4@frimit.test\",\"password\":\"$SB_TEST_PASSWORD\"}")
+check "다시 로그인할 수 없다"              400 "$LOGIN"
+
+# ============================================================================
+section "계정 삭제 — 넘길 사람이 없으면 접는다"
+#
+# t9는 자기 혼자인 draft 그룹 다섯 개의 관리자다(정원 섹션에서 만들었다).
+# 넘길 사람이 없으므로 다섯 개가 전부 보관되어야 한다.
+# ============================================================================
+
+LONER=$(uid 9)
+rpc 9 delete_my_account
+check "혼자인 그룹 다섯 개를 정리"         5 "$(field .groups)"
+check "전부 보관됐다"                      5 "$(field .archived)"
+check "넘긴 관리자는 없다"                 0 "$(field .transferred)"
+
+svc GET "groups?admin_id=eq.$LONER&select=status"
+check "남은 active 그룹이 없다"            0 "$(jq -r '[.[] | select(.status != "archived")] | length' <<< "$CURL_BODY")"
+
+# 비석이 남은 계정은 cleanup이 auth 목록에서 찾지 못한다. 여기서 직접 치운다.
+svc DELETE "groups?admin_id=eq.$LONER"
+svc DELETE "profiles?id=eq.$LONER"
+svc DELETE "profiles?id=eq.$DEAD"
+svc GET "profiles?deleted_at=not.is.null&select=id"
+check "시험이 남긴 비석을 치웠다"          0 "$(jq -r 'length' <<< "$CURL_BODY")"
 
 # ============================================================================
 printf '\n'

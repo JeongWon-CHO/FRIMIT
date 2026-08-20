@@ -1,6 +1,7 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { Linking, Pressable, StyleSheet, View } from 'react-native';
+import { Alert, Linking, Pressable, StyleSheet, View } from 'react-native';
 
 import {
   AppText,
@@ -16,6 +17,7 @@ import { useMyProfile } from '@/hooks/use-profile';
 import { useTrackingState } from '@/hooks/use-tracking';
 import { hexToRgba } from '@/lib/color';
 import { formatShort } from '@/lib/format';
+import { deleteMyAccount } from '@/lib/account';
 import { ensureDevice } from '@/lib/device';
 import { resetProgress } from '@/lib/onboarding';
 import { readPushPermission, registerPushToken, requestPushPermission, type PushPermission } from '@/lib/push';
@@ -159,6 +161,8 @@ export default function MyScreen() {
         />
       </View>
 
+      <DeleteAccountRow />
+
       {__DEV__ && (
         <View style={styles.rows}>
           <SettingRow label="스파이크 화면" value="개발용" onPress={() => router.push('/spike')} />
@@ -175,6 +179,71 @@ export default function MyScreen() {
         </View>
       )}
     </ScreenFrame>
+  );
+}
+
+/**
+ * 계정 삭제.
+ *
+ * 두 번 묻는다. 되돌릴 수 없는 동작에서 한 번의 오탭과 한 번의 결심은 구분되어야
+ * 한다. 첫 화면은 **무슨 일이 일어나는지**를 말하고, 둘째 화면은 되돌릴 수 없다는
+ * 사실만 말한다.
+ *
+ * 기록이 남는다는 사실을 숨기지 않는다. 남는 것은 이름이 지워진 합계뿐이고,
+ * 그것마저 지우면 남은 친구들의 지난 공동 시간이 무너진다 — 그 이유까지 적는다.
+ */
+function DeleteAccountRow() {
+  const queryClient = useQueryClient();
+  const [busy, setBusy] = useState(false);
+
+  const run = async () => {
+    setBusy(true);
+    try {
+      await deleteMyAccount();
+
+      /*
+       * 캐시를 비운다. 지운 계정의 그룹과 사용량이 5분(gcTime) 동안 살아 있어서,
+       * 새 계정으로 온보딩을 마치고 오늘 화면에 닿으면 남의 데이터가 한 번
+       * 그려진다. 세션은 이미 없으므로 다시 읽히지도 않는다.
+       */
+      queryClient.clear();
+      router.replace('/welcome');
+    } catch (error) {
+      Alert.alert('지우지 못했어요', error instanceof Error ? error.message : String(error));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const confirmTwice = () => {
+    Alert.alert(
+      '계정을 지울까요?',
+      '내가 관리자인 그룹은 가장 먼저 들어온 친구에게 넘어가고, 혼자인 그룹은 사라져요.\n\n' +
+        '지금까지의 공동 시간 합계는 이름 없이 남아요. 그것까지 지우면 남은 친구들의 지난 기록이 함께 무너져요.',
+      [
+        { text: '아니요', style: 'cancel' },
+        {
+          text: '계속',
+          style: 'destructive',
+          onPress: () =>
+            Alert.alert('되돌릴 수 없어요', '지우고 나면 이 계정으로 다시 들어올 수 없어요.', [
+              { text: '아니요', style: 'cancel' },
+              { text: '계정 지우기', style: 'destructive', onPress: run },
+            ]),
+        },
+      ]
+    );
+  };
+
+  return (
+    <View style={styles.rows}>
+      <GradientButton
+        label="계정 삭제"
+        variant="tertiary"
+        loading={busy}
+        onPress={confirmTwice}
+      />
+    </View>
   );
 }
 
