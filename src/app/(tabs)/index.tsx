@@ -99,6 +99,26 @@ export default function TodayScreen() {
           body="친구 한 명만 있으면 공동 시간을 시작할 수 있어요."
           action={<GradientButton label="그룹 만들기" size="md" onPress={() => router.push('/group')} />}
         />
+      ) : hero?.status === 'draft' && !devPreview ? (
+        /*
+          시작 전 그룹이 히어로에 올라오는 경우가 생겼다 — 대기실에서 "먼저
+          둘러보기"로 나오면 가진 그룹이 draft 하나뿐일 수 있다.
+
+          게이지를 그리면 안 된다. 서버는 시작 전 그룹에도 한도와 다음 초기화
+          시각을 정상으로 주므로(집계 대상만 0명), 그대로 그리면 "8h shared today"가
+          뜨면서 아무도 안 쓴 날처럼 보인다. 아직 흐르지 않는 시간이다.
+        */
+        <EmptyState
+          title="아직 시작하지 않았어요"
+          body="친구가 준비를 마치면 우리 시간이 흐르기 시작해요."
+          action={
+            <GradientButton
+              label="대기실 보기"
+              size="md"
+              onPress={() => router.push({ pathname: '/ready', params: { groupId: hero.id } })}
+            />
+          }
+        />
       ) : !heroView ? (
         <HeroSkeleton />
       ) : (

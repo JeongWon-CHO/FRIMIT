@@ -25,6 +25,7 @@ import { useMyProfile } from '@/hooks/use-profile';
 import { useScreenGroup } from '@/hooks/use-screen-group';
 import { useTrackingState } from '@/hooks/use-tracking';
 import { avatarEmoji } from '@/lib/avatars';
+import { markProgress } from '@/lib/onboarding';
 import { formatShort } from '@/lib/format';
 import { READY_MEMBERS_TO_START } from '@/lib/groups';
 import { armTracking, isUsable } from '@/lib/tracking';
@@ -80,6 +81,22 @@ export default function ReadinessScreen() {
       ? 'Waiting for app selection'
       : null;
 
+  /**
+   * 대기실에서 나가는 문.
+   *
+   * 혼자 만든 그룹은 시작할 수 없다(2명 필요). 그 상태에서 나갈 길이 없으면
+   * 온보딩이 막다른 골목이 된다 — 앱을 껐다 켜도 `resolveEntryRoute`가 여기로
+   * 되돌려 보내기 때문에 더 그렇다.
+   *
+   * `done`을 찍는 이유가 그것이다. 이 사람은 혼자 할 수 있는 것을 다 했고, 남은
+   * 것은 친구가 들어오는 일뿐이다. 디자인의 복구 분기도 시작한 그룹 없이 앱을
+   * 둘러볼 수 있어야 한다고 말한다(ONBOARDING_NAVIGATION의 Recovery branch).
+   */
+  const browse = async () => {
+    await markProgress({ done: true });
+    router.replace('/');
+  };
+
   const start = async () => {
     if (!group) return;
     await startGroup.mutateAsync(group.id);
@@ -127,13 +144,14 @@ export default function ReadinessScreen() {
                 관리자가 시작하기를 기다리는 중
               </AppText>
             ) : (
-              <GradientButton label="오늘 보기" onPress={() => router.replace('/')} />
+              <GradientButton label="홈으로 가기" onPress={() => router.replace('/')} />
             )}
             {isDraft && !canStart && (
               <AppText variant="metadata" tone="faint" style={styles.note}>
                 {READY_MEMBERS_TO_START}명 이상 준비되면 시작할 수 있어요.
               </AppText>
             )}
+            {isDraft && <GradientButton label="먼저 둘러보기" variant="tertiary" onPress={browse} />}
           </ButtonStack>
         }>
         <View style={styles.top}>
@@ -219,9 +237,23 @@ export default function ReadinessScreen() {
               }
             />
           )}
+
+          {/*
+            준비를 마쳤는데 아직 시작할 수 없으면 **홈이 다음 자리**다.
+            실제 흐름은 한 사람이 먼저 깔고 초대 코드를 보낸 뒤 친구가 몇 시간
+            뒤에 들어오는 것이다. 그 사이를 대기실에서 보내게 하면, 할 수 있는
+            일이 하나도 없는 화면에 사람을 세워 두는 셈이 된다.
+
+            정족수가 차면 반대가 된다 — 시작 버튼이 대기실에 있으므로 그쪽이
+            먼저다. 지금 할 수 있는 일이 언제나 primary다.
+          */}
+          {me?.is_ready && !blockedReason && !canStart && (
+            <GradientButton label="홈으로 가기" onPress={browse} />
+          )}
+
           <GradientButton
             label="대기실로 가기"
-            variant={me?.is_ready && !blockedReason ? 'primary' : 'secondary'}
+            variant={me?.is_ready && !blockedReason && canStart ? 'primary' : 'secondary'}
             onPress={() => setInWaitingRoom(true)}
           />
         </ButtonStack>

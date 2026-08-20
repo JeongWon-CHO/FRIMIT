@@ -41,7 +41,7 @@ export default function GroupStartedScreen() {
   return (
     <OnboardingFrame
       ambient={{ color: colors.accent.violet, size: 560, opacity: 0.5, x: 169, y: 330 }}
-      footer={<GradientButton label="오늘 보기" onPress={finish} />}>
+      footer={<GradientButton label="홈으로 가기" onPress={finish} />}>
       <View style={styles.orbitBox}>
         <SharedOrbitRing
           size={ORBIT}
