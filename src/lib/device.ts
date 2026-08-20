@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
+import { registerPushToken } from './push';
 import { supabase } from './supabase';
 import type { PermissionState } from '@modules/screen-time';
 
@@ -23,6 +24,23 @@ function currentPlatform(): 'ios' | 'android' {
 }
 
 export async function ensureDevice(permissionState: PermissionState): Promise<string> {
+  const id = await resolveDeviceId(permissionState);
+
+  /*
+   * 푸시 토큰은 기기 행이 있어야 적을 수 있으므로 여기가 유일하게 맞는 자리다.
+   * 이 함수는 앱이 앞으로 나올 때마다 불리는데, 토큰은 OS가 언제든 갱신할 수
+   * 있어서 한 번 적고 끝낼 값이 아니다.
+   *
+   * 기다리지 않는다. 권한이 없거나 시뮬레이터이거나 프로젝트 설정이 아직 없으면
+   * 토큰은 그냥 없는 것이고(`registerPushToken`이 null로 돌아온다), 그 사정으로
+   * 사용량 동기화가 늦어질 이유는 없다.
+   */
+  void registerPushToken(id);
+
+  return id;
+}
+
+async function resolveDeviceId(permissionState: PermissionState): Promise<string> {
   const storedId = await AsyncStorage.getItem(DEVICE_ID_KEY);
 
   if (storedId) {

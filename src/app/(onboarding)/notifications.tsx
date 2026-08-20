@@ -1,10 +1,12 @@
 import { router } from 'expo-router';
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { OnboardingFrame, SampleRow, StepProgress } from '@/components/onboarding';
 import { AppText, ButtonStack, GradientButton } from '@/components/ui';
 import { colors } from '@/constants/design-tokens';
 import { markProgress } from '@/lib/onboarding';
+import { requestPushPermission } from '@/lib/push';
 
 /**
  * 04 · 알림 사전 설명.
@@ -12,15 +14,33 @@ import { markProgress } from '@/lib/onboarding';
  * OS가 묻기 전에 **왜 필요한지** 먼저 말한다. 시스템 시트는 우리가 그리지 않고,
  * 우리 몫은 그 앞 화면과 뒤 화면뿐이다(PERMISSION_FLOW_SPEC).
  *
- * ⚠️ 지금 이 화면은 실제로 권한을 요청하지 않는다. `expo-notifications`가
- * 프로젝트에 없고 푸시 발송 인프라(토큰 테이블·서버)도 없다. 켜든 넘기든 05로
- * 간다는 점은 스펙과 같으므로 흐름은 지금도 정확하다 — 붙일 때 바뀌는 것은
- * `turnOn` 안쪽 한 줄이다.
+ * 거절해도 05로 간다. 알림은 이 앱을 쓰는 조건이 아니고, 여기서 막으면 사전
+ * 설명 화면이 설명이 아니라 관문이 된다.
+ *
+ * 토큰은 여기서 적지 않는다. 기기 행이 있어야 적을 수 있고 그 행은 첫 동기화에서
+ * 만들어지므로, `ensureDevice`가 오늘 화면에서 바로 이어받는다.
  */
 export default function NotificationIntroScreen() {
+  const [asking, setAsking] = useState(false);
+
   const advance = async () => {
     await markProgress({ notificationsSeen: true });
     router.push('/privacy');
+  };
+
+  const turnOn = async () => {
+    setAsking(true);
+    try {
+      // 결과를 보고 갈라지지 않는다. 거절도 정상적인 답이고, 그 사실은 서버에
+      // 토큰이 없다는 것으로 이미 표현된다.
+      await requestPushPermission();
+    } catch {
+      // 시뮬레이터나 알림을 지원하지 않는 환경. 흐름을 막지 않는다.
+    } finally {
+      setAsking(false);
+    }
+
+    await advance();
   };
 
   return (
@@ -28,7 +48,7 @@ export default function NotificationIntroScreen() {
       ambient={{ color: colors.accent.violet, size: 380, opacity: 0.3, x: 100, y: 120 }}
       footer={
         <ButtonStack>
-          <GradientButton label="알림 켜기" onPress={advance} />
+          <GradientButton label="알림 켜기" onPress={turnOn} loading={asking} />
           <GradientButton label="나중에" variant="tertiary" onPress={advance} />
         </ButtonStack>
       }>

@@ -968,6 +968,52 @@ rpc 4 purge_expired_activity
 check "보관 정리는 예약 작업 전용"         403 "$CURL_CODE"
 
 # ============================================================================
+section "푸시 발송 — 집고 표시하기"
+#
+# 발송기(Edge Function)는 밖에서 주기적으로 부른다. 여기서 확인하는 것은 그
+# 발송기가 기대는 두 가지다 — **누구에게 보낼지 서버가 정한다**는 것과, **한 사건은
+# 한 번만 나간다**는 것.
+# ============================================================================
+
+# 활성 멤버 중 토큰이 있는 기기에만 간다. 지금 GROUP_B의 활성 멤버는 t4·t5뿐이고
+# (t6~t8은 내일 6시부터다) 그중 t5에게만 토큰을 심는다.
+svc PATCH "devices?id=eq.$DEV5" '{"expo_push_token":"ExponentPushToken[verify-db-test]"}'
+
+svc POST "rpc/claim_push_batch" '{"max_events":50}'
+BATCH=$(jq -c --arg g 경계확인 '[.[] | select(.group_name == $g)]' <<< "$CURL_BODY")
+check "한도 사건 넷이 집힌다"              4 "$(jq -r 'length' <<< "$BATCH")"
+check "단계 셋과 초과 하나"                '["pool_over","pool_threshold"]' "$(jq -c '[.[].kind] | unique' <<< "$BATCH")"
+check "75·90·100이 다 있다"                "[75,90,100]" "$(jq -c '[.[] | select(.kind == "pool_threshold") | .payload.threshold] | sort' <<< "$BATCH")"
+check "토큰 가진 사람에게만 간다"          '["ExponentPushToken[verify-db-test]"]' "$(jq -c '[.[].tokens[]] | unique' <<< "$BATCH")"
+check "문장 재료가 실려 온다"              yes "$(jq -r '[.[] | select(.kind == "pool_over") | .payload.over_seconds][0] | if . == 150 then "yes" else "no" end' <<< "$BATCH")"
+
+svc POST "rpc/claim_push_batch" '{"max_events":50}'
+check "집힌 사건은 다시 집히지 않는다"     0 "$(jq -r --arg g 경계확인 '[.[] | select(.group_name == $g)] | length' <<< "$CURL_BODY")"
+
+# Expo가 잠깐 흔들렸다고 그날의 알림이 사라지면 안 된다.
+svc POST "rpc/release_push_batch" "{\"event_ids\":$(jq -c '[.[].event_id]' <<< "$BATCH")}"
+check "실패한 발송은 되돌릴 수 있다"       4 "$(jq -r . <<< "$CURL_BODY")"
+svc POST "rpc/claim_push_batch" '{"max_events":50}'
+check "되돌린 사건은 다시 집힌다"          4 "$(jq -r --arg g 경계확인 '[.[] | select(.group_name == $g)] | length' <<< "$CURL_BODY")"
+
+svc POST "rpc/forget_push_token" '{"bad_token":"ExponentPushToken[verify-db-test]"}'
+check "죽은 토큰은 비운다"                 1 "$(jq -r . <<< "$CURL_BODY")"
+svc GET "devices?id=eq.$DEV5&select=id,expo_push_token,is_active"
+check "기기 행은 지우지 않는다"            1 "$(jq -r 'length' <<< "$CURL_BODY")"
+check "토큰만 비었다"                      null "$(jq -r '.[0].expo_push_token' <<< "$CURL_BODY")"
+check "집계 기기로는 그대로 살아 있다"     true "$(jq -r '.[0].is_active' <<< "$CURL_BODY")"
+
+rpc 4 claim_push_batch '{"max_events":10}'
+check "발송 대상 조회는 미노출"            403 "$CURL_CODE"
+rpc 4 release_push_batch '{"event_ids":[]}'
+check "발송 표시 되돌리기도 미노출"        403 "$CURL_CODE"
+rpc 4 forget_push_token '{"bad_token":"x"}'
+check "남의 토큰은 건드릴 수 없다"         403 "$CURL_CODE"
+
+call GET "$SB_URL/rest/v1/devices?select=expo_push_token" "$(jwt 5)" "$SB_ANON"
+check "토큰은 본인 것만 보인다"            1 "$(jq -r 'length' <<< "$CURL_BODY")"
+
+# ============================================================================
 printf '\n'
 # ${VAR} 형태로 감쌀 것. `$PASS개`처럼 쓰면 bash가 한글 바이트까지 변수명으로 읽는다.
 if [ "$FAIL" -eq 0 ]; then

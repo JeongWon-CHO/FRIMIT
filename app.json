@@ -34,6 +34,13 @@
         }
       ],
       [
+        "expo-notifications",
+        {
+          "color": "#7C4DFF",
+          "defaultChannel": "default"
+        }
+      ],
+      [
         "./plugins/withFrimitScreenTime",
         {
           "appleTeamId": "7D75P7PR8U"
@@ -44,6 +51,13 @@
       "typedRoutes": true,
       "reactCompiler": true
     },
-    "backgroundColor": "#050507"
+    "backgroundColor": "#050507",
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "3de78116-6c23-4e47-bb5b-890053131a63"
+      }
+    },
+    "owner": "jeongwon0312"
   }
 }

@@ -371,6 +371,12 @@ authorization_url_path = "/oauth/consent"
 # Allow dynamic client registration
 allow_dynamic_registration = false
 
+# 한도 알림 발송기. JWT 검사를 끄는 대신 함수가 x-cron-secret 헤더를 직접 본다 —
+# 이 프로젝트의 API 키는 새 형식(sb_secret_…)이라 JWT가 아니어서 게이트웨이 검사와
+# 맞지 않는다. 플래그로 매번 넘기지 않고 여기 적어 두면 배포가 항상 같게 나간다.
+[functions.push-activity]
+verify_jwt = false
+
 [edge_runtime]
 enabled = true
 # Supported request policies: `oneshot`, `per_worker`.

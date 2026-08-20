@@ -1,5 +1,6 @@
 import { router } from 'expo-router';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { Linking, Pressable, StyleSheet, View } from 'react-native';
 
 import {
   AppText,
@@ -15,9 +16,11 @@ import { useMyProfile } from '@/hooks/use-profile';
 import { useTrackingState } from '@/hooks/use-tracking';
 import { hexToRgba } from '@/lib/color';
 import { formatShort } from '@/lib/format';
+import { ensureDevice } from '@/lib/device';
 import { resetProgress } from '@/lib/onboarding';
+import { readPushPermission, registerPushToken, requestPushPermission, type PushPermission } from '@/lib/push';
 import { groupAccent } from '@/lib/today';
-import { describePermission, isUsable, requestPermission } from '@/lib/tracking';
+import { describePermission, isUsable, readPermission, requestPermission } from '@/lib/tracking';
 
 /**
  * MY 탭.
@@ -85,6 +88,8 @@ export default function MyScreen() {
         </Surface>
       )}
 
+      <PushCard />
+
       <View style={styles.rows}>
         {(groups.data ?? []).map((group) => {
           const usage = usages.byGroupId.get(group.id);
@@ -147,6 +152,79 @@ export default function MyScreen() {
         </View>
       )}
     </ScreenFrame>
+  );
+}
+
+/**
+ * 알림.
+ *
+ * 온보딩 04는 **신규 사용자만** 지나간다. 그래서 이 줄이 없으면 이미 온보딩을
+ * 마친 사람은 알림을 켤 방법이 영영 없다 — 지금 베타 참가자 전원이 그 상태다.
+ *
+ * iOS는 한 번 거절당하면 앱이 다시 물을 수 없다. 그때는 우리가 물어볼 자리가
+ * 아니라 설정으로 보내는 자리다.
+ */
+function PushCard() {
+  const [permission, setPermission] = useState<PushPermission | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const refresh = useCallback(() => {
+    readPushPermission()
+      .then(setPermission)
+      .catch(() => setPermission('undetermined'));
+  }, []);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  const turnOn = async () => {
+    setBusy(true);
+
+    try {
+      const status = await requestPushPermission();
+      setPermission(status);
+
+      if (status !== 'granted') return;
+
+      /*
+       * 토큰은 기기 행이 있어야 적을 수 있다. 평소에는 첫 동기화가 그 일을
+       * 하지만(`ensureDevice`), 여기서는 사람이 방금 버튼을 눌렀으므로 다음
+       * 동기화를 기다리지 않고 바로 적는다.
+       */
+      await registerPushToken(await ensureDevice(readPermission()));
+    } catch {
+      // 시뮬레이터이거나 네트워크가 없는 경우. 다음 동기화에서 다시 시도된다.
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (permission === 'granted') {
+    return (
+      <View style={styles.rows}>
+        <SettingRow label="알림" value="켜짐" onPress={() => Linking.openSettings()} />
+      </View>
+    );
+  }
+
+  const denied = permission === 'denied';
+
+  return (
+    <Surface fill={colors.surface.cardNeutral} cornerRadius={22} padding={16} style={styles.permission}>
+      <AppText variant="bodyStrong" tone="body">
+        {denied ? '알림이 꺼져 있어요' : '알림을 받을까요?'}
+      </AppText>
+      <AppText variant="metadata" tone="metadata">
+        우리 시간이 75%에 닿았을 때만 알려드려요. 하루에 몇 번이면 충분해요.
+      </AppText>
+      <GradientButton
+        label={denied ? '설정에서 켜기' : '알림 켜기'}
+        size="md"
+        loading={busy}
+        onPress={denied ? () => Linking.openSettings() : turnOn}
+      />
+    </Surface>
   );
 }
 
