@@ -43,7 +43,21 @@ export default function TrackingScreen() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const chosen = tracking.selectionCount > 0;
+  /**
+   * 방금 고른 결과.
+   *
+   * `presentSelection`은 저장을 마친 뒤 **그 자리에서 센 개수**를 돌려준다. 그걸
+   * 버리고 `getSelectionSummary`로 다시 읽으면 같은 값을 한 번 더 묻는 셈인데,
+   * 다시 고르기로 앱을 더한 직후에는 그 재조회가 옛 개수를 준다. 화면은 2를
+   * 그대로 두고, 다음 화면에 가서야 4가 나온다.
+   *
+   * 그래서 돌려받은 값을 우선한다. 아직 한 번도 고르지 않았으면 null이고, 그때는
+   * 기기에 저장된 값을 읽는다(다른 기기에서 고르고 온 경우).
+   */
+  const [pickedCount, setPickedCount] = useState<number | null>(null);
+  const selectionCount = pickedCount ?? tracking.selectionCount;
+
+  const chosen = selectionCount > 0;
 
   useEffect(() => {
     if (Platform.OS !== 'android' || !group) return;
@@ -97,6 +111,7 @@ export default function TrackingScreen() {
     run(async () => {
       if (!group) return;
       const count = await pickTargetsIOS(group.id);
+      setPickedCount(count);
       // 그룹이 아직 시작 전이면 서버가 스냅샷을 거절하지만 기기 쪽 집계는 미리
       // 돌아도 무해하고, 시작되는 순간부터 값이 바로 쌓인다.
       if (count > 0) await armTracking(group.id, group.time_zone);
@@ -106,6 +121,7 @@ export default function TrackingScreen() {
     run(async () => {
       if (!group) return;
       const count = await saveSelectedPackages(group.id, selected);
+      setPickedCount(count);
       if (count > 0) await armTracking(group.id, group.time_zone);
     });
 
@@ -129,7 +145,7 @@ export default function TrackingScreen() {
           </ButtonStack>
         }>
         <AppText variant="numericLabel" tone="faint">
-          {group?.name ?? 'THIS GROUP'}
+          {group?.name ?? '이 그룹'}
         </AppText>
 
         <View style={styles.center}>
@@ -139,10 +155,10 @@ export default function TrackingScreen() {
             gradient={gradients.sharedPool.colors}
             strokeRatio={0.13}>
             <AppText variant="heroNumber" style={styles.count}>
-              {tracking.selectionCount}
+              {selectionCount}
             </AppText>
             <AppText variant="bodyStrong" tone="metadata">
-              apps in this pool
+              우리 시간에 포함된 앱
             </AppText>
           </SharedOrbitRing>
 
@@ -257,7 +273,7 @@ export default function TrackingScreen() {
         {Platform.OS === 'ios' && (
           <PrivacyDisclosureCard
             tone="hidden"
-            eyebrow="STAYS ON THIS PHONE"
+            eyebrow="이 기기에만 남아요"
             note="고른 앱 목록은 이 기기에만 남아요. 친구들에게는 앱 개수와 총 시간만 보여요."
           />
         )}
