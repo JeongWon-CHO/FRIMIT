@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { AppText, AvatarStack, Bloom, StatusPill, Surface } from '@/components/ui';
+import { AppText, AvatarStack, Bloom, StatusDot, Surface } from '@/components/ui';
 import { colors, layout, radius as radii } from '@/constants/design-tokens';
 import type { PoolView } from '@/lib/today';
 
@@ -79,8 +79,20 @@ export const GroupTile = memo(function GroupTile({ view, wide, onPress }: GroupT
 /**
  * 아직 시작하지 않은 그룹.
  *
- * 넓은 카드에서는 알약과 이름을 좌우로 갈라 놓는다. 88px 안에 셋을 세로로
+ * 상태는 알약이 아니라 **점 하나와 작은 글자**로 오른쪽 위에 앉는다. 알약은
+ * 채운 배경과 테두리를 함께 갖고 있어서, 카드가 하나뿐인 그리드에서는 그것이
+ * 카드 안의 두 번째 카드처럼 보인다. 여기서 말해야 하는 것은 "아직 안 시작했다"는
+ * 사실 한 줄이고, 그 무게는 점 하나면 충분하다.
+ *
+ * 넓은 카드에서는 이름과 상태를 좌우로 갈라 놓는다. 88px 안에 셋을 세로로
  * 쌓으면 서로 붙어서 한 덩어리로 보인다.
+ *
+ * 좁은 카드는 `space-between`을 쓰지 않는다. 그러면 124px 안에서 상태는 맨 위,
+ * 이름은 맨 아래로 갈라져 사이가 휑해진다. 대신 위에서부터 쌓는다 — 아래가 비는
+ * 대신 둘이 한 덩어리로 읽힌다.
+ *
+ * ⚠️ 그 대가로 활성 그룹 카드(`GroupTile`)와 이름 높이가 어긋난다. 그쪽은 여전히
+ * 아래에서부터 쌓는다. 섞인 그리드에서 그게 거슬리면 여기를 되돌리면 된다.
  */
 export function DraftTile({
   name,
@@ -91,6 +103,15 @@ export function DraftTile({
   wide?: boolean;
   onPress: () => void;
 }) {
+  const text = (
+    <View style={styles.draftText}>
+      <AppText variant="cardTitle">{name}</AppText>
+      <AppText variant="metadata" tone="muted">
+        친구를 기다리는 중
+      </AppText>
+    </View>
+  );
+
   return (
     <Surface
       fill={colors.surface.cardNeutral}
@@ -106,34 +127,41 @@ export function DraftTile({
               justifyContent: 'space-between',
               gap: 14,
             }
-          : { height: layout.groupCardHeight, justifyContent: 'space-between' }
+          : { height: layout.groupCardHeight, gap: 10 }
       }>
       {wide ? (
         <>
-          <View style={styles.draftText}>
-            <AppText variant="cardTitle">{name}</AppText>
-            <AppText variant="metadata" tone="muted">
-              친구를 기다리는 중
-            </AppText>
-          </View>
-          <StatusPill label="시작 대기" tone="amber" />
+          {text}
+          <DraftStatus />
         </>
       ) : (
         <>
-          <StatusPill label="시작 대기" tone="amber" />
-          <View style={styles.draftText}>
-            <AppText variant="cardTitle">{name}</AppText>
-            <AppText variant="metadata" tone="muted">
-              친구를 기다리는 중
-            </AppText>
+          <View style={styles.draftStatusRow}>
+            <DraftStatus />
           </View>
+          {text}
         </>
       )}
     </Surface>
   );
 }
 
+/** 점과 글자 한 쌍. 색은 호박색 — 멈춘 것이 아니라 기다리는 중이라는 뜻이다. */
+function DraftStatus() {
+  return (
+    <View style={styles.draftStatus}>
+      <StatusDot color={colors.state.staleSync} size={6} />
+      <AppText variant="metadata" tone="metadata">
+        시작 대기
+      </AppText>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   text: { gap: 3 },
   draftText: { gap: 5, flexShrink: 1 },
+  draftStatus: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  // 좁은 카드에서는 오른쪽 위 구석에 붙는다.
+  draftStatusRow: { flexDirection: 'row', justifyContent: 'flex-end' },
 });
