@@ -114,14 +114,14 @@ describe('formatPoolHeadline', () => {
 
 describe('formatUsedPercent', () => {
   it('반올림한다', () => {
-    expect(formatUsedPercent(15552, 28800)).toBe('54% USED');
+    expect(formatUsedPercent(15552, 28800)).toBe('54% 사용');
   });
 
   it('늦은 멤버가 있으면 ~를 붙인다', () => {
-    expect(formatUsedPercent(15552, 28800, true)).toBe('~54% USED');
+    expect(formatUsedPercent(15552, 28800, true)).toBe('~54% 사용');
   });
 
   it('한도가 없으면 퍼센트가 성립하지 않는다', () => {
-    expect(formatUsedPercent(100, 0)).toBe('NO DATA');
+    expect(formatUsedPercent(100, 0)).toBe('기록 없음');
   });
 });

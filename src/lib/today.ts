@@ -59,9 +59,9 @@ export type PoolView = {
   overSeconds: number;
   /** 히어로의 큰 숫자 — `"3h 42m"` 또는 `"42m over"` */
   headline: string;
-  /** `"of 8h shared today"` */
+  /** `"우리 시간 8h 중"` */
   sublabel: string;
-  /** `"54% USED"` */
+  /** `"54% 사용"` */
   percentLabel: string;
   /** `"Updated 2m ago"` */
   syncLabel: string;
@@ -143,12 +143,12 @@ export function buildPoolView(
     headline: formatPoolHeadline(usage.remaining_seconds, usage.over_seconds),
     sublabel:
       usage.over_seconds > 0
-        ? `of ${formatShort(limit)} shared today`
+        ? `우리 시간 ${formatShort(limit)} 중`
         : state === 'complete'
           ? `${formatShort(limit)} shared, all used`
-          : `of ${formatShort(limit)} shared today`,
+          : `우리 시간 ${formatShort(limit)} 중`,
     percentLabel:
-      state === 'permissionOff' ? 'NO DATA' : formatUsedPercent(used, limit, stale),
+      state === 'permissionOff' ? '기록 없음' : formatUsedPercent(used, limit, stale),
     syncLabel: formatSyncAge(latestSync(usage), now),
     seats: seated.map((member) => ({
       id: member.id,

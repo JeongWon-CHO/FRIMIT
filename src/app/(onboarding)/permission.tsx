@@ -99,7 +99,7 @@ export default function PermissionScreen() {
         </ButtonStack>
       }>
       <AppText variant="numericLabel" tone="faint">
-        STEP 3 OF 3
+        3단계 중 3단계
       </AppText>
 
       <View style={styles.center}>
@@ -113,7 +113,7 @@ export default function PermissionScreen() {
             — —
           </AppText>
           <AppText variant="numericLabel" tone="faint">
-            NO DATA YET
+            아직 기록 없음
           </AppText>
         </SharedOrbitRing>
 

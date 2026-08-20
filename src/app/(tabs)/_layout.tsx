@@ -23,9 +23,9 @@ export default function TabsLayout() {
         headerShown: false,
         sceneStyle: { backgroundColor: colors.background.base },
       }}>
-      <Tabs.Screen name="index" options={{ title: 'Today' }} />
-      <Tabs.Screen name="goals" options={{ title: 'Goals' }} />
-      <Tabs.Screen name="activity" options={{ title: 'Activity' }} />
+      <Tabs.Screen name="index" options={{ title: '오늘' }} />
+      <Tabs.Screen name="goals" options={{ title: '목표' }} />
+      <Tabs.Screen name="activity" options={{ title: '활동' }} />
       <Tabs.Screen name="my" options={{ title: 'MY' }} />
     </Tabs>
   );

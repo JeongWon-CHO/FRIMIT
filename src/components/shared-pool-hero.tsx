@@ -57,7 +57,7 @@ export function SharedPoolHero({ view, onPress, permissionCta, syncRow }: Shared
       );
 
   const percentLabel = off
-    ? 'NO DATA'
+    ? '기록 없음'
     : formatUsedPercent(Math.max(0, countedUsed), view.limitSeconds, view.stale);
 
   /**

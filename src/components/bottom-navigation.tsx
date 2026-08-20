@@ -20,9 +20,9 @@ import { hexToRgba } from '@/lib/color';
  * 탭마다 강조색이 다르다 — 오늘 보라, 목표 파랑, 활동 시안, MY 연보라.
  */
 const TABS = [
-  { name: 'index', label: 'Today', accent: colors.accent.violet, tint: colors.accent.violetPale },
-  { name: 'goals', label: 'Goals', accent: colors.accent.blue, tint: colors.accent.bluePale },
-  { name: 'activity', label: 'Activity', accent: colors.accent.cyan, tint: colors.accent.cyanPale },
+  { name: 'index', label: '오늘', accent: colors.accent.violet, tint: colors.accent.violetPale },
+  { name: 'goals', label: '목표', accent: colors.accent.blue, tint: colors.accent.bluePale },
+  { name: 'activity', label: '활동', accent: colors.accent.cyan, tint: colors.accent.cyanPale },
   { name: 'my', label: 'MY', accent: colors.accent.violetSoft, tint: colors.accent.violetTint },
 ] as const;
 

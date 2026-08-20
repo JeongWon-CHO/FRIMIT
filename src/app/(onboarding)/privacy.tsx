@@ -27,16 +27,21 @@ export default function PrivacyIntroScreen() {
           공동 시간을 계산하려면 Screen Time 데이터가 필요해요.
         </AppText>
 
+        {/*
+          미리보기 값은 실제 화면이 그리는 문장과 같아야 한다. 동기화 시각은
+          `formatSyncAge`가 "2분 전 동기화"로 만든다 — 여기만 영어로 두면 방금 본
+          예시와 다음 화면의 실제가 다른 말을 하게 된다.
+        */}
         <PrivacyDisclosureCard
           tone="visible"
-          eyebrow="FRIENDS CAN SEE"
-          headline="1h 42m used"
-          chips={['6 apps counted', 'synced 2m ago']}
+          eyebrow="친구에게 보여요"
+          headline="1h 42m 사용"
+          chips={['앱 6개', '2분 전 동기화']}
         />
 
         <PrivacyDisclosureCard
           tone="hidden"
-          eyebrow="FRIENDS CAN'T SEE"
+          eyebrow="친구에게 안 보여요"
           rows={[
             { label: 'Instagram', value: '48m' },
             { label: 'YouTube', value: '32m' },

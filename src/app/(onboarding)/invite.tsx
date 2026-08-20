@@ -80,7 +80,7 @@ export default function InvitationPreviewScreen() {
           strokeRatio={0.12}>
           <AppText variant="heroNumberMd">8h</AppText>
           <AppText variant="metadata" tone="metadata">
-            shared every day
+            매일 함께 쓰는 시간
           </AppText>
         </SharedOrbitRing>
 

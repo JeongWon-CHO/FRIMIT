@@ -105,7 +105,7 @@ export default function TodayScreen() {
           둘러보기"로 나오면 가진 그룹이 draft 하나뿐일 수 있다.
 
           게이지를 그리면 안 된다. 서버는 시작 전 그룹에도 한도와 다음 초기화
-          시각을 정상으로 주므로(집계 대상만 0명), 그대로 그리면 "8h shared today"가
+          시각을 정상으로 주므로(집계 대상만 0명), 그대로 그리면 "우리 시간 8h 중"이
           뜨면서 아무도 안 쓴 날처럼 보인다. 아직 흐르지 않는 시간이다.
         */
         <EmptyState
@@ -141,7 +141,7 @@ export default function TodayScreen() {
       {others.length > 0 && (
         <>
           <View style={styles.sectionTitle}>
-            <AppText variant="sectionTitle">Your groups</AppText>
+            <AppText variant="sectionTitle">내 그룹</AppText>
             <AppText variant="metadata" tone="metadata">
               {others.length}
             </AppText>
@@ -196,8 +196,23 @@ function Header({
   profileId?: string;
   view: ReturnType<typeof buildPoolView>;
 }) {
-  const greeting = greetingFor(new Date());
   const off = view?.state === 'permissionOff';
+
+  /*
+   * 인사와 이름.
+   *
+   * 닉네임은 20자까지 허용된다(서버 제약). 24px 굵은 글씨로 "인사말, 이름"을 다
+   * 넣으려면 두 줄로도 모자라서 이름이 `…`로 잘린다.
+   *
+   * 그때 버리는 것은 **인사말**이다. 이름이 아니라. 분위기는 바로 아랫줄이 이미
+   * 맡고 있고, 이 화면이 누구의 것인지는 오른쪽 위 아바타가 말한다. 반대로
+   * 이름을 자르면 사람을 잘못 부르는 셈이 된다.
+   *
+   * 두 줄까지 허용한다(`numberOfLines`). 스무 자는 두 줄에 들어가고, 세 줄이
+   * 되면 그 아래 히어로가 접힌다 — 이 화면의 주인공은 히어로다.
+   */
+  const name = nickname ?? '친구';
+  const greeting = name.length > 6 ? name : `${greetingFor(new Date())}, ${name}`;
 
   const [title, subline] =
     view?.state === 'over'
@@ -205,22 +220,21 @@ function Header({
       : view?.state === 'complete'
         ? ['오늘 몫은 다 썼어요', '내일 다시 채워져요.']
         : off
-          ? [`${greeting}, ${nickname ?? '친구'}`, '아직 우리 시간에 참여하지 못했어요']
+          ? [greeting, '아직 우리 시간에 참여하지 못했어요']
           : view?.state === 'fresh'
-            ? [`${greeting}, ${nickname ?? '친구'}`, '화면 밖의 하루가 널 기다리고 있어']
+            ? [greeting, '화면 밖의 하루가 널 기다리고 있어']
             : view?.state === 'tightening'
               ? ['우리 시간이 조금 남았어요', '같이 아껴봐요.']
               : view?.state === 'approaching'
                 ? ['오늘 남은 시간이 얼마 없어요', '같이 아껴봐요.']
-                : [
-                    `${greeting}, ${nickname ?? '친구'}`,
-                    "우리의 일상을 위한 시간도 남겨두자",
-                  ];
+                : [greeting, '우리의 일상을 위한 시간도 남겨두자'];
 
   return (
     <View style={styles.header}>
       <View style={styles.headerText}>
-        <AppText variant="greeting">{title}</AppText>
+        <AppText variant="greeting" numberOfLines={2}>
+          {title}
+        </AppText>
         <AppText variant="body" tone="muted">
           {subline}
         </AppText>
@@ -268,11 +282,21 @@ function HeroSkeleton() {
   );
 }
 
+/**
+ * 시간대별 인사.
+ *
+ * 영어의 morning/afternoon/evening을 그대로 옮기면 안 된다. 한국어에서 실제로
+ * 쓰는 인사는 "좋은 아침"뿐이고, "좋은 오후"와 "좋은 저녁"은 번역투다. 그래서
+ * 시간대는 살리되 문구는 각각 따로 고른다.
+ *
+ * 저녁이 "고생했어"인 것은 이 제품의 태도이기도 하다. 하루의 끝에 화면을 얼마나
+ * 봤는지 따지지 않는다.
+ */
 function greetingFor(now: Date): string {
   const hour = now.getHours();
-  if (hour < 12) return 'Good morning';
-  if (hour < 18) return 'Good afternoon';
-  return 'Good evening';
+  if (hour < 12) return '좋은 아침';
+  if (hour < 18) return '오늘도 반가워';
+  return '고생했어';
 }
 
 const styles = StyleSheet.create({

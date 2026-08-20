@@ -53,7 +53,7 @@ export default function GroupStartedScreen() {
             {formatShort(usage?.remaining_seconds ?? limit)}
           </AppText>
           <AppText variant="bodyStrong" tone="metadata">
-            shared today
+            오늘 우리 몫
           </AppText>
         </SharedOrbitRing>
 
@@ -72,7 +72,7 @@ export default function GroupStartedScreen() {
 
       <View style={styles.copy}>
         <AppText variant="screenTitle" font="display" style={styles.headline}>
-          Our time starts now.
+          우리 시간이 시작됐어요
         </AppText>
         <AppText variant="body" tone="muted">
           {members.data?.length ?? 2}명이 하나의 시간을 공유해요.

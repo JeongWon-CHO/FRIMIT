@@ -33,7 +33,7 @@ export function InviteCodeCard({ code }: { code: string }) {
         padding={18}
         style={styles.card}>
         <AppText variant="eyebrow" tone={copied ? 'cyan' : 'faint'}>
-          {copied ? '복사했어요' : 'INVITE CODE'}
+          {copied ? '복사했어요' : '초대 코드'}
         </AppText>
         <AppText variant="cardNumber" font="mono" style={styles.code}>
           FRM-{code}

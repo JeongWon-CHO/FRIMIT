@@ -29,7 +29,7 @@ export default function ActivityScreen() {
     <ScreenFrame
       ambient={{ color: colors.accent.cyan, size: 380, opacity: 0.22, x: 330, y: 140 }}
       onRefresh={() => activity.refetch()}>
-      <TitleRow title="Activity" />
+      <TitleRow title="활동" />
 
       {activity.isPending ? (
         <EmptyState title="읽는 중이에요" body="최근 사건을 불러오고 있어요." />

@@ -128,7 +128,7 @@ export default function GroupDetailScreen() {
                   strokeRatio={0.26}>
                   <AppText variant="cardNumber">{formatShort(view.usedSeconds)}</AppText>
                   <AppText variant="numericLabel" tone="metadata">
-                    USED
+                    사용
                   </AppText>
                 </SharedOrbitRing>
 
@@ -143,7 +143,7 @@ export default function GroupDetailScreen() {
 
               <View style={styles.heroText}>
                 <AppText variant="bodyStrong" tone="muted">
-                  Left together
+                  함께 남은 시간
                 </AppText>
                 <AppText variant="heroNumberMd" tone={visual.numberTone}>
                   {view.headline}
@@ -154,7 +154,7 @@ export default function GroupDetailScreen() {
                 <View style={styles.heroBar}>
                   <ProgressBar progress={view.progress} height={6} gradient={visual.arc} />
                   <AppText variant="badge" tone="metadata" font="display">
-                    {view.ranking.length} members sharing
+                    {view.ranking.length}명이 함께 써요
                   </AppText>
                 </View>
               </View>
@@ -251,7 +251,7 @@ function RankOneCard({ member, onNudge }: { member: RankedMember; onNudge: () =>
       <View style={styles.memberRight}>
         <AppText variant="cardNumber">{member.usageLabel}</AppText>
         <AppText variant="badge" tone="achievement" font="display">
-          LEAST TODAY
+          오늘 가장 적게
         </AppText>
       </View>
 

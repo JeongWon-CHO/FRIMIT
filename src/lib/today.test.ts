@@ -66,7 +66,7 @@ describe('buildPoolView', () => {
   it('큰 숫자는 잔여시간이다', () => {
     const view = buildPoolView(group(), usage(), members, options)!;
     expect(view.headline).toBe('3h 40m');
-    expect(view.percentLabel).toBe('54% USED');
+    expect(view.percentLabel).toBe('54% 사용');
     expect(view.state).toBe('normal');
   });
 
@@ -86,7 +86,7 @@ describe('buildPoolView', () => {
   it('권한이 없으면 다른 판단보다 먼저다', () => {
     const view = buildPoolView(group(), usage(), members, { ...options, permission: false })!;
     expect(view.state).toBe('permissionOff');
-    expect(view.percentLabel).toBe('NO DATA');
+    expect(view.percentLabel).toBe('기록 없음');
   });
 
   it('늦은 멤버가 있으면 퍼센트에 ~가 붙고 그 사람이 따로 잡힌다', () => {
@@ -103,7 +103,7 @@ describe('buildPoolView', () => {
     )!;
 
     expect(view.stale).toBe(true);
-    expect(view.percentLabel).toBe('~54% USED');
+    expect(view.percentLabel).toBe('~54% 사용');
     expect(view.staleMembers.map((m) => m.name)).toEqual(['민지']);
   });
 

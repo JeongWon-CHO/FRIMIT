@@ -116,13 +116,13 @@ export function formatPoolHeadline(remainingSeconds: number, overSeconds: number
   return formatShort(remainingSeconds);
 }
 
-/** `"54% USED"`. 늦은 멤버가 있으면 `~`가 붙는다 — 값이 더 낮을 수 있다는 뜻. */
+/** `"54% 사용"`. 늦은 멤버가 있으면 `~`가 붙는다 — 값이 더 낮을 수 있다는 뜻. */
 export function formatUsedPercent(
   usedSeconds: number,
   limitSeconds: number,
   stale = false
 ): string {
-  if (limitSeconds <= 0) return 'NO DATA';
+  if (limitSeconds <= 0) return '기록 없음';
   const percent = Math.round((usedSeconds / limitSeconds) * 100);
-  return `${stale ? '~' : ''}${percent}% USED`;
+  return `${stale ? '~' : ''}${percent}% 사용`;
 }

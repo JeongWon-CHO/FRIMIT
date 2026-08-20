@@ -42,7 +42,7 @@ import { armTracking, isUsable } from '@/lib/tracking';
  * 그 규칙은 제품 쪽에 있다 — 이걸 화면이 안 막으면 아무것도 올리지 못하는 사람이
  * 시작 정족수를 채우고, 그룹은 시작됐는데 공동 풀은 비어 있는 상태가 된다.
  *
- * ⚠️ 다른 멤버의 칩(`✓ Screen Time`, `✓ 6 apps`)은 그릴 수 없다. 앱 개수는 서버로
+ * ⚠️ 다른 멤버의 칩(`✓ Screen Time`, `✓ 앱 6개`)은 그릴 수 없다. 앱 개수는 서버로
  * 올라가지 않고, 권한 상태는 그 사람이 한 번이라도 올린 뒤에만 알 수 있다.
  * 그래서 칩은 내 줄에만 붙는다.
  */
@@ -76,9 +76,9 @@ export default function ReadinessScreen() {
   const isDraft = group?.status === 'draft';
 
   const blockedReason = !isUsable(tracking.permission)
-    ? 'Waiting for Screen Time'
+    ? 'Screen Time 권한 기다리는 중'
     : tracking.selectionCount === 0
-      ? 'Waiting for app selection'
+      ? '앱 선택 기다리는 중'
       : null;
 
   /**
@@ -189,7 +189,7 @@ export default function ReadinessScreen() {
             strokeRatio={0.12}>
             <AppText variant="heroNumberMd">{formatShort(28800)}</AppText>
             <AppText variant="bodyStrong" tone="metadata">
-              shared every day
+              매일 함께 쓰는 시간
             </AppText>
           </SharedOrbitRing>
 
@@ -210,7 +210,7 @@ export default function ReadinessScreen() {
         <View style={styles.status}>
           <StatusDot color={colors.accent.cyan} />
           <AppText variant="bodyStrong" tone="muted">
-            {ready} friends ready · {total - ready}명 준비 중
+            {ready}명 준비 완료 · {total - ready}명 준비 중
           </AppText>
         </View>
       </OnboardingFrame>
@@ -273,7 +273,7 @@ export default function ReadinessScreen() {
 
         <View style={styles.readyRow}>
           <AppText variant="bodyStrong" tone="accent">
-            {ready} of {total} ready
+            {total}명 중 {ready}명 준비
           </AppText>
           <View style={styles.bar}>
             <ProgressBar progress={total > 0 ? ready / total : 0} height={5} />
@@ -296,7 +296,7 @@ export default function ReadinessScreen() {
                 // 칩은 내 줄에만. 남의 설정 내역을 늘어놓는 화면이 아니다.
                 chips={
                   self && member.is_ready
-                    ? ['✓ Screen Time', `✓ ${tracking.selectionCount} apps`]
+                    ? ['✓ Screen Time', `✓ 앱 ${tracking.selectionCount}개`]
                     : undefined
                 }
                 pendingReason={self ? (blockedReason ?? '준비 대기') : '준비 대기'}

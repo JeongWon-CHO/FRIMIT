@@ -81,7 +81,7 @@ export default function InviteFriendsScreen() {
             {group ? formatShort(28800) : '—'}
           </AppText>
           <AppText variant="metadata" tone="metadata">
-            {joined} of {expected} joined
+            {expected}명 중 {joined}명 참여
           </AppText>
         </SharedOrbitRing>
 

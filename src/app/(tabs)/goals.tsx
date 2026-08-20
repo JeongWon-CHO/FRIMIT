@@ -77,7 +77,7 @@ export default function GoalsScreen() {
       onRefresh={() => groups.refetch()}
     >
       <TitleRow
-        title="Goals"
+        title="목표"
         right={
           startedGroups.length > 0 ? (
             <AddButton onPress={() => router.push("/goal/new")} />

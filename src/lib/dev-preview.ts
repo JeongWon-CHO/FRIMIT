@@ -53,16 +53,16 @@ export function devPoolView(state: PoolState): PoolView {
     overSeconds: over,
     headline: over > 0 ? `${Math.round(over / 60)}m over` : formatDev(remaining),
     sublabel:
-      state === 'complete' ? '8h shared, all used' : 'of 8h shared today',
+      state === 'complete' ? '우리 시간 8h, 다 썼어요' : '우리 시간 8h 중',
     percentLabel:
       state === 'permissionOff'
-        ? 'NO DATA'
-        : `${stale ? '~' : ''}${Math.round((used / limit) * 100)}% USED`,
-    syncLabel: 'Updated 2m ago',
+        ? '기록 없음'
+        : `${stale ? '~' : ''}${Math.round((used / limit) * 100)}% 사용`,
+    syncLabel: '2분 전 동기화',
     seats: SEATS,
     highlight: used > 0 ? { name: '민지', label: '1h 04m' } : null,
     staleMembers: stale
-      ? [{ id: 'minji', name: '민지', emoji: '🦊', syncLabel: 'synced 38m ago' }]
+      ? [{ id: 'minji', name: '민지', emoji: '🦊', syncLabel: '38분 전 동기화' }]
       : [],
     ranking: [],
   };
