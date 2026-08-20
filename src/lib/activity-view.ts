@@ -72,6 +72,8 @@ export function groupByDay(
 export function toRow(event: ActivityEvent, myProfileId?: string, now: Date = new Date()): ActivityRow {
   const isMine = Boolean(event.actor_id) && event.actor_id === myProfileId;
   const name = isMine ? '나' : (event.actor?.nickname ?? '탈퇴한 멤버');
+  // 남은 "지호 님이", 나는 "내가". '나 님이'는 사람이 쓰는 말이 아니다.
+  const subject = isMine ? '내가' : `${name} 님이`;
 
   return {
     id: event.id,
@@ -85,7 +87,7 @@ export function toRow(event: ActivityEvent, myProfileId?: string, now: Date = ne
           emoji: avatarEmoji(event.actor?.avatar_key ?? 'avatar-01'),
         }
       : null,
-    text: describe(event, name),
+    text: describe(event, subject),
     timeLabel: formatSince(event.created_at, now),
     emphasis: event.kind === 'pool_threshold' || event.kind === 'pool_over' ? 'violet' : 'none',
   };
@@ -94,19 +96,20 @@ export function toRow(event: ActivityEvent, myProfileId?: string, now: Date = ne
 /**
  * 사건 한 줄의 문장.
  *
- * 조사는 전부 `님이`로 받는다. 이름 끝의 받침에 따라 이/가를 고르는 일을 하지
- * 않으려는 것이고, 존대가 한 겹 붙는 편이 서로를 부르는 톤에도 맞는다.
+ * 주어는 이미 만들어져 들어온다("지호 님이" / "내가"). 조사를 `님이`로 받는 것은
+ * 이름 끝의 받침에 따라 이/가를 고르지 않으려는 것이고, 존대가 한 겹 붙는 편이
+ * 서로를 부르는 톤에도 맞는다.
  */
-function describe(event: ActivityEvent, name: string): string {
+function describe(event: ActivityEvent, subject: string): string {
   const p = event.payload ?? {};
 
   switch (event.kind) {
     case 'group_started':
       return '우리 시간이 시작됐어요';
     case 'member_joined':
-      return `${name} 님이 들어왔어요`;
+      return `${subject} 들어왔어요`;
     case 'member_left':
-      return `${name} 님이 나갔어요`;
+      return `${subject} 나갔어요`;
     case 'rule_changed':
       return p.daily_limit_seconds
         ? `공동 시간이 ${formatDuration(p.daily_limit_seconds)}로 바뀌어요`
@@ -121,11 +124,11 @@ function describe(event: ActivityEvent, name: string): string {
       return `${formatDuration(p.over_seconds ?? 0)} 넘겼어요`;
 
     case 'goal_created':
-      return `${name} 님이 목표를 걸었어요 · ${p.title ?? ''}`;
+      return `${subject} 목표를 걸었어요 · ${p.title ?? ''}`;
     case 'goal_entry':
-      return `${name} 님이 ${formatAmount(p.amount ?? 0)}${p.unit ?? ''} 기록했어요`;
+      return `${subject} ${formatAmount(p.amount ?? 0)}${p.unit ?? ''} 기록했어요`;
     case 'goal_cleared':
-      return `${name} 님이 오늘 기록을 지웠어요`;
+      return `${subject} 오늘 기록을 지웠어요`;
     case 'goal_cancelled':
       return `목표를 그만뒀어요 · ${p.title ?? ''}`;
   }

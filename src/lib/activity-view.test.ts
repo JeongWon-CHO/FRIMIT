@@ -40,8 +40,8 @@ describe('문장', () => {
     expect(text(event('pool_over', { over_seconds: 4200 }))).toBe('1시간 10분 넘겼어요');
   });
 
-  it('내 사건은 이름 대신 나', () => {
-    expect(text(event('goal_entry', { amount: 3, unit: '번' }), 'me')).toBe('나 님이 3번 기록했어요');
+  it('내 사건은 이름 대신 나 — "나 님이"는 사람이 쓰는 말이 아니다', () => {
+    expect(text(event('goal_entry', { amount: 3, unit: '번' }), 'me')).toBe('내가 3번 기록했어요');
     expect(text(event('goal_entry', { amount: 3, unit: '번' }), 'other')).toBe(
       '지호 님이 3번 기록했어요'
     );
