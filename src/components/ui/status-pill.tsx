@@ -80,5 +80,15 @@ const styles = StyleSheet.create({
   withDot: { paddingLeft: 9, paddingRight: 13, paddingVertical: 7 },
   withoutDot: { paddingHorizontal: 11, paddingVertical: 6 },
   small: { paddingVertical: 5 },
-  label: { fontSize: 13 },
+  /*
+   * 크기를 줄이면 줄 높이도 함께 줄여야 한다.
+   *
+   * `bodyStrong`은 14/20이라, fontSize만 13으로 낮추면 13px 글자가 20px 줄상자에
+   * 남는다. iOS는 줄 높이가 자연 높이보다 클 때 남는 공간을 **글자 위에** 몰아
+   * 주므로, 글자가 아래로 앉아 알약 테두리에 닿는다.
+   *
+   * 16은 13의 1.23배다. 한글은 베이스라인 아래로 내려가는 획이 없어서(g·y 같은
+   * 것이 없다) 이 정도면 잘리지 않고, 위아래 여백은 알약의 패딩이 만든다.
+   */
+  label: { fontSize: 13, lineHeight: 16 },
 });
