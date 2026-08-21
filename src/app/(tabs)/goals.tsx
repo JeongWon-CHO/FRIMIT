@@ -1,3 +1,4 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { useMemo, useState } from "react";
 import { Alert, Pressable, StyleSheet, TextInput, View } from "react-native";
@@ -21,6 +22,7 @@ import { useMyGroups } from "@/hooks/use-groups";
 import { useMyProfile } from "@/hooks/use-profile";
 import { hexToRgba } from "@/lib/color";
 import { buildGoalView, pickHeroGoal, type GoalView } from "@/lib/goal-view";
+import { queryKeys } from "@/lib/query";
 
 /**
  * 목표 탭.
@@ -36,6 +38,7 @@ export default function GoalsScreen() {
   const profile = useMyProfile();
   const groups = useMyGroups();
   const goals = useGroupGoals(groups.data);
+  const queryClient = useQueryClient();
 
   const [preferredGroupId, setPreferredGroupId] = useState<string | null>(null);
 
@@ -74,7 +77,9 @@ export default function GoalsScreen() {
         x: 60,
         y: 140,
       }}
-      onRefresh={() => groups.refetch()}
+      // 그룹 목록만 다시 읽으면 정작 목표는 그대로다. 목표는 그룹마다 다른
+      // 쿼리라(`['groups', id, 'goal']`) 접두사째 비우는 편이 맞다.
+      onRefresh={() => queryClient.invalidateQueries({ queryKey: queryKeys.allGroups })}
     >
       <TitleRow
         title="목표"
