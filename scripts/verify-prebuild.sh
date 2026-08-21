@@ -54,6 +54,15 @@ check() {
   [ "$group_count" -eq 1 ] \
     || fail "[$label] App Group이 ${group_count}번 등록됐습니다 (1번이어야 함)"
 
+  # Apple 로그인 entitlement (app.json의 ios.usesAppleSignIn)
+  #
+  # 이 파일에 쓰는 주체가 둘이라서 확인한다 — expo의 기본 mod와 우리
+  # `withFrimitScreenTime`이 같은 entitlements를 건드린다. 한쪽이 파일을
+  # 통째로 쓰면 다른 쪽 키가 조용히 사라지고, 그때 나는 증상은 빌드 실패가
+  # 아니라 **실기기에서 Apple 시트가 뜨자마자 닫히는 것**이다.
+  grep -q "com.apple.developer.applesignin" "$ENTITLEMENTS" \
+    || fail "[$label] Apple 로그인 entitlement가 없습니다"
+
   # extension 쪽 파일들
   [ -f "ios/${EXT_NAME}/${EXT_NAME}.entitlements" ] || fail "[$label] extension entitlement 없음"
   [ -f "ios/${EXT_NAME}/Info.plist" ] || fail "[$label] extension Info.plist 없음"

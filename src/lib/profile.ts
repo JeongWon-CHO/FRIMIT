@@ -1,5 +1,5 @@
 import { AVATAR_PRESETS, avatarEmoji } from './avatars';
-import { ensureSession, supabase } from './supabase';
+import { requireSession, supabase } from './supabase';
 
 /**
  * 내 프로필 읽기·쓰기.
@@ -29,9 +29,9 @@ export type Profile = {
   locale: string;
 };
 
-/** 내 프로필. 세션이 없으면 익명으로 하나 만든 뒤 읽는다. */
+/** 내 프로필. 로그인돼 있어야 한다. */
 export async function fetchMyProfile(): Promise<Profile> {
-  const profileId = await ensureSession();
+  const profileId = await requireSession();
 
   const { data, error } = await supabase
     .from('profiles')
@@ -47,7 +47,7 @@ export async function updateMyProfile(input: {
   nickname: string;
   avatarKey: string;
 }): Promise<Profile> {
-  const profileId = await ensureSession();
+  const profileId = await requireSession();
   const nickname = input.nickname.trim();
 
   // 서버도 같은 것을 검사하지만(nickname_length), 거기서 걸리면 사용자에게는

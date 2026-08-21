@@ -1083,7 +1083,18 @@ check "받는 사람이 표시된다"               "$(uid 5)" "$(jq -r '.[0].ta
 check "그때의 이름이 박힌다"               yes "$(jq -r '.[0].payload | if has("sender_nickname") then "yes" else "no" end' <<< "$CURL_BODY")"
 
 # 쿨다운을 지나게 하려면 기다리는 수밖에 없으므로 기록을 과거로 옮긴다.
-svc PATCH "nudges?sender_id=eq.$(uid 4)&recipient_id=eq.$(uid 5)" '{"created_at":"2026-08-20T00:00:00Z"}'
+#
+# ⚠️ 절대 시각을 박아 두면 안 된다. 옮긴 기록은 두 조건을 **동시에** 만족해야
+# 하는데(30분 쿨다운 밖 · 오늘의 Frimit 일자 안), 박아 둔 날짜는 다음 날
+# 자동으로 두 번째 조건을 잃는다. 그러면 remaining_today가 9로 돌아오고,
+# 검증은 코드가 바뀌지 않았는데 어느 날 아침부터 빨개진다. (실제로 그랬다.)
+#
+# 40분으로 잡는 이유는 그 사이가 좁기 때문이다. 오전 6시 경계 직후에는 "30분
+# 넘게 지났으면서 오늘인 시각"이 아예 존재하지 않는다 — KST 06:00~06:40에
+# 돌리면 이 검사 하나는 성립할 수 없다. 그 40분을 피해서 돌린다.
+NUDGE_AGO=$(date -u -v-40M '+%Y-%m-%dT%H:%M:%SZ' 2> /dev/null \
+  || date -u -d '40 minutes ago' '+%Y-%m-%dT%H:%M:%SZ')
+svc PATCH "nudges?sender_id=eq.$(uid 4)&recipient_id=eq.$(uid 5)" "{\"created_at\":\"$NUDGE_AGO\"}"
 rpc 4 send_nudge "{\"target_group_id\":\"$GROUP_B\",\"target_profile_id\":\"$(uid 5)\"}"
 check "쿨다운이 지나면 다시 된다"          8 "$(field .remaining_today)"
 
@@ -1259,6 +1270,77 @@ svc DELETE "profiles?id=eq.$DEAD"
 # 잔여물로 잡히므로, 이 시험이 만든 둘만 확인한다.
 svc GET "profiles?id=in.($LONER,$DEAD)&select=id"
 check "시험이 남긴 비석을 치웠다"          0 "$(jq -r 'length' <<< "$CURL_BODY")"
+
+# ============================================================================
+section "로그인 — 프로필은 트리거가 만든다"
+#
+# 앱의 입구는 Apple·Google뿐이다(`src/lib/auth.ts`). 여기서 확인하는 것은 그
+# 공급자들이 아니라, **로그인이 auth.users에 행을 하나 만들었을 때 그 뒤에
+# 무슨 일이 벌어지는가**다. 공급자별 흐름은 서버가 아니라 기기에서 끝난다.
+#
+# 확인할 것이 셋이다.
+#   1. 프로필이 자동으로 생기는가 (`handle_new_user`)
+#   2. **공급자가 준 이름이 닉네임 자리에 새어 들어오지 않는가** — 온보딩은
+#      "닉네임이 아직 임시값인가"로 03 화면을 띄울지 정한다(`onboarding.ts`의
+#      needsNickname). Apple의 fullName이나 Google의 name이 여기 심어지면 그
+#      판정이 무너져 아무도 닉네임 화면을 보지 못한다.
+#   3. 지운 계정으로 다시 로그인하면 새 계정인가 — 비석(0012)이 되살아나면
+#      남의 지난 집계가 새 사용자에게 붙는다.
+#
+# 관리자 API로 만든 사용자는 공급자만 다를 뿐 auth.users 입장에서는 소셜
+# 로그인과 같은 INSERT다. 트리거는 그 행 하나만 본다.
+# ============================================================================
+
+# create_admin_user <이메일> <user_metadata JSON> → uid
+create_admin_user() {
+  curl -s -X POST "$SB_URL/auth/v1/admin/users" \
+    -H "apikey: $SB_SECRET" -H "Authorization: Bearer $SB_SECRET" \
+    -H 'Content-Type: application/json' \
+    -d "{\"email\":\"$1\",\"password\":\"$SB_TEST_PASSWORD\",\"email_confirm\":true,\"user_metadata\":$2}" \
+    | jq -r '.id // empty'
+}
+
+# 공급자가 실어 보내는 모양 그대로. Supabase는 Apple·Google의 응답을
+# raw_user_meta_data에 통째로 넣는다.
+SOCIAL=$(create_admin_user 't10@frimit.test' \
+  '{"full_name":"홍길동","name":"홍길동","avatar_url":"https://example.test/a.png","email_verified":true}')
+
+svc GET "profiles?id=eq.$SOCIAL&select=nickname,avatar_key,deleted_at"
+check "로그인하면 프로필이 생긴다"          1     "$(jq -r 'length' <<< "$CURL_BODY")"
+check "공급자 이름은 닉네임이 되지 않는다"  친구  "$(jq -r '.[0].nickname' <<< "$CURL_BODY")"
+check "새 계정은 비석이 아니다"             ""    "$(jq -r '.[0].deleted_at // ""' <<< "$CURL_BODY")"
+
+# 반대쪽도 확인한다. 트리거가 읽는 유일한 키는 'nickname'이고, 앱은 지금 그걸
+# 보내지 않는다 — 보내기 시작해도 동작한다는 것만 확인해 둔다.
+NAMED=$(create_admin_user 't11@frimit.test' '{"nickname":"미리정한이름"}')
+svc GET "profiles?id=eq.$NAMED&select=nickname"
+check "nickname 키만 닉네임이 된다"         미리정한이름 "$(jq -r '.[0].nickname' <<< "$CURL_BODY")"
+
+# ============================================================================
+section "로그인 — 지운 계정으로 다시 들어오면 새 계정이다"
+#
+# 같은 Apple ID로 다시 로그인하는 경로다. `delete_my_account`가 auth.users 행을
+# 지우므로 공급자가 같아도 새 uid가 나와야 하고, 남겨 둔 비석은 그 자리에
+# 그대로 있어야 한다.
+# ============================================================================
+
+rpc 10 delete_my_account
+check "삭제 성공"                           200 "$CURL_CODE"
+
+svc GET "profiles?id=eq.$SOCIAL&select=nickname,deleted_at"
+check "비석이 남는다"                       탈퇴한 "$(jq -r '.[0].nickname' <<< "$CURL_BODY" | cut -d' ' -f1)"
+check "deleted_at이 찍혔다"                 true   "$(jq -r '.[0].deleted_at != null' <<< "$CURL_BODY")"
+
+# 같은 이메일, 같은 공급자로 다시 로그인.
+REBORN=$(create_admin_user 't10@frimit.test' '{"full_name":"홍길동"}')
+check "같은 사람이어도 uid가 다르다"        false  "$([ "$REBORN" = "$SOCIAL" ] && echo true || echo false)"
+
+svc GET "profiles?id=eq.$REBORN&select=nickname,deleted_at"
+check "새 프로필이 생긴다"                  친구   "$(jq -r '.[0].nickname' <<< "$CURL_BODY")"
+check "비석을 물려받지 않는다"              ""     "$(jq -r '.[0].deleted_at // ""' <<< "$CURL_BODY")"
+
+# 비석은 cleanup의 auth 목록에 없다. 여기서 직접 치운다.
+svc DELETE "profiles?id=eq.$SOCIAL"
 
 # ============================================================================
 printf '\n'

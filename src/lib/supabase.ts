@@ -48,26 +48,65 @@ AppState.addEventListener('change', (state) => {
   }
 });
 
+/** 세션이 필요한 자리에서 던지는 오류. 화면이 이걸 보고 로그인으로 돌려보낸다. */
+export class NoSessionError extends Error {
+  constructor() {
+    super('로그인이 필요합니다.');
+    this.name = 'NoSessionError';
+  }
+}
+
+/** 지금 로그인된 사람. 없으면 `null`. 절대 만들지 않는다. */
+export async function getSessionUserId(): Promise<string | null> {
+  const { data } = await supabase.auth.getSession();
+  return data.session?.user.id ?? null;
+}
+
 /**
- * 세션이 없으면 익명으로 하나 만든다.
+ * 세션이 있어야만 진행하는 자리.
  *
- * 온보딩에서 Apple·Google 로그인을 붙이기 전까지의 임시 수단이 아니라, 그 자체로
- * 쓸 수 있는 경로다. 익명 계정은 나중에 `linkIdentity`로 실제 계정에 승격시킬 수
- * 있어서, 지금 만든 그룹과 사용량 기록이 그대로 따라간다.
+ * 예전에는 이 함수가 세션이 없으면 **익명으로 하나 만들었다.** 그래서 앱을 처음
+ * 켠 사람이 로그인 화면을 보기도 전에 계정 하나가 생겼고, 그 사람이 Apple로
+ * 로그인하는 순간 방금 만들어진 빈 계정이 버려졌다. 로그인이 필수가 된 지금
+ * 그 경로는 사고밖에 만들지 않는다 — 만들지 않고 던진다.
+ *
+ * 던지는 쪽이 안전한 이유: 세션 없이 부르는 곳은 전부 서버에 무언가를 쓰려는
+ * 자리다. 조용히 `null`을 돌려주면 그 쓰기가 `auth.uid() is null`로 RLS에서
+ * 막히고, 사용자에게는 "권한이 없습니다"라는 엉뚱한 문장이 보인다.
+ */
+export async function requireSession(): Promise<string> {
+  const userId = await getSessionUserId();
+  if (!userId) throw new NoSessionError();
+  return userId;
+}
+
+/**
+ * 익명 로그인. **개발 전용이다.**
+ *
+ * 제품의 로그인 경로는 Apple·Google뿐이고(`lib/auth.ts`), 익명 계정은 화면을
+ * 혼자 돌려 보기 위한 수단으로만 남는다. `spike.tsx`가 유일한 사용처다.
+ *
+ * 릴리스 번들에서 부르면 던진다. 남겨 두는 것과 나가는 것은 다른 문제고, 이
+ * 함수로 만들어진 계정은 다시 로그인할 방법이 없어(공급자에 매인 것이 없다)
+ * 사용자 손에 들어가면 그대로 잠긴 계정이 된다.
  *
  * ⚠️ 대시보드에서 Anonymous sign-ins를 켜 두어야 동작한다.
  */
-export async function ensureSession(): Promise<string> {
-  const { data } = await supabase.auth.getSession();
-  if (data.session) return data.session.user.id;
+export async function signInAnonymouslyForDev(): Promise<string> {
+  if (!__DEV__) {
+    throw new Error('익명 로그인은 개발 빌드에서만 쓸 수 있습니다.');
+  }
 
-  const { data: created, error } = await supabase.auth.signInAnonymously();
+  const existing = await getSessionUserId();
+  if (existing) return existing;
+
+  const { data, error } = await supabase.auth.signInAnonymously();
   if (error) {
     throw new Error(`익명 로그인에 실패했습니다: ${error.message}`);
   }
-  if (!created.session) {
+  if (!data.session) {
     throw new Error('익명 로그인은 됐지만 세션이 없습니다.');
   }
 
-  return created.session.user.id;
+  return data.session.user.id;
 }

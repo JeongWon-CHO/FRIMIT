@@ -7,7 +7,7 @@ import {
   nextPeriodStartFor,
   periodStartFor,
 } from './frimit-day';
-import { ensureSession, supabase } from './supabase';
+import { requireSession, supabase } from './supabase';
 import {
   partitionSnapshots,
   summarizeSyncResults,
@@ -27,7 +27,7 @@ import {
  * 고칠 것이 없는 정상적인 거절이다.
  */
 export async function syncUsage(): Promise<UsageSyncSummary> {
-  await ensureSession();
+  await requireSession();
 
   const permissionState = ScreenTime.getPermissionState();
   const deviceId = await ensureDevice(permissionState);

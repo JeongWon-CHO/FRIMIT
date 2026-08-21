@@ -11,7 +11,8 @@
     "ios": {
       "icon": "./assets/expo.icon",
       "bundleIdentifier": "com.frimit.app",
-      "supportsTablet": false
+      "supportsTablet": false,
+      "usesAppleSignIn": true
     },
     "android": {
       "package": "com.frimit.app",

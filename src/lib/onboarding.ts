@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { listMyGroups } from './groups';
 import { DEFAULT_NICKNAME, fetchMyProfile } from './profile';
+import { getSessionUserId } from './supabase';
 import { readTrackingState } from './tracking';
 
 /**
@@ -89,8 +90,34 @@ export type EntryRoute =
  *
  * 순서는 plan.md 3장의 온보딩 순서를 따른다(푸시 권한 단계는 아직 없다).
  * 각 단계는 "아직 안 된 일"이 있을 때만 멈춘다 — 이미 된 일은 조용히 지나간다.
+ *
+ * 세션 확인이 맨 앞에 있어야 한다. 아래의 되짚기는 전부 서버에 묻는 일이고,
+ * 로그인하지 않은 사람에게는 물어볼 것 자체가 없다. 예전에는 `fetchMyProfile()`이
+ * 세션이 없으면 **익명 계정을 하나 만들어서** 이 판정을 이어 갔다 — 그래서 앱을
+ * 처음 켜는 사람은 소개 화면을 보기도 전에 계정이 생겼다.
  */
 export async function resolveEntryRoute(): Promise<EntryRoute> {
+  if (!(await getSessionUserId())) return OnboardingRoutes.welcome;
+  return resolveRouteForSignedIn();
+}
+
+/**
+ * 로그인 직후 어디로 보낼지.
+ *
+ * 되짚기를 그대로 쓰되 한 가지만 다르다 — 결과가 소개 화면(01)이면 닉네임(03)으로
+ * 바꿔 보낸다. 되짚기가 01을 가리키는 유일한 이유는 "닉네임이 아직 임시값"인데,
+ * 방금 02에서 로그인한 사람에게 01을 다시 보여주면 소개 → 로그인 → 소개로 도는
+ * 것처럼 보인다.
+ *
+ * 기기를 바꾼 사람은 여기서 자기 자리로 곧장 간다. 닉네임도 그룹도 이미 서버에
+ * 있으므로 되짚기가 오늘 화면이나 남은 권한 단계를 가리킨다.
+ */
+export async function resolveRouteAfterSignIn(): Promise<EntryRoute> {
+  const route = await resolveRouteForSignedIn();
+  return route === OnboardingRoutes.welcome ? OnboardingRoutes.nickname : route;
+}
+
+async function resolveRouteForSignedIn(): Promise<EntryRoute> {
   const progress = await readProgress();
   const [profile, groups] = await Promise.all([fetchMyProfile(), listMyGroups()]);
 

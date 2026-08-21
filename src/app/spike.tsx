@@ -13,7 +13,7 @@ import {
   periodStartFor,
 } from '@/lib/frimit-day';
 import { ensureGroup, setReady, startGroup, type MyGroup } from '@/lib/groups';
-import { ensureSession } from '@/lib/supabase';
+import { signInAnonymouslyForDev } from '@/lib/supabase';
 import { describeSyncSummary } from '@/lib/usage-payload';
 import { syncUsage } from '@/lib/usage-sync';
 import {
@@ -101,7 +101,7 @@ export default function SpikeScreen() {
    */
   const ensureServerGroup = useCallback(async () => {
     try {
-      await ensureSession();
+      await signInAnonymouslyForDev();
       const mine = await ensureGroup(SPIKE_GROUP_NAME);
       setGroup(mine);
       append(`그룹 확보: ${mine.name} (${mine.status}) · 초대 코드 ${mine.invite_code}`);

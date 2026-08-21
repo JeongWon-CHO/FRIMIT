@@ -19,6 +19,7 @@ import { useTrackingState } from '@/hooks/use-tracking';
 import { hexToRgba } from '@/lib/color';
 import { formatShort } from '@/lib/format';
 import { deleteMyAccount } from '@/lib/account';
+import { signOut } from '@/lib/auth';
 import { ensureDevice } from '@/lib/device';
 import { resetProgress } from '@/lib/onboarding';
 import { readPushPermission, registerPushToken, requestPushPermission, type PushPermission } from '@/lib/push';
@@ -184,7 +185,7 @@ export default function MyScreen() {
         />
       </View>
 
-      <DeleteAccountRow />
+      <AccountRows />
 
       {__DEV__ && (
         <View style={styles.rows}>
@@ -202,6 +203,63 @@ export default function MyScreen() {
         </View>
       )}
     </ScreenFrame>
+  );
+}
+
+/**
+ * 로그아웃과 계정 삭제.
+ *
+ * 둘을 한 덩어리에 둔다. 떠나는 방법이 두 가지인데 한쪽만 보이면, 잠깐 나가고
+ * 싶은 사람이 계정 삭제를 누른다 — 그건 되돌릴 수 없다.
+ */
+function AccountRows() {
+  return (
+    <View style={styles.rows}>
+      <SignOutRow />
+      <DeleteAccountRow />
+    </View>
+  );
+}
+
+/**
+ * 로그아웃.
+ *
+ * 캐시를 비우는 것이 계정 삭제와 같은 이유로 필요하다 — 남은 그룹·사용량이
+ * gcTime(5분) 동안 살아 있어서, 다른 계정으로 로그인해 오늘 화면에 닿으면
+ * 남의 데이터가 한 번 그려진다.
+ *
+ * 기기 등록(`devices`)은 건드리지 않는다. 그 행은 계정에 매여 있고 계정당 활성
+ * 기기는 하나로 DB가 강제한다 — 다른 계정으로 로그인하면 새 행이 생기면서 이전
+ * 것이 자동으로 비활성이 되고, 같은 계정으로 돌아오면 그대로 이어 쓴다.
+ * 여기서 미리 지우면 되돌아온 사람의 푸시 토큰만 잃는다.
+ */
+function SignOutRow() {
+  const queryClient = useQueryClient();
+  const [busy, setBusy] = useState(false);
+
+  const run = async () => {
+    setBusy(true);
+    try {
+      await signOut();
+      queryClient.clear();
+      router.replace('/welcome');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <GradientButton
+      label="로그아웃"
+      variant="secondary"
+      loading={busy}
+      onPress={() =>
+        Alert.alert('로그아웃할까요?', '다시 로그인하면 그룹과 기록이 그대로 있어요.', [
+          { text: '아니요', style: 'cancel' },
+          { text: '로그아웃', onPress: run },
+        ])
+      }
+    />
   );
 }
 
@@ -259,14 +317,7 @@ function DeleteAccountRow() {
   };
 
   return (
-    <View style={styles.rows}>
-      <GradientButton
-        label="계정 삭제"
-        variant="tertiary"
-        loading={busy}
-        onPress={confirmTwice}
-      />
-    </View>
+    <GradientButton label="계정 삭제" variant="tertiary" loading={busy} onPress={confirmTwice} />
   );
 }
 
