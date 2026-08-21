@@ -173,7 +173,7 @@ export function SharedPoolHero({ view, onPress, permissionCta, syncRow }: Shared
                   tone={view.stale ? 'stale' : 'metadata'}
                   numberOfLines={2}
                   style={styles.sublabel}>
-                  {off ? 'Screen Time 권한 필요' : view.stale ? 'may be less' : view.sublabel}
+                  {off ? 'Screen Time 권한 필요' : view.stale ? '더 적을 수 있어요' : view.sublabel}
                 </AppText>
               </View>
             </SharedOrbitRing>
