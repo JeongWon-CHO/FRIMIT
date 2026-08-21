@@ -1,9 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { AppState, Platform } from 'react-native';
+import { AppState, Linking, Platform } from 'react-native';
 
 import { ScreenTime, type PermissionState, type SelectableApp } from '@modules/screen-time';
 
 import { DEFAULT_TIME_ZONE, nextPeriodStartFor, periodStartFor } from './frimit-day';
+import { permissionCta } from './permission';
 
 /**
  * 기기 쪽 추적 설정. 온보딩의 권한·선택 단계와 MY 탭이 이것만 쓴다.
@@ -61,6 +62,35 @@ export function readTrackingState(groupId: string): TrackingState {
 
 export async function requestPermission(): Promise<PermissionState> {
   return ScreenTime.requestPermission();
+}
+
+/** 이 상태에서 그릴 버튼. 없으면 null — 화면이 플랫폼을 알 필요는 없다. */
+export function permissionButton(permission: PermissionState) {
+  return permissionCta(permission, Platform.OS === 'android' ? 'android' : 'ios');
+}
+
+/**
+ * 권한을 되찾는 한 번의 동작.
+ *
+ * 화면은 "요청인가 설정인가"를 판단하지 않는다. 그 규칙은 `permission.ts` 한 곳에
+ * 있고, 여기서는 그 답대로 움직일 뿐이다 — 오늘 화면과 MY 탭이 같은 버튼을 두
+ * 벌 만들지 않게 하려는 것이다.
+ *
+ * 설정으로 나간 뒤의 복귀는 여기서 다루지 않는다. `subscribeTracking`이 앱이
+ * 앞으로 나올 때마다 상태를 다시 읽으므로(AppState), 돌아오면 화면이 저절로
+ * 살아난다. 그것이 PERMISSION_FLOW_SPEC §4의 "재시작 없이 복구"다.
+ */
+export async function recoverPermission(permission: PermissionState): Promise<void> {
+  const cta = permissionCta(permission, Platform.OS === 'android' ? 'android' : 'ios');
+  if (!cta) return;
+
+  if (cta.opensSettings) {
+    await Linking.openSettings();
+    return;
+  }
+
+  await requestPermission();
+  notifyTrackingChanged();
 }
 
 /**
@@ -142,6 +172,30 @@ function emit(): void {
   for (const listener of listeners) listener();
 }
 
+/*
+ * 설정에서 권한을 바꾸고 돌아온 직후.
+ *
+ * Family Controls는 갱신된 상태를 곧바로 주지 않는다 — 이미 승인된 기기에서 앱을
+ * 켰을 때 몇 초 동안 `notDetermined`로 읽히는 것과 같은 지연이다
+ * (`FrimitAuthorization.currentState`의 주석). 복귀 시점에 한 번만 읽으면 그 창에
+ * 걸려서, 사용자는 설정에서 껐는데 화면은 그대로인 것을 본다.
+ *
+ * 그래서 몇 번 더 본다. 값이 그대로면 스냅샷이 같은 참조로 돌아가 다시 그리지도
+ * 않으므로(`getTrackingSnapshot`) 헛일이 비싸지 않다.
+ */
+const RECHECK_DELAYS = [400, 1200, 2500];
+let rechecks: ReturnType<typeof setTimeout>[] = [];
+
+function clearRechecks(): void {
+  for (const timer of rechecks) clearTimeout(timer);
+  rechecks = [];
+}
+
+function recheckAfterReturn(): void {
+  clearRechecks();
+  rechecks = RECHECK_DELAYS.map((delay) => setTimeout(emit, delay));
+}
+
 /** 앱 안에서 권한을 요청하거나 대상을 고른 직후에 부른다. */
 export function notifyTrackingChanged(): void {
   emit();
@@ -154,7 +208,10 @@ export function subscribeTracking(listener: Listener): () => void {
   // 탭을 옮길 때마다 붙었다 떨어지고, 그 사이의 변화를 놓친다.
   if (listeners.size === 1) {
     const appState = AppState.addEventListener('change', (state) => {
-      if (state === 'active') emit();
+      if (state !== 'active') return;
+
+      emit();
+      recheckAfterReturn();
     });
 
     let permissionChange: { remove: () => void } | null = null;
@@ -167,6 +224,7 @@ export function subscribeTracking(listener: Listener): () => void {
     teardown = () => {
       appState.remove();
       permissionChange?.remove();
+      clearRechecks();
     };
   }
 

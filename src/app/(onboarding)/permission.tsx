@@ -1,13 +1,13 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Linking, Platform, StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 
 import { SharedOrbitRing } from '@/components/orbit';
 import { OnboardingFrame } from '@/components/onboarding';
 import { AppText, ButtonStack, GradientButton } from '@/components/ui';
 import { gradients } from '@/constants/design-tokens';
 import { markProgress } from '@/lib/onboarding';
-import { describePermission, requestPermission } from '@/lib/tracking';
+import { describePermission, permissionButton, recoverPermission } from '@/lib/tracking';
 import { useTrackingState } from '@/hooks/use-tracking';
 
 /**
@@ -26,17 +26,19 @@ export default function PermissionScreen() {
   const [busy, setBusy] = useState(false);
 
   const granted = tracking.permission === 'granted';
-  // 시스템이 더 이상 묻지 않는 상태. 이때 "다시 시도"는 설정으로 보내야 한다.
-  const blocked = tracking.permission === 'denied' || tracking.permission === 'restricted';
+
+  /*
+   * 무슨 버튼을 보여주고 눌렀을 때 무엇을 할지는 `permission.ts` 한 곳이 정한다.
+   * 이 화면이 따로 판단하면 오늘 화면·MY 탭과 규칙이 갈라진다 — 실제로 그랬고,
+   * 여기서는 기기 정책으로 막힌 상태(restricted)까지 설정으로 보내고 있었다.
+   * 거기서는 사용자가 바꿀 수 있는 것이 없다.
+   */
+  const cta = permissionButton(tracking.permission);
 
   const ask = async () => {
     setBusy(true);
     try {
-      if (blocked) {
-        await Linking.openSettings();
-        return;
-      }
-      await requestPermission();
+      await recoverPermission(tracking.permission);
     } catch {
       // 사유는 상태로 다시 읽는다. iOS는 시트 취소를 오류로 알려주지 않는다.
     } finally {
@@ -80,7 +82,8 @@ export default function PermissionScreen() {
         </SharedOrbitRing>}
         title="아직 참여 전이에요"
         body="둘러보는 건 괜찮아요. 공동 시간 집계는 권한을 켠 뒤부터 시작돼요."
-        primary={{ label: blocked ? '설정에서 켜기' : '다시 시도', onPress: ask }}
+        // 켤 수 없는 상태에는 버튼을 만들지 않는다. 넘어가는 문만 남는다.
+        primary={cta ? { label: cta.label, onPress: ask } : undefined}
         secondary={{ label: '일단 넘어가기', onPress: next }}
       />
     );
@@ -91,7 +94,7 @@ export default function PermissionScreen() {
       texture="calm"
       footer={
         <ButtonStack>
-          <GradientButton label="Screen Time 권한 켜기" onPress={ask} loading={busy} />
+          {cta && <GradientButton label={cta.label} onPress={ask} loading={busy} />}
           <GradientButton label="일단 넘어가기" variant="tertiary" onPress={next} />
           <AppText variant="metadata" tone="faint" style={styles.note}>
             다음 화면은 {Platform.OS === 'ios' ? 'iOS' : 'Android'} 시스템 시트예요.
@@ -147,7 +150,8 @@ function Result({
   ring: React.ReactNode;
   title: string;
   body: string;
-  primary: { label: string; onPress: () => void };
+  /** 켤 수 없는 상태에서는 없다 — 눌러도 아무 일이 없는 버튼을 두지 않는다. */
+  primary?: { label: string; onPress: () => void };
   secondary?: { label: string; onPress: () => void };
   calm?: boolean;
 }) {
@@ -156,11 +160,13 @@ function Result({
       texture={calm ? 'calm' : 'screen'}
       footer={
         <ButtonStack>
-          <GradientButton
-            label={primary.label}
-            variant={calm ? 'primary' : 'secondary'}
-            onPress={primary.onPress}
-          />
+          {primary && (
+            <GradientButton
+              label={primary.label}
+              variant={calm ? 'primary' : 'secondary'}
+              onPress={primary.onPress}
+            />
+          )}
           {secondary && (
             <GradientButton
               label={secondary.label}

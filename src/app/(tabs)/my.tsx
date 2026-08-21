@@ -24,7 +24,13 @@ import { resetProgress } from '@/lib/onboarding';
 import { readPushPermission, registerPushToken, requestPushPermission, type PushPermission } from '@/lib/push';
 import { underLimitStreak, weeklyAverage } from '@/lib/history-view';
 import { groupAccent, pickHeroGroup } from '@/lib/today';
-import { describePermission, isUsable, readPermission, requestPermission } from '@/lib/tracking';
+import {
+  describePermission,
+  isUsable,
+  permissionButton,
+  readPermission,
+  recoverPermission,
+} from '@/lib/tracking';
 
 /**
  * MY 탭.
@@ -45,6 +51,7 @@ export default function MyScreen() {
   const tracking = useTrackingState(groups.data?.[0]?.id);
 
   const granted = isUsable(tracking.permission);
+  const permissionCta = permissionButton(tracking.permission);
 
   /*
    * 스탯 두 칸은 **대표 그룹 하나**를 기준으로 센다(오늘 화면의 히어로와 같은 규칙).
@@ -96,11 +103,15 @@ export default function MyScreen() {
           <AppText variant="metadata" tone="metadata">
             권한을 켜면 내 사용 시간이 우리 공동 시간에 합산돼요.
           </AppText>
-          <GradientButton
-            label="Screen Time 권한 켜기"
-            size="md"
-            onPress={() => requestPermission().finally(tracking.refresh)}
-          />
+          {/* 켤 수 없는 상태(기기 정책·미지원)에는 버튼을 그리지 않는다. 위의
+              문구가 이미 이유를 말하고 있다. */}
+          {permissionCta && (
+            <GradientButton
+              label={permissionCta.label}
+              size="md"
+              onPress={() => recoverPermission(tracking.permission)}
+            />
+          )}
         </Surface>
       )}
 

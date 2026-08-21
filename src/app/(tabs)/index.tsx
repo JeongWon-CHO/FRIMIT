@@ -19,8 +19,14 @@ import { useTrackingState } from '@/hooks/use-tracking';
 import { useUsageSync } from '@/hooks/use-usage-sync';
 import { DEV_POOL_STATE, devPoolView } from '@/lib/dev-preview';
 import { POOL_VISUALS } from '@/lib/pool-state';
-import { isUsable, requestPermission } from '@/lib/tracking';
+import {
+  describePermission,
+  isUsable,
+  permissionButton,
+  recoverPermission,
+} from '@/lib/tracking';
 import { buildPoolView, pickHeroGroup } from '@/lib/today';
+import type { PermissionState } from '@modules/screen-time';
 
 /**
  * 오늘 화면.
@@ -132,7 +138,7 @@ export default function TodayScreen() {
           }
           permissionCta={
             heroView.state === 'permissionOff' ? (
-              <PermissionCTA onPrimary={() => requestPermission().finally(tracking.refresh)} />
+              <PermissionCTA permission={tracking.permission} />
             ) : undefined
           }
         />
@@ -261,14 +267,30 @@ function Header({
  *
  * 이 버튼의 그라데이션이 권한 꺼짐 화면에서 **유일하게 채도 있는 요소**다.
  * 게이지는 회색으로 남는다.
+ *
+ * 버튼이 없는 상태도 있다(기기 정책·미지원 기기). 그때는 눌러도 아무 일이 없는
+ * 버튼 대신 이유만 말한다 — 사용자가 켤 수 없는 것을 켜라고 하지 않는다.
+ *
+ * 설정으로 나갔다 돌아오면 화면이 저절로 살아난다. `useTrackingState`가 앱 복귀
+ * 때마다 권한을 다시 읽기 때문이고, 그것이 스펙이 말하는 "재시작 없는 복구"다.
  */
-function PermissionCTA({ onPrimary }: { onPrimary: () => void }) {
+function PermissionCTA({ permission }: { permission: PermissionState }) {
+  const cta = permissionButton(permission);
+
   return (
     <View style={styles.cta}>
       <AppText variant="body" tone="muted" style={styles.ctaBody}>
-        권한을 켜면 내 사용 시간이 우리 공동 시간에 합산돼요.
+        {cta
+          ? '권한을 켜면 내 사용 시간이 우리 공동 시간에 합산돼요.'
+          : describePermission(permission)}
       </AppText>
-      <GradientButton label="Screen Time 권한 켜기" size="md" onPress={onPrimary} />
+      {cta && (
+        <GradientButton
+          label={cta.label}
+          size="md"
+          onPress={() => recoverPermission(permission)}
+        />
+      )}
     </View>
   );
 }
