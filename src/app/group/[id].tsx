@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 
 import { OrbitSeats, SharedOrbitRing } from '@/components/orbit';
+import { RecentDays } from '@/components/recent-days';
 import {
   AppText,
   Avatar,
@@ -18,7 +19,9 @@ import {
 import { colors, gradients, radius as radii } from '@/constants/design-tokens';
 import { useGroupMembers, useGroupUsages, useMyGroups } from '@/hooks/use-groups';
 import { useLeaveGroupPrompt } from '@/hooks/use-leave-group-prompt';
+import { useRecentDays } from '@/hooks/use-history';
 import { useNudge } from '@/hooks/use-nudge';
+import { useUsageSync } from '@/hooks/use-usage-sync';
 import { useMyProfile } from '@/hooks/use-profile';
 import { useScreenGroup } from '@/hooks/use-screen-group';
 import { useTrackingState } from '@/hooks/use-tracking';
@@ -45,9 +48,19 @@ export default function GroupDetailScreen() {
   const group = useScreenGroup(groups.data, id);
   const usages = useGroupUsages(group ? [group] : []);
   const members = useGroupMembers(id);
+  const history = useRecentDays(id);
   const tracking = useTrackingState(id);
   const leave = useLeaveGroupPrompt();
   const nudge = useNudge();
+
+  /*
+   * 당겨서 새로고침.
+   *
+   * 오늘 화면과 같은 순서다 — **먼저 올리고 그다음 읽는다**(`useUsageSync`).
+   * 반대로 하면 내가 방금 쓴 시간만 빠진 순위가 그려진다. 동기화가 끝나면 훅이
+   * `['groups', …]` 접두사를 통째로 비우므로 멤버·집계·최근 7일이 함께 새로 온다.
+   */
+  const sync = useUsageSync();
 
   /**
    * 콕 찌르기.
@@ -81,7 +94,7 @@ export default function GroupDetailScreen() {
   const [rankOne, ...rest] = view?.ranking ?? [];
 
   return (
-    <ScreenFrame bottomInset={24} texture={visual.texture}>
+    <ScreenFrame bottomInset={24} texture={visual.texture} onRefresh={sync.sync}>
       <View style={styles.navBar}>
         <CircleButton label="←" onPress={() => router.back()} />
         <StatusPill label={group?.name ?? '…'} dotColor={accent.dot} />
@@ -197,6 +210,8 @@ export default function GroupDetailScreen() {
           )}
 
           <MyShareCard view={view} myId={profile.data?.id} />
+
+          <RecentDays days={history.data} />
         </>
       )}
     </ScreenFrame>
@@ -371,10 +386,10 @@ function MyShareCard({
       style={styles.myShare}>
       <View style={styles.myShareTop}>
         <AppText variant="eyebrow" tone="faint">
-          MY SHARE
+          내 몫
         </AppText>
         <AppText variant="bodyStrong" tone="body">
-          {formatShort(Math.max(0, share - used))} left
+          {formatShort(Math.max(0, share - used))} 남음
         </AppText>
       </View>
 
@@ -386,7 +401,7 @@ function MyShareCard({
 
       <View style={styles.myShareTop}>
         <AppText variant="metadata" tone="muted">
-          Used {formatShort(used)}
+          {formatShort(used)} 사용
         </AppText>
         <AppText variant="metadata" tone="metadata">
           {view.ranking.length}명 기준 · 1인 {formatShort(share)}

@@ -31,6 +31,7 @@ export const queryKeys = {
   myMemberships: ['groups', 'memberships'] as const,
   groupUsage: (groupId: string) => ['groups', groupId, 'usage'] as const,
   groupGoal: (groupId: string) => ['groups', groupId, 'goal'] as const,
+  groupHistory: (groupId: string) => ['groups', groupId, 'history'] as const,
   /** 활동은 그룹 통합이라 키가 하나뿐이다. 접두사는 일괄 무효화를 위해 맞춘다. */
   activity: ['groups', 'activity'] as const,
   /** 사용량 관련 전부. 동기화 직후 이 접두사로 한 번에 무효화한다. */

@@ -1132,6 +1132,43 @@ svc PATCH "devices?id=eq.$DEV4" '{"expo_push_token":null}'
 svc PATCH "devices?id=eq.$DEV5" '{"expo_push_token":null}'
 
 # ============================================================================
+section "최근 며칠 — 화면 셋이 같은 숫자를 본다"
+#
+# 계정 삭제 앞에 둔다. 그 섹션이 t4를 지우면 여기서 볼 집계가 주인을 잃는다
+# (남기는 것이 설계이긴 하지만, 순서를 바꾸면 '내 몫'을 물어볼 사람이 없다).
+# ============================================================================
+
+rpc 9 group_recent_days "{\"target_group_id\":\"$GROUP_B\"}"
+check "비멤버는 볼 수 없다"                not_a_member "$(hint)"
+
+# 숫자를 박아 두지 않는다. 이 섹션이 확인하는 것은 "공동 풀 화면과 같은 값이
+# 나오는가"이지 특정 초 수가 아니다 — 앞 섹션이 사용량을 더 올리면 값은 바뀌고
+# 불변식은 그대로다.
+rpc 4 group_daily_usage "{\"target_group_id\":\"$GROUP_B\"}"
+POOL_TOTAL=$(field .total_seconds)
+POOL_LIMIT=$(field .daily_limit_seconds)
+POOL_MINE=$(jq -r --arg me "$(uid 4)" '.members[] | select(.profile_id == $me) | .cumulative_seconds' <<< "$CURL_BODY")
+POOL_T5=$(jq -r --arg who "$(uid 5)" '.members[] | select(.profile_id == $who) | .cumulative_seconds' <<< "$CURL_BODY")
+
+rpc 4 group_recent_days "{\"target_group_id\":\"$GROUP_B\"}"
+check "이레치가 온다"                      7 "$(jq -r 'length' <<< "$CURL_BODY")"
+check "마지막 칸이 오늘"                   "$DATE_KEY" "$(jq -r '.[-1].date_key' <<< "$CURL_BODY")"
+check "오늘 합계는 공동 풀과 같다"         "$POOL_TOTAL" "$(jq -r '.[-1].total_seconds' <<< "$CURL_BODY")"
+check "그날의 한도도 같다"                 "$POOL_LIMIT" "$(jq -r '.[-1].limit_seconds' <<< "$CURL_BODY")"
+check "내 몫만 따로 센다"                  "$POOL_MINE" "$(jq -r '.[-1].my_seconds' <<< "$CURL_BODY")"
+check "어제 이전은 비어 있다"              0 "$(jq -r '[.[:-1][].total_seconds] | add' <<< "$CURL_BODY")"
+check "날짜는 하루씩 이어진다"             yes "$(jq -r '[.[].date_key] | . as $d | ([range(1; length)] | map(($d[.] | strptime("%Y-%m-%d") | mktime) - ($d[. - 1] | strptime("%Y-%m-%d") | mktime)) | unique) == [86400] | if . then "yes" else "no" end' <<< "$CURL_BODY")"
+
+rpc 5 group_recent_days "{\"target_group_id\":\"$GROUP_B\"}"
+check "사람마다 내 몫이 다르다"            "$POOL_T5" "$(jq -r '.[-1].my_seconds' <<< "$CURL_BODY")"
+check "합계는 누가 보든 같다"              "$POOL_TOTAL" "$(jq -r '.[-1].total_seconds' <<< "$CURL_BODY")"
+
+rpc 4 group_recent_days "{\"target_group_id\":\"$GROUP_B\",\"day_count\":90}"
+check "물어볼 수 있는 날수에 상한이 있다"  30 "$(jq -r 'length' <<< "$CURL_BODY")"
+rpc 4 group_recent_days "{\"target_group_id\":\"$GROUP_B\",\"day_count\":1}"
+check "하루만 물어볼 수도 있다"            1 "$(jq -r 'length' <<< "$CURL_BODY")"
+
+# ============================================================================
 section "계정 삭제 — 관리자 자동 이전과 집계 보존"
 #
 # 되돌릴 수 없는 동작이라 확인할 것이 셋이다. 인증 정보가 실제로 사라지는가,
@@ -1218,7 +1255,9 @@ check "남은 active 그룹이 없다"            0 "$(jq -r '[.[] | select(.sta
 svc DELETE "groups?admin_id=eq.$LONER"
 svc DELETE "profiles?id=eq.$LONER"
 svc DELETE "profiles?id=eq.$DEAD"
-svc GET "profiles?deleted_at=not.is.null&select=id"
+# 이 프로젝트에는 실기기에서 지운 진짜 계정의 비석도 있다. 전역으로 세면 그것까지
+# 잔여물로 잡히므로, 이 시험이 만든 둘만 확인한다.
+svc GET "profiles?id=in.($LONER,$DEAD)&select=id"
 check "시험이 남긴 비석을 치웠다"          0 "$(jq -r 'length' <<< "$CURL_BODY")"
 
 # ============================================================================

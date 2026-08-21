@@ -13,6 +13,7 @@ import {
 } from '@/components/ui';
 import { colors, radius as radii } from '@/constants/design-tokens';
 import { useGroupUsages, useMyGroups, useMyMemberships, useSetMuted } from '@/hooks/use-groups';
+import { useRecentDays } from '@/hooks/use-history';
 import { useMyProfile } from '@/hooks/use-profile';
 import { useTrackingState } from '@/hooks/use-tracking';
 import { hexToRgba } from '@/lib/color';
@@ -21,7 +22,8 @@ import { deleteMyAccount } from '@/lib/account';
 import { ensureDevice } from '@/lib/device';
 import { resetProgress } from '@/lib/onboarding';
 import { readPushPermission, registerPushToken, requestPushPermission, type PushPermission } from '@/lib/push';
-import { groupAccent } from '@/lib/today';
+import { underLimitStreak, weeklyAverage } from '@/lib/history-view';
+import { groupAccent, pickHeroGroup } from '@/lib/today';
 import { describePermission, isUsable, readPermission, requestPermission } from '@/lib/tracking';
 
 /**
@@ -44,11 +46,15 @@ export default function MyScreen() {
 
   const granted = isUsable(tracking.permission);
 
-  const myToday = (groups.data ?? []).reduce((sum, group) => {
-    const usage = usages.byGroupId.get(group.id);
-    const mine = usage?.members.find((member) => member.profile_id === profile.data?.id);
-    return sum + (mine?.cumulative_seconds ?? 0);
-  }, 0);
+  /*
+   * 스탯 두 칸은 **대표 그룹 하나**를 기준으로 센다(오늘 화면의 히어로와 같은 규칙).
+   *
+   * 여러 그룹의 값을 더할 수 없다. 겹치는 앱은 같은 시간이 그룹마다 독립적으로
+   * 잡히므로(plan.md 30행), 더하면 하루 30시간을 쓴 사람이 나온다.
+   */
+  const stats = pickHeroGroup(groups.data ?? []);
+  const history = useRecentDays(stats?.id);
+  const days = history.data ?? [];
 
   return (
     <ScreenFrame
@@ -68,8 +74,14 @@ export default function MyScreen() {
       </View>
 
       <View style={styles.statGrid}>
-        <StatCard value={String(groups.data?.length ?? 0)} caption="참여 중인 그룹" />
-        <StatCard value={formatShort(myToday)} caption="오늘 내 사용" />
+        <StatCard
+          value={formatShort(weeklyAverage(days, stats?.started_at))}
+          caption="주간 평균"
+        />
+        <StatCard
+          value={`${underLimitStreak(days, stats?.started_at)}일`}
+          caption="연속 한도 미만"
+        />
       </View>
 
       {!granted && (
