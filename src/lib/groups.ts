@@ -177,6 +177,23 @@ export async function leaveGroup(groupId: string): Promise<GroupSnapshot> {
 }
 
 /**
+ * 관리자 권한을 넘긴다.
+ *
+ * 서버가 받을 사람을 두 가지로 거른다 — 이미 나간 사람과 **탈퇴를 예약한
+ * 사람**이다. 후자를 허용하면 오전 6시에 관리자 없는 그룹이 남아서, 애초에
+ * 이전을 강제한 이유가 그대로 재발한다. 화면도 같은 사람을 걸러야 한다
+ * (`effective_until`이 있는 멤버).
+ */
+export async function transferAdmin(groupId: string, newAdminId: string): Promise<GroupSnapshot> {
+  const { data, error } = await supabase.rpc('transfer_admin', {
+    target_group_id: groupId,
+    new_admin_id: newAdminId,
+  });
+  if (error) throw new Error(`관리자를 넘기지 못했습니다: ${error.message}`);
+  return data as GroupSnapshot;
+}
+
+/**
  * 준비 상태를 켜고 끈다.
  *
  * 이것만 RPC가 아니라 테이블 UPDATE다. 서버가 authenticated에게 열어 준 유일한

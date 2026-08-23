@@ -12,6 +12,7 @@ import {
   setReady,
   startGroup,
   toMyGroup,
+  transferAdmin,
   type GroupMember,
   type MyGroup,
 } from '@/lib/groups';
@@ -126,6 +127,17 @@ export function useJoinGroup() {
 export function useLeaveGroup() {
   return useMutation({
     mutationFn: (groupId: string) => leaveGroup(groupId),
+  });
+}
+
+export function useTransferAdmin() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: { groupId: string; newAdminId: string }) =>
+      transferAdmin(input.groupId, input.newAdminId),
+    // 역할은 그룹 스냅샷과 멤버 목록 양쪽에 박혀 있다. 접두사째 비운다.
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.allGroups }),
   });
 }
 

@@ -37,11 +37,23 @@ export function useLeaveGroupPrompt() {
       const willVanish = others.length < 2;
       const isAdmin = group.admin_id === myProfileId;
 
+      /*
+       * 관리자는 살아남을 그룹을 두고 나갈 수 없다(서버의 `admin_must_transfer`).
+       * 안내만 하고 끝내면 막다른 골목이다 — 넘길 화면으로 가는 문을 여기 붙인다.
+       * 들어오는 문이 둘(상세 화면·대기실)이라 문도 이 한 곳에 있으면 된다.
+       */
       if (isAdmin && !willVanish) {
         Alert.alert(
           '먼저 관리자를 넘겨 주세요',
           '관리자가 나가면 남은 사람들이 그룹을 시작하거나 규칙을 바꿀 수 없어요. 다른 멤버에게 관리자를 넘긴 뒤에 나갈 수 있어요.',
-          [{ text: '알겠어요' }]
+          [
+            { text: '나중에', style: 'cancel' },
+            {
+              text: '넘기기',
+              onPress: () =>
+                router.push({ pathname: '/group/transfer', params: { groupId: group.id } }),
+            },
+          ]
         );
         return;
       }
