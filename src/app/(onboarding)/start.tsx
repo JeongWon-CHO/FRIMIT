@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { ChoiceCard, CodeEntryField, OnboardingFrame } from '@/components/onboarding';
+import { BackButton, ChoiceCard, CodeEntryField, OnboardingFrame } from '@/components/onboarding';
 import { AppText, Avatar, GradientButton } from '@/components/ui';
 import { colors } from '@/constants/design-tokens';
 import { avatarPosition } from '@/lib/orbit';
@@ -15,6 +15,9 @@ import { avatarPosition } from '@/lib/orbit';
  *
  * 초대 코드는 **숫자 여섯 자리**다(서버 제약 `^[0-9]{6}$`). 디자인의 `FRM-`
  * 접두사는 보여줄 때만 붙이는 장식이라 입력에서는 받지 않는다.
+ *
+ * 이제 온보딩의 일부가 아니라 **홈에서 들어오는 문**이다. 그래서 뒤로 가기가
+ * 있다 — 그룹을 더 만들 생각이 없어진 사람이 여기 갇히면 안 된다.
  */
 export default function CreateOrJoinScreen() {
   const [code, setCode] = useState('');
@@ -34,6 +37,8 @@ export default function CreateOrJoinScreen() {
         ) : undefined
       }>
       <View style={styles.top}>
+        <BackButton />
+
         <AppText variant="screenTitle" style={styles.title}>
           혼자서는 시작할 수 없어요
         </AppText>

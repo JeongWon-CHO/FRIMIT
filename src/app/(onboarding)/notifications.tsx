@@ -53,7 +53,7 @@ export default function NotificationIntroScreen() {
         </ButtonStack>
       }>
       <View style={styles.top}>
-        <StepProgress total={3} current={2} />
+        <StepProgress total={4} current={2} />
 
         <AppText variant="screenTitle" style={styles.title}>
           우리 시간이 얼마 남았는지{'\n'}놓치지 않도록

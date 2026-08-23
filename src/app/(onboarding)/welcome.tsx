@@ -73,10 +73,19 @@ export default function WelcomeScreen() {
 
           <ButtonStack>
             <GradientButton label="시작하기" onPress={() => router.push('/sign-in')} />
+            {/*
+              코드를 받고 온 사람도 로그인을 지나야 한다. 참여는 `join_group`
+              RPC이고 그건 세션이 있어야 부른다 — 예전에는 이 버튼이 07로 바로
+              새서, 코드를 다 넣고 참여를 누른 뒤에야 "로그인 세션이 없습니다"를
+              날것으로 봤다.
+
+              그래도 라벨은 남긴다. 이 버튼이 하는 말은 "여기가 네 코드를 넣는
+              앱이 맞다"이고, 그건 로그인 앞에서 해 줘야 하는 말이다.
+            */}
             <GradientButton
               label="초대 코드가 있어요"
               variant="secondary"
-              onPress={() => router.push('/start')}
+              onPress={() => router.push('/sign-in')}
             />
           </ButtonStack>
         </View>

@@ -5,6 +5,7 @@ import { Pressable, Share, StyleSheet, View } from 'react-native';
 import { OrbitSeats, SharedOrbitRing } from '@/components/orbit';
 import {
   BackButton,
+  StepProgress,
   InviteCodeCard,
   OnboardingFrame,
   ReadinessRow,
@@ -30,7 +31,6 @@ import { useMyProfile } from '@/hooks/use-profile';
 import { useScreenGroup } from '@/hooks/use-screen-group';
 import { useTrackingState } from '@/hooks/use-tracking';
 import { avatarEmoji } from '@/lib/avatars';
-import { markProgress } from '@/lib/onboarding';
 import { formatShort } from '@/lib/format';
 import { READY_MEMBERS_TO_START } from '@/lib/groups';
 import { armTracking, isUsable } from '@/lib/tracking';
@@ -102,18 +102,15 @@ export default function ReadinessScreen() {
   /**
    * 대기실에서 나가는 문.
    *
-   * 혼자 만든 그룹은 시작할 수 없다(2명 필요). 그 상태에서 나갈 길이 없으면
-   * 온보딩이 막다른 골목이 된다 — 앱을 껐다 켜도 `resolveEntryRoute`가 여기로
-   * 되돌려 보내기 때문에 더 그렇다.
-   *
-   * `done`을 찍는 이유가 그것이다. 이 사람은 혼자 할 수 있는 것을 다 했고, 남은
-   * 것은 친구가 들어오는 일뿐이다. 디자인의 복구 분기도 시작한 그룹 없이 앱을
+   * 혼자 만든 그룹은 시작할 수 없다(2명 필요). 남은 것은 친구가 들어오는 일뿐이라
+   * 여기 붙잡아 둘 이유가 없다. 디자인의 복구 분기도 시작한 그룹 없이 앱을
    * 둘러볼 수 있어야 한다고 말한다(ONBOARDING_NAVIGATION의 Recovery branch).
+   *
+   * 예전에는 나가면서 `done`을 찍었다. 되짚기가 그룹을 세던 시절에는 그게 없으면
+   * 앱을 켤 때마다 이 대기실로 되돌아왔기 때문이다. 이제 되짚기는 그룹을 보지
+   * 않으므로(`resolveRouteForSignedIn`) 그냥 나가면 된다.
    */
-  const browse = async () => {
-    await markProgress({ done: true });
-    router.replace('/');
-  };
+  const browse = () => router.replace('/');
 
   const share = async () => {
     if (!group) return;
@@ -317,6 +314,7 @@ export default function ReadinessScreen() {
       <View style={styles.top}>
         <View style={styles.navRow}>
           <BackButton />
+          <StepProgress total={4} current={4} />
           <LeaveButton
             disabled={!group || leave.isPending}
             onPress={() => group && leave.prompt(group, members.data, profile.data?.id)}

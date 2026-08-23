@@ -3,14 +3,13 @@ import { useEffect, useMemo, useState } from 'react';
 import { Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { SharedOrbitRing } from '@/components/orbit';
-import { OnboardingFrame, PrivacyDisclosureCard } from '@/components/onboarding';
+import { OnboardingFrame, PrivacyDisclosureCard, StepProgress } from '@/components/onboarding';
 import { AppText, ButtonStack, GradientButton, StatusPill } from '@/components/ui';
 import { colors, gradients, radius as radii } from '@/constants/design-tokens';
 import { useMyGroups } from '@/hooks/use-groups';
 import { useScreenGroup } from '@/hooks/use-screen-group';
 import { useTrackingState } from '@/hooks/use-tracking';
 import { hexToRgba } from '@/lib/color';
-import { markProgress } from '@/lib/onboarding';
 import {
   armTracking,
   listInstalledApps,
@@ -141,10 +140,7 @@ export default function TrackingScreen() {
     }
   };
 
-  const skip = async () => {
-    await markProgress({ trackingSkipped: true });
-    leave();
-  };
+  const skip = leave;
 
   // ── 12 · 선택 결과 ─────────────────────────────────────────────
   if (chosen) {
@@ -164,9 +160,12 @@ export default function TrackingScreen() {
             <GradientButton label="이대로 좋아요" onPress={leave} />
           </ButtonStack>
         }>
-        <AppText variant="numericLabel" tone="faint">
-          {group?.name ?? '이 그룹'}
-        </AppText>
+        <View style={styles.navRow}>
+          <AppText variant="numericLabel" tone="faint">
+            {group?.name ?? '이 그룹'}
+          </AppText>
+          {!editing && <StepProgress total={4} current={3} />}
+        </View>
 
         <View style={styles.center}>
           <SharedOrbitRing
@@ -227,7 +226,10 @@ export default function TrackingScreen() {
         </ButtonStack>
       }>
       <View style={styles.top}>
-        {group && <StatusPill label={group.name} dotColor={colors.accent.violetSoft} />}
+        <View style={styles.navRow}>
+          {group && <StatusPill label={group.name} dotColor={colors.accent.violetSoft} />}
+          {!editing && <StepProgress total={4} current={3} />}
+        </View>
 
         <AppText variant="screenTitle" style={styles.title}>
           무엇을 이 시간에{'\n'}포함할까요?
@@ -317,6 +319,7 @@ function setSelectionAgain(refresh: () => void, params: { groupId?: string; edit
 
 const styles = StyleSheet.create({
   top: { gap: 22 },
+  navRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   title: { fontSize: 30, lineHeight: 38 },
   center: { alignItems: 'center', gap: 20 },
   count: { fontSize: 64, lineHeight: 68, letterSpacing: -3.2 },

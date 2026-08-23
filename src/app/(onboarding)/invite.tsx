@@ -24,8 +24,10 @@ export default function InvitationPreviewScreen() {
   const join = useJoinGroup();
 
   const accept = async () => {
-    await join.mutateAsync((code ?? '').trim());
-    router.replace('/tracking');
+    // 방금 참여한 그룹의 id를 실어 보낸다. 없으면 추적 화면이 목록의 첫 그룹으로
+    // 떨어져서, 이미 그룹이 있는 사람이 **엉뚱한 그룹의 추적 대상**을 고른다.
+    const joined = await join.mutateAsync((code ?? '').trim());
+    router.replace({ pathname: '/tracking', params: { groupId: joined.id } });
   };
 
   if (!code || code.length !== 6) {

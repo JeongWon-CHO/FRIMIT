@@ -103,7 +103,13 @@ export default function TodayScreen() {
         <EmptyState
           title="아직 그룹이 없어요"
           body="친구 한 명만 있으면 공동 시간을 시작할 수 있어요."
-          action={<GradientButton label="그룹 만들기" size="md" onPress={() => router.push('/group')} />}
+          /*
+            만들기 화면이 아니라 갈림길(07)로 보낸다. 초대 코드를 받고 온 사람은
+            그룹을 만들 게 아니라 참여해야 하는데, 코드 입력은 그 화면에만 있다.
+          */
+          action={
+            <GradientButton label="그룹 시작하기" size="md" onPress={() => router.push('/start')} />
+          }
         />
       ) : hero?.status === 'draft' && !devPreview ? (
         /*

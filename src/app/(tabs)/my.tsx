@@ -168,7 +168,7 @@ export default function MyScreen() {
         })}
 
         {(groups.data?.length ?? 0) === 0 && (
-          <GradientButton label="그룹 만들기" size="md" onPress={() => router.push('/group')} />
+          <GradientButton label="그룹 시작하기" size="md" onPress={() => router.push('/start')} />
         )}
       </View>
 

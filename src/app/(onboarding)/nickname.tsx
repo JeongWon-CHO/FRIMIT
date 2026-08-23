@@ -78,7 +78,7 @@ export default function ProfileSetupScreen() {
       <View style={styles.top}>
         <View style={styles.navRow}>
           <BackButton />
-          {!editing && <StepProgress total={3} current={1} />}
+          {!editing && <StepProgress total={4} current={1} />}
         </View>
 
         <AppText variant="screenTitle" style={styles.title}>

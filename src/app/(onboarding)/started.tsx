@@ -9,7 +9,6 @@ import { useGroupMembers, useGroupUsages, useMyGroups } from '@/hooks/use-groups
 import { useScreenGroup } from '@/hooks/use-screen-group';
 import { avatarEmoji } from '@/lib/avatars';
 import { formatShort } from '@/lib/format';
-import { markProgress } from '@/lib/onboarding';
 
 /**
  * 15 · 시작했어요.
@@ -31,12 +30,9 @@ export default function GroupStartedScreen() {
 
   const limit = usage?.daily_limit_seconds ?? 28800;
 
-  const finish = async () => {
-    await markProgress({ done: true });
-    // reset이 아니라 replace다. 온보딩 스택은 이 화면이 마지막이라 뒤로 가도
-    // 돌아올 곳이 없다.
-    router.replace('/');
-  };
+  // reset이 아니라 replace다. 그룹 흐름은 이 화면이 마지막이라 뒤로 가도
+  // 돌아올 곳이 없다.
+  const finish = () => router.replace('/');
 
   return (
     <OnboardingFrame

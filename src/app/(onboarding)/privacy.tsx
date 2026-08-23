@@ -18,7 +18,7 @@ export default function PrivacyIntroScreen() {
       texture="calm"
       footer={<GradientButton label="다음" onPress={() => router.push('/permission')} />}>
       <View style={styles.top}>
-        <StepProgress total={3} current={3} />
+        <StepProgress total={4} current={3} />
 
         <AppText variant="screenTitle" style={styles.title}>
           시간만 공유하고{'\n'}목록은 남기지 않아요

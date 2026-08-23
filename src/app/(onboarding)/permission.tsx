@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 
 import { SharedOrbitRing } from '@/components/orbit';
-import { OnboardingFrame } from '@/components/onboarding';
+import { OnboardingFrame, StepProgress } from '@/components/onboarding';
 import { AppText, ButtonStack, GradientButton } from '@/components/ui';
 import { gradients } from '@/constants/design-tokens';
 import { markProgress } from '@/lib/onboarding';
@@ -55,9 +55,16 @@ export default function PermissionScreen() {
     }
   }, [busy, granted, result]);
 
+  /*
+   * 온보딩의 끝. 여기서 홈으로 내보낸다.
+   *
+   * 예전에는 07(만들기·참여)로 밀었다. 그래서 온보딩이 끝난 자리에서 퍼널이
+   * 하나 더 열렸고, 사용자는 끝난 줄 알았다가 다시 걷기 시작했다. 그룹 만들기는
+   * 홈의 빈 상태에서 시작한다.
+   */
   const next = async () => {
     if (!granted) await markProgress({ permissionSkipped: true });
-    router.push('/start');
+    router.replace('/');
   };
 
   if (result === 'granted') {
@@ -101,9 +108,7 @@ export default function PermissionScreen() {
           </AppText>
         </ButtonStack>
       }>
-      <AppText variant="numericLabel" tone="faint">
-        3단계 중 3단계
-      </AppText>
+      <StepProgress total={4} current={4} />
 
       <View style={styles.center}>
         <SharedOrbitRing

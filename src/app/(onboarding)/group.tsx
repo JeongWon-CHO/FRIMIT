@@ -5,6 +5,7 @@ import { StyleSheet, TextInput, View } from 'react-native';
 import {
   AccentPicker,
   BackButton,
+  StepProgress,
   NumericTimeSelector,
   OnboardingFrame,
   SHARED_TIME_DEFAULT,
@@ -79,9 +80,9 @@ export default function CreateGroupScreen() {
         <View style={styles.navRow}>
           {/* 2단계의 뒤로는 화면을 떠나는 것이 아니라 이름·색으로 돌아가는 것이다. */}
           <BackButton onPress={step === 2 ? () => setStep(1) : undefined} />
-          <AppText variant="numericLabel" tone="faint">
-            {step} / 2
-          </AppText>
+          {/* 화면 안의 2단계가 아니라 **그룹 흐름 전체**를 센다. 이 화면 둘,
+              추적 하나, 준비 하나. 대기실은 내 일이 끝난 뒤라 세지 않는다. */}
+          <StepProgress total={4} current={step} />
         </View>
 
         {step === 1 ? (
