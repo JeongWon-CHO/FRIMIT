@@ -191,7 +191,19 @@ export default function ReadinessScreen() {
                 </AppText>
               </>
             )}
-            {isDraft && <GradientButton label="먼저 둘러보기" variant="tertiary" onPress={browse} />}
+            {/*
+              둘러보기는 **나갈 방법이 그것뿐일 때만** 그린다.
+
+              하는 일이 "온보딩을 끝난 것으로 표시하고 홈으로"인데, 시작 버튼이
+              눈앞에 있는 관리자에게는 그게 두 번째 출구다. 다 모인 화면에서
+              할 일은 하나여야 한다.
+
+              시작을 못 누르는 사람에게는 남긴다. 이 표시가 없으면 앱을 다시 켤
+              때마다 되짚기가 이 대기실로 돌려보낸다(`resolveRouteForSignedIn`).
+            */}
+            {isDraft && !(canStart && isAdmin) && (
+              <GradientButton label="먼저 둘러보기" variant="tertiary" onPress={browse} />
+            )}
           </ButtonStack>
         }>
         <View style={styles.top}>
