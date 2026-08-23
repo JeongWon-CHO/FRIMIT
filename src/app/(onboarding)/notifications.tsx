@@ -63,7 +63,7 @@ export default function NotificationIntroScreen() {
         </AppText>
 
         <View style={styles.rows}>
-          <SampleRow title="밤샘 금지단 · 75% 사용" caption="2시간 남았어요" emphasis />
+          <SampleRow title="밤샘 금지단 · 75% 사용" caption="2시간 남았어요" />
           <SampleRow title="도형이가 콕 찔렀어요 👀" caption="방금" />
           <SampleRow title="목표 진행 64%" caption="이번 주 5번 운동하기" />
         </View>
