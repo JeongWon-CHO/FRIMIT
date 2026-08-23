@@ -189,7 +189,9 @@ export default function GroupDetailScreen() {
                 <GradientButton
                   label="초대 코드 보기"
                   size="md"
-                  onPress={() => router.push({ pathname: '/ready', params: { groupId: id } })}
+                  onPress={() =>
+                    router.push({ pathname: '/ready', params: { groupId: id, invite: '1' } })
+                  }
                 />
               }
             />

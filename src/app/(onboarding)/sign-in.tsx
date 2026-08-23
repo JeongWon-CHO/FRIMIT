@@ -8,6 +8,7 @@ import { AppText } from '@/components/ui';
 import { colors, gradients, radius as radii } from '@/constants/design-tokens';
 import { isAppleSignInAvailable, signInWithApple, signInWithGoogle } from '@/lib/auth';
 import { resolveRouteAfterSignIn } from '@/lib/onboarding';
+import { queryClient } from '@/lib/query';
 
 /**
  * 02 · 로그인.
@@ -56,6 +57,13 @@ export default function SignInScreen() {
 
       // 스스로 시트를 내린 것이므로 아무 말도 하지 않고 이 화면에 남는다.
       if (outcome === 'canceled') return;
+
+      /*
+       * 방금 다른 사람이 됐다. 앞 계정의 그룹·사용량이 캐시에 5분(gcTime) 동안
+       * 살아 있어서, 비우지 않으면 온보딩을 마치고 오늘 화면에 닿는 순간 남의
+       * 데이터가 한 번 그려진다. 로그아웃·계정 삭제도 같은 이유로 비운다.
+       */
+      queryClient.clear();
 
       /*
        * 다음 화면은 되짚기가 정한다. 기기를 바꾼 사람은 닉네임도 그룹도 이미

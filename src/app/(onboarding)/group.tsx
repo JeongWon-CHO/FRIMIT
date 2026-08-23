@@ -44,7 +44,19 @@ export default function CreateGroupScreen() {
       colorKey: COLOR_KEY[accent],
       dailyLimitSeconds: minutes * 60,
     });
-    router.push({ pathname: '/invite-friends', params: { groupId: group.id } });
+    /*
+     * 초대가 아니라 추적 선택이 먼저다.
+     *
+     * 초대는 공유 시트를 띄워 **온보딩에서 앱을 떠나는 유일한 지점**이다. 그
+     * 뒤에 남은 단계가 있으면 카카오톡으로 넘어간 사람이 돌아오지 않고, 그러면
+     * `is_ready`가 끝내 안 찍힌다. 시작에는 준비 2명이 필요하므로 친구가 들어와
+     * 준비를 다 마쳐도 그룹이 시작되지 않는다 — 친구 쪽에서는 이유를 알 방법이
+     * 없는 상태다.
+     *
+     * 그래서 혼자 할 수 있는 일을 전부 끝낸 뒤 대기실에서 초대한다. 거기서는
+     * 떠나도 잃을 것이 없다.
+     */
+    router.push({ pathname: '/tracking', params: { groupId: group.id } });
   };
 
   return (

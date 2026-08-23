@@ -19,7 +19,30 @@ import { readTrackingState } from './tracking';
  * 되돌려 보내게 된다(iOS 권한 시트를 취소하면 상태가 `notDetermined`로 남는다).
  */
 
-const PROGRESS_KEY = 'frimit.onboarding.v1';
+/**
+ * 진행 기록은 **계정별로** 따로 둔다.
+ *
+ * 한 기기에 계정 하나뿐이라면 접두사만으로 충분했다. 하지만 로그아웃과 계정
+ * 삭제가 있는 지금은 같은 기기에서 사람이 바뀔 수 있고, 그때 기록 하나를 같이
+ * 쓰면 **앞 사람이 지난 단계를 뒷사람이 건너뛴다.** 실제로 그랬다 — 개발용
+ * 익명 계정으로 온보딩을 마친 기기에서 Apple로 처음 로그인하니 `nicknameDone`이
+ * 이미 true라 닉네임 화면을 건너뛰고 닉네임이 '친구'로 남았다.
+ *
+ * 권한·추적 건너뛰기는 사실 기기 쪽 사실에 가까워서 계정을 옮길 때 같이 물려도
+ * 됐지만, 나누지 않는다. 계정이 바뀌면 그 사람은 이 앱을 처음 쓰는 것이고,
+ * 무엇을 건너뛸지는 그 사람이 정할 일이다.
+ */
+const PROGRESS_PREFIX = 'frimit.onboarding.v1';
+
+/**
+ * 세션이 없을 때 접두사만 쓰는 이유: 그 상태에서 기록을 읽는 경로는 로그인 전
+ * 되짚기뿐이고, 거기서는 값이 무엇이든 소개 화면으로 간다. 던지지 않고 빈
+ * 기록을 돌려주는 편이 조용하다.
+ */
+async function progressKey(): Promise<string> {
+  const userId = await getSessionUserId();
+  return userId ? `${PROGRESS_PREFIX}:${userId}` : PROGRESS_PREFIX;
+}
 
 export type OnboardingProgress = {
   /** 닉네임 단계를 지났다. 자기를 정말 '친구'라고 부르고 싶은 사람을 위해 필요하다. */
@@ -43,7 +66,7 @@ const EMPTY_PROGRESS: OnboardingProgress = {
 };
 
 export async function readProgress(): Promise<OnboardingProgress> {
-  const raw = await AsyncStorage.getItem(PROGRESS_KEY);
+  const raw = await AsyncStorage.getItem(await progressKey());
   if (!raw) return EMPTY_PROGRESS;
 
   try {
@@ -55,12 +78,12 @@ export async function readProgress(): Promise<OnboardingProgress> {
 
 export async function markProgress(patch: Partial<OnboardingProgress>): Promise<void> {
   const next = { ...(await readProgress()), ...patch };
-  await AsyncStorage.setItem(PROGRESS_KEY, JSON.stringify(next));
+  await AsyncStorage.setItem(await progressKey(), JSON.stringify(next));
 }
 
 /** 개발 중 온보딩을 다시 보려면 MY 탭에서 이걸 부른다. */
 export async function resetProgress(): Promise<void> {
-  await AsyncStorage.removeItem(PROGRESS_KEY);
+  await AsyncStorage.removeItem(await progressKey());
 }
 
 /** 온보딩 라우트. `(onboarding)` 그룹은 경로에 나타나지 않는다. */
@@ -73,7 +96,6 @@ export const OnboardingRoutes = {
   permission: '/permission',
   start: '/start',
   group: '/group',
-  inviteFriends: '/invite-friends',
   tracking: '/tracking',
   ready: '/ready',
   started: '/started',

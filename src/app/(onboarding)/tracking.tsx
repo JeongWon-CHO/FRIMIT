@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
@@ -7,6 +7,7 @@ import { OnboardingFrame, PrivacyDisclosureCard } from '@/components/onboarding'
 import { AppText, ButtonStack, GradientButton, StatusPill } from '@/components/ui';
 import { colors, gradients, radius as radii } from '@/constants/design-tokens';
 import { useMyGroups } from '@/hooks/use-groups';
+import { useScreenGroup } from '@/hooks/use-screen-group';
 import { useTrackingState } from '@/hooks/use-tracking';
 import { hexToRgba } from '@/lib/color';
 import { markProgress } from '@/lib/onboarding';
@@ -33,8 +34,11 @@ import type { SelectableApp } from '@modules/screen-time';
 const VISIBLE_APP_LIMIT = 40;
 
 export default function TrackingScreen() {
+  const { groupId } = useLocalSearchParams<{ groupId?: string }>();
   const groups = useMyGroups();
-  const group = groups.data?.[0];
+  // 방금 만든 그룹의 id를 받아서 온다. 목록의 첫 그룹으로 떨어지면 이미 그룹이
+  // 있는 사람이 **엉뚱한 그룹의 추적 대상**을 고르게 된다.
+  const group = useScreenGroup(groups.data, groupId);
   const tracking = useTrackingState(group?.id);
 
   const [apps, setApps] = useState<SelectableApp[] | null>(null);
@@ -127,7 +131,7 @@ export default function TrackingScreen() {
 
   const skip = async () => {
     await markProgress({ trackingSkipped: true });
-    router.push('/ready');
+    router.push({ pathname: '/ready', params: group ? { groupId: group.id } : {} });
   };
 
   // ── 12 · 선택 결과 ─────────────────────────────────────────────
@@ -141,7 +145,12 @@ export default function TrackingScreen() {
               variant="secondary"
               onPress={Platform.OS === 'ios' ? openPicker : () => setSelectionAgain(tracking.refresh)}
             />
-            <GradientButton label="이대로 좋아요" onPress={() => router.push('/ready')} />
+            <GradientButton
+              label="이대로 좋아요"
+              onPress={() =>
+                router.push({ pathname: '/ready', params: group ? { groupId: group.id } : {} })
+              }
+            />
           </ButtonStack>
         }>
         <AppText variant="numericLabel" tone="faint">
