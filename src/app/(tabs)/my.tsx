@@ -173,15 +173,20 @@ export default function MyScreen() {
       </View>
 
       <View style={styles.rows}>
+        {/*
+          온보딩 화면을 그대로 쓰되 `edit=1`을 붙인다. 이 표시가 없으면 저장한
+          뒤 온보딩 다음 단계로 넘어가서, 설정을 고치러 온 사람이 온보딩을
+          처음부터 다시 걷는다.
+        */}
         <SettingRow
           label="추적 대상"
           value={`${tracking.selectionCount}개 선택`}
-          onPress={() => router.push('/tracking')}
+          onPress={() => router.push({ pathname: '/tracking', params: { edit: '1' } })}
         />
         <SettingRow
           label="닉네임 · 아바타"
           value={profile.data?.nickname ?? '…'}
-          onPress={() => router.push('/nickname')}
+          onPress={() => router.push({ pathname: '/nickname', params: { edit: '1' } })}
         />
       </View>
 
@@ -190,7 +195,6 @@ export default function MyScreen() {
       {__DEV__ && (
         <View style={styles.rows}>
           <SettingRow label="스파이크 화면" value="개발용" onPress={() => router.push('/spike')} />
-          <SettingRow label="갤러리" value="개발용" onPress={() => router.push('/gallery')} />
           <SettingRow label="오빗 실험대" value="개발용" onPress={() => router.push('/orbit-demo')} />
           <SettingRow
             label="온보딩 다시 보기"

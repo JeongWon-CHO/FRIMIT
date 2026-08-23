@@ -34,7 +34,9 @@ import type { SelectableApp } from '@modules/screen-time';
 const VISIBLE_APP_LIMIT = 40;
 
 export default function TrackingScreen() {
-  const { groupId } = useLocalSearchParams<{ groupId?: string }>();
+  const { groupId, edit } = useLocalSearchParams<{ groupId?: string; edit?: string }>();
+  // MY 탭에서 고치러 온 경우. 저장하면 온보딩 다음 단계가 아니라 왔던 자리로 돌아간다.
+  const editing = edit === '1';
   const groups = useMyGroups();
   // 방금 만든 그룹의 id를 받아서 온다. 목록의 첫 그룹으로 떨어지면 이미 그룹이
   // 있는 사람이 **엉뚱한 그룹의 추적 대상**을 고르게 된다.
@@ -129,9 +131,19 @@ export default function TrackingScreen() {
       if (count > 0) await armTracking(group.id, group.time_zone);
     });
 
+  const leave = () => {
+    if (!editing) {
+      router.push({ pathname: '/ready', params: group ? { groupId: group.id } : {} });
+    } else if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/');
+    }
+  };
+
   const skip = async () => {
     await markProgress({ trackingSkipped: true });
-    router.push({ pathname: '/ready', params: group ? { groupId: group.id } : {} });
+    leave();
   };
 
   // ── 12 · 선택 결과 ─────────────────────────────────────────────
@@ -143,14 +155,13 @@ export default function TrackingScreen() {
             <GradientButton
               label="다시 고르기"
               variant="secondary"
-              onPress={Platform.OS === 'ios' ? openPicker : () => setSelectionAgain(tracking.refresh)}
-            />
-            <GradientButton
-              label="이대로 좋아요"
-              onPress={() =>
-                router.push({ pathname: '/ready', params: group ? { groupId: group.id } : {} })
+              onPress={
+                Platform.OS === 'ios'
+                  ? openPicker
+                  : () => setSelectionAgain(tracking.refresh, { groupId, edit })
               }
             />
+            <GradientButton label="이대로 좋아요" onPress={leave} />
           </ButtonStack>
         }>
         <AppText variant="numericLabel" tone="faint">
@@ -293,9 +304,14 @@ export default function TrackingScreen() {
   );
 }
 
-/** Android에서 다시 고르려면 선택을 비우고 목록으로 돌아간다. */
-function setSelectionAgain(refresh: () => void) {
-  router.replace('/tracking');
+/**
+ * Android에서 다시 고르려면 선택을 비우고 목록으로 돌아간다.
+ *
+ * 파라미터를 그대로 다시 넘긴다. 빠뜨리면 다시 고른 사람이 엉뚱한 그룹의 대상을
+ * 고르거나(groupId), 저장 뒤 온보딩으로 끌려간다(edit).
+ */
+function setSelectionAgain(refresh: () => void, params: { groupId?: string; edit?: string }) {
+  router.replace({ pathname: '/tracking', params });
   refresh();
 }
 

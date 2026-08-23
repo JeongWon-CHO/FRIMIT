@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
@@ -21,8 +21,15 @@ import { DEFAULT_NICKNAME, NICKNAME_MAX_LENGTH } from '@/lib/profile';
  *
  * 사용자가 손대기 전에는 상태를 들지 않는다. 서버 값을 상태로 복사해 두면 그 값이
  * 늦게 도착해서 "복사 시점"을 관리해야 하고, 사본과 서버 값이 어긋난 창이 생긴다.
+ *
+ * MY 탭에서도 같은 화면을 쓴다(`?edit=1`). 화면을 하나 더 만들 이유가 없다 —
+ * 다른 것은 저장 뒤 갈 곳뿐이다. 온보딩에서는 다음 단계로 가고, 고치러 온
+ * 사람은 왔던 자리로 돌아간다. 진행 표시도 그때는 거짓말이라 그리지 않는다.
  */
 export default function ProfileSetupScreen() {
+  const { edit } = useLocalSearchParams<{ edit?: string }>();
+  const editing = edit === '1';
+
   const profile = useMyProfile();
   const update = useUpdateProfile();
 
@@ -36,34 +43,46 @@ export default function ProfileSetupScreen() {
   const trimmed = nickname.trim();
   const tooLong = trimmed.length > NICKNAME_MAX_LENGTH;
 
+  // 비워 두면 임시값을 그대로 쓴다. 이름 짓기를 강제할 이유가 없다.
+  const nextNickname = trimmed.length > 0 ? trimmed : DEFAULT_NICKNAME;
+
+  /*
+   * 고치러 온 사람에게는 바뀐 게 없으면 저장을 잠근다. 누를 수 있게 두면 같은
+   * 값을 서버에 한 번 더 쓰고 돌아가는데, 그건 저장이 아니라 취소다.
+   *
+   * 프로필이 아직 안 왔을 때도 잠근다 — 그때 입력칸은 비어 있고, 그대로 누르면
+   * 서버에 있는 이름이 임시값으로 덮인다.
+   */
+  const unchanged =
+    !profile.data ||
+    (nextNickname === profile.data.nickname && avatarKey === profile.data.avatar_key);
+
   const save = async () => {
-    await update.mutateAsync({
-      // 비워 두면 임시값을 그대로 쓴다. 이름 짓기를 강제할 이유가 없다.
-      nickname: trimmed.length > 0 ? trimmed : DEFAULT_NICKNAME,
-      avatarKey,
-    });
+    await update.mutateAsync({ nickname: nextNickname, avatarKey });
     await markProgress({ nicknameDone: true });
-    router.push('/notifications');
+    if (!editing) router.push('/notifications');
+    else if (router.canGoBack()) router.back();
+    else router.replace('/');
   };
 
   return (
     <OnboardingFrame
       footer={
         <GradientButton
-          label="다음"
+          label={editing ? '저장' : '다음'}
           onPress={save}
-          disabled={tooLong}
+          disabled={tooLong || (editing && unchanged)}
           loading={update.isPending}
         />
       }>
       <View style={styles.top}>
         <View style={styles.navRow}>
           <BackButton />
-          <StepProgress total={3} current={1} />
+          {!editing && <StepProgress total={3} current={1} />}
         </View>
 
         <AppText variant="screenTitle" style={styles.title}>
-          어떻게 불러드릴까요?
+          {editing ? '닉네임과 아바타' : '어떻게 불러드릴까요?'}
         </AppText>
         <AppText variant="body" tone="muted">
           친구들에게 보이는 이름과 아바타예요.
