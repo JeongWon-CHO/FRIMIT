@@ -77,6 +77,41 @@ export const GroupTile = memo(function GroupTile({ view, wide, onPress }: GroupT
 });
 
 /**
+ * 그룹 하나 더 만들기.
+ *
+ * 그리드에 이 자리가 없으면 **두 번째 그룹을 만들 방법이 없다.** 오늘 화면의
+ * "그룹이 없어요" 빈 상태는 그룹이 하나라도 있으면 사라지고, 시작 전 그룹 하나만
+ * 가진 사람은 그 자리에 대기실 안내를 보게 된다 — 거기서 새 그룹으로 가는 문이
+ * 끊긴다.
+ *
+ * 점선이다. 아직 아무것도 아닌 자리이고, 대기실의 빈 좌석과 같은 말투다.
+ */
+export function AddGroupTile({ wide, onPress }: { wide?: boolean; onPress: () => void }) {
+  return (
+    <Surface
+      fill="transparent"
+      border={colors.border.dashed}
+      cornerRadius={radii.groupCard}
+      padding={16}
+      onPress={onPress}
+      style={{
+        height: wide ? layout.groupCardWideHeight : layout.groupCardHeight,
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 6,
+        borderStyle: 'dashed',
+      }}>
+      <AppText variant="cardTitle" tone="muted">
+        +
+      </AppText>
+      <AppText variant="metadata" tone="muted">
+        그룹 추가
+      </AppText>
+    </Surface>
+  );
+}
+
+/**
  * 아직 시작하지 않은 그룹.
  *
  * 상태는 알약이 아니라 **점 하나와 작은 글자**로 오른쪽 위에 앉는다. 알약은

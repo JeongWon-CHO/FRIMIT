@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { DraftTile, GroupTile } from '@/components/group-tile';
+import { AddGroupTile, DraftTile, GroupTile } from '@/components/group-tile';
 import { SharedPoolHero, SyncRow } from '@/components/shared-pool-hero';
 import {
   AppText,
@@ -14,6 +14,7 @@ import {
 } from '@/components/ui';
 import { colors, spacing } from '@/constants/design-tokens';
 import { useGroupMembers, useGroupUsages, useMyGroups } from '@/hooks/use-groups';
+import { MAX_ACTIVE_GROUPS } from '@/lib/groups';
 import { useMyProfile } from '@/hooks/use-profile';
 import { useTrackingState } from '@/hooks/use-tracking';
 import { useUsageSync } from '@/hooks/use-usage-sync';
@@ -67,6 +68,21 @@ export default function TodayScreen() {
   );
 
   const others = (groups.data ?? []).filter((group) => group.id !== hero?.id);
+
+  /*
+   * 그리드에 "그룹 추가" 자리를 둘지.
+   *
+   * 그룹이 하나라도 있으면 빈 상태의 CTA가 사라지므로, 여기가 두 번째 그룹으로
+   * 가는 유일한 문이다. 서버가 5개에서 막으므로(`too_many_groups`) 그때는 그리지
+   * 않는다 — 눌러도 거절당할 버튼을 두지 않는다.
+   */
+  const groupCount = groups.data?.length ?? 0;
+  const canAddGroup = groupCount > 0 && groupCount < MAX_ACTIVE_GROUPS;
+  const tileCount = others.length + (canAddGroup ? 1 : 0);
+
+  // 홀수 번째 마지막 카드는 두 칸을 차지한다. 그리드에 빈 칸이 남으면 화면이
+  // 미완성으로 보인다.
+  const isWide = (index: number) => index === tileCount - 1 && tileCount % 2 === 1;
 
   const refresh = async () => {
     await sync.sync();
@@ -150,20 +166,18 @@ export default function TodayScreen() {
         />
       )}
 
-      {others.length > 0 && (
+      {tileCount > 0 && (
         <>
           <View style={styles.sectionTitle}>
             <AppText variant="sectionTitle">내 그룹</AppText>
             <AppText variant="metadata" tone="metadata">
-              {others.length}
+              {groupCount}
             </AppText>
           </View>
 
           <View style={styles.grid}>
             {others.map((group, index) => {
-              // 홀수 번째 남은 카드는 두 칸을 차지한다. 그리드에 빈 칸이 남으면
-              // 화면이 미완성으로 보인다.
-              const wide = index === others.length - 1 && others.length % 2 === 1;
+              const wide = isWide(index);
               const view = buildPoolView(group, usages.byGroupId.get(group.id), undefined, {
                 permission: true,
                 myProfileId: profile.data?.id,
@@ -184,6 +198,15 @@ export default function TodayScreen() {
                 </View>
               );
             })}
+
+            {canAddGroup && (
+              <View style={isWide(others.length) ? styles.wide : styles.half}>
+                <AddGroupTile
+                  wide={isWide(others.length)}
+                  onPress={() => router.push('/start')}
+                />
+              </View>
+            )}
           </View>
         </>
       )}

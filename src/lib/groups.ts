@@ -291,6 +291,15 @@ export function toMyGroup(snapshot: GroupSnapshot): MyGroup {
 /** 그룹을 시작하려면 준비된 멤버가 2명 이상이어야 한다(plan.md 33행). */
 export const READY_MEMBERS_TO_START = 2;
 
+/**
+ * 한 사람이 참여할 수 있는 그룹 수.
+ *
+ * 서버의 `create_group`·`join_group`이 같은 값으로 막는다(`too_many_groups`).
+ * 화면은 그 거절을 미리 알아 "그룹 추가"를 그리지 않는 데만 쓴다 — 우회 수단이
+ * 아니라 예의다.
+ */
+export const MAX_ACTIVE_GROUPS = 5;
+
 export function countReady(members: GroupMember[]): number {
   return members.filter((member) => member.is_ready).length;
 }
