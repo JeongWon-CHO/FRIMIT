@@ -1,5 +1,5 @@
-import { useRef } from 'react';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { useEffect, useRef } from 'react';
+import { StyleSheet, TextInput, View } from 'react-native';
 
 import { AppText } from '@/components/ui';
 import { colors } from '@/constants/design-tokens';
@@ -13,6 +13,11 @@ import { hexToRgba } from '@/lib/color';
  *
  * **코드는 숫자 여섯 자리다.** 디자인의 `FRM-` 접두사는 표시용 장식이고, 서버
  * 제약은 `^[0-9]{6}$`이라 입력에서는 숫자만 받는다.
+ *
+ * **이건 화면 하나를 차지해야 한다.** 07의 카드 안에 넣었더니 키보드가 올라오는
+ * 순간 입력칸이 키보드와 버튼 사이에 끼어 보이지 않았다. 카드 두 장과 제목까지
+ * 있는 화면에서 키보드가 절반을 먹으면 자리가 남지 않는다. 지금 실제 입력은 08이
+ * 맡고, 07의 카드에는 그림(`CodeBoxes`)만 남는다.
  */
 export function CodeEntryField({
   value,
@@ -24,31 +29,14 @@ export function CodeEntryField({
   error?: boolean;
 }) {
   const input = useRef<TextInput>(null);
-  const digits = value.padEnd(6, ' ').slice(0, 6).split('');
+
+  useEffect(() => {
+    input.current?.focus();
+  }, []);
 
   return (
-    <Pressable accessibilityRole="none" onPress={() => input.current?.focus()}>
-      <View style={styles.row}>
-        {digits.map((digit, index) => {
-          const filled = digit.trim().length > 0;
-          const next = index === value.length;
-
-          return (
-            <View
-              key={index}
-              style={[
-                styles.box,
-                filled && styles.boxFilled,
-                next && styles.boxNext,
-                error && styles.boxError,
-              ]}>
-              <AppText variant="cardTitle" font="mono" tone={filled ? 'cyan' : 'faint'}>
-                {digit.trim()}
-              </AppText>
-            </View>
-          );
-        })}
-      </View>
+    <View>
+      <CodeBoxes value={value} error={error} />
 
       <TextInput
         ref={input}
@@ -60,15 +48,49 @@ export function CodeEntryField({
         style={styles.hidden}
         accessibilityLabel="초대 코드"
       />
-    </Pressable>
+    </View>
+  );
+}
+
+/**
+ * 상자 여섯 개. 입력은 받지 않는다.
+ *
+ * 07의 참여 카드가 이걸 쓴다 — 거기서 이 상자들은 "여기 코드를 넣는다"는 그림일
+ * 뿐이고, 탭은 카드가 통째로 받아 08로 보낸다.
+ */
+export function CodeBoxes({ value, error }: { value: string; error?: boolean }) {
+  const digits = value.padEnd(6, ' ').slice(0, 6).split('');
+
+  return (
+    <View style={styles.row}>
+      {digits.map((digit, index) => {
+        const filled = digit.trim().length > 0;
+        const next = index === value.length;
+
+        return (
+          <View
+            key={index}
+            style={[
+              styles.box,
+              filled && styles.boxFilled,
+              next && styles.boxNext,
+              error && styles.boxError,
+            ]}>
+            <AppText variant="cardTitle" font="mono" tone={filled ? 'cyan' : 'faint'}>
+              {digit.trim()}
+            </AppText>
+          </View>
+        );
+      })}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', gap: 8 },
+  row: { flexDirection: 'row', gap: 7 },
   box: {
-    width: 34,
-    height: 44,
+    width: 40,
+    height: 52,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',

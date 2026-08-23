@@ -1,6 +1,6 @@
 export { AccentPicker } from './accent-picker';
 export { ChoiceCard } from './choice-card';
-export { CodeEntryField } from './code-entry-field';
+export { CodeBoxes, CodeEntryField } from './code-entry-field';
 export { InviteCodeCard } from './invite-code-card';
 export {
   NumericTimeSelector,

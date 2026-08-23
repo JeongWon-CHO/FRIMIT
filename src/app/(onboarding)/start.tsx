@@ -1,9 +1,8 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { BackButton, ChoiceCard, CodeEntryField, OnboardingFrame } from '@/components/onboarding';
-import { AppText, Avatar, GradientButton } from '@/components/ui';
+import { BackButton, ChoiceCard, CodeBoxes, OnboardingFrame } from '@/components/onboarding';
+import { AppText, Avatar } from '@/components/ui';
 import { colors } from '@/constants/design-tokens';
 import { avatarPosition } from '@/lib/orbit';
 
@@ -13,37 +12,29 @@ import { avatarPosition } from '@/lib/orbit';
  * 온보딩의 사회적 절반으로 갈라지는 자리다. 두 카드를 같은 크기로 두지 않는다 —
  * 크기와 빛의 차이가 곧 추천이고, 코드를 받고 온 사람은 이미 무엇을 할지 안다.
  *
- * 초대 코드는 **숫자 여섯 자리**다(서버 제약 `^[0-9]{6}$`). 디자인의 `FRM-`
- * 접두사는 보여줄 때만 붙이는 장식이라 입력에서는 받지 않는다.
+ * 참여 카드의 상자 여섯 개는 **그림이다**. 여기서 코드를 받으려고 했더니 키보드가
+ * 올라오는 순간 입력칸이 키보드와 버튼 사이에 끼어 보이지 않았다 — 제목과 카드 두
+ * 장이 있는 화면에서 키보드가 절반을 먹으면 남는 자리가 없다. 입력은 08이 화면
+ * 하나를 통째로 쓴다.
  *
  * 이제 온보딩의 일부가 아니라 **홈에서 들어오는 문**이다. 그래서 뒤로 가기가
  * 있다 — 그룹을 더 만들 생각이 없어진 사람이 여기 갇히면 안 된다.
  */
 export default function CreateOrJoinScreen() {
-  const [code, setCode] = useState('');
-  const [joining, setJoining] = useState(false);
-
-  const submit = () => router.push({ pathname: '/invite', params: { code } });
-
   return (
-    <OnboardingFrame
-      footer={
-        joining ? (
-          <GradientButton
-            label="참여하기"
-            onPress={submit}
-            disabled={code.length !== 6}
-          />
-        ) : undefined
-      }>
+    <OnboardingFrame>
       <View style={styles.top}>
         <BackButton />
 
+        {/*
+          예전 제목은 "혼자서는 시작할 수 없어요"였다. 사실이긴 하지만 갈림길에서
+          할 말은 아니다 — 무엇을 고르라는 화면인데 못 하는 것부터 말했다.
+        */}
         <AppText variant="screenTitle" style={styles.title}>
-          혼자서는 시작할 수 없어요
+          어떻게 시작할까요?
         </AppText>
         <AppText variant="body" tone="muted">
-          공동 시간은 친구가 있어야 흘러요.
+          그룹을 만들거나, 받은 코드로 참여해요.
         </AppText>
       </View>
 
@@ -60,8 +51,8 @@ export default function CreateOrJoinScreen() {
           emphasis="secondary"
           title="초대로 참여하기"
           caption="6자리 코드를 입력해요"
-          onPress={() => setJoining(true)}
-          figure={<CodeEntryField value={code} onChange={setCode} />}
+          onPress={() => router.push('/invite')}
+          figure={<CodeBoxes value="" />}
         />
       </View>
     </OnboardingFrame>
@@ -100,7 +91,9 @@ const styles = StyleSheet.create({
   // 카드가 가운데를 차지하므로 제목은 그 위에서 조금 내려와 앉는다.
   top: { gap: 9, paddingTop: 12 },
   title: { fontSize: 30, lineHeight: 38 },
-  cards: { gap: 14, flex: 1, justifyContent: 'center', paddingBottom: 8 },
+  // 제목 바로 아래에 붙인다. `center`로 두면 카드가 화면 한가운데로 내려가서
+  // 제목과 갈라지고, 고를 것 둘이 저 아래 따로 떠 있는 것처럼 보인다.
+  cards: { gap: 14, flex: 1, paddingBottom: 8 },
   miniRing: {
     position: 'absolute',
     borderWidth: 1,
