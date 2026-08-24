@@ -18,10 +18,11 @@ import {
   StatusDot,
   StatusPill,
 } from '@/components/ui';
-import { colors, gradients } from '@/constants/design-tokens';
+import { colors, gradients, radius as radii } from '@/constants/design-tokens';
 import {
   readyCount,
   useGroupMembers,
+  useGroupUsages,
   useMyGroups,
   useSetReady,
   useStartGroup,
@@ -31,6 +32,7 @@ import { useMyProfile } from '@/hooks/use-profile';
 import { useScreenGroup } from '@/hooks/use-screen-group';
 import { useTrackingState } from '@/hooks/use-tracking';
 import { avatarEmoji } from '@/lib/avatars';
+import { hexToRgba } from '@/lib/color';
 import { formatShort } from '@/lib/format';
 import { READY_MEMBERS_TO_START } from '@/lib/groups';
 import { armTracking, isUsable } from '@/lib/tracking';
@@ -81,6 +83,10 @@ export default function ReadinessScreen() {
   const group = useScreenGroup(groups.data, params.groupId);
 
   const members = useGroupMembers(group?.id);
+  // 대기실이 그리는 큰 숫자가 이 그룹의 실제 한도다. 서버는 시작 전 그룹에도
+  // 한도를 정상으로 준다(집계 대상만 0명이다).
+  const usages = useGroupUsages(group ? [group] : []);
+  const limitSeconds = (group && usages.byGroupId.get(group.id)?.daily_limit_seconds) ?? 28800;
   const tracking = useTrackingState(group?.id);
   const setReady = useSetReady(group?.id);
   const startGroup = useStartGroup();
@@ -236,7 +242,7 @@ export default function ReadinessScreen() {
             gradient={gradients.sharedPool.colors}
             showTrackDashes
             strokeRatio={0.12}>
-            <AppText variant="heroNumberMd">{formatShort(28800)}</AppText>
+            <AppText variant="heroNumberMd">{formatShort(limitSeconds)}</AppText>
             <AppText variant="bodyStrong" tone="metadata">
               매일 함께 쓰는 시간
             </AppText>
@@ -325,6 +331,32 @@ export default function ReadinessScreen() {
           {group?.name ?? '…'}
         </AppText>
 
+        {/*
+          이 그룹이 하루에 함께 쓸 시간.
+          
+          13에 이 숫자가 없었다. 시작 전 그룹으로 들어오면 언제나 여기에 먼저
+          떨어지는데, 정작 방금 정한 값을 확인할 자리가 없고 고칠 문도 없었다.
+          
+          사람보다 먼저 온다. 그룹의 설정이 한 덩어리이고, 그 아래 "N명 중 M명
+          준비"부터가 사람 이야기다. 목록 뒤에 두면 명단의 꼬리처럼 보인다.
+          
+          고치는 것은 관리자만이다(서버도 `update_draft_rule`을 그렇게 연다).
+          시작하고 나면 전원 동의가 필요하고, 그건 그룹 상세가 맡는다.
+        */}
+        <Pressable
+          accessibilityRole={isAdmin ? 'button' : 'text'}
+          disabled={!isAdmin || !group}
+          onPress={() =>
+            group && router.push({ pathname: '/group/limit', params: { groupId: group.id } })
+          }
+          style={styles.limitRow}>
+          <AppText variant="bodyStrong">매일 함께 쓰는 시간</AppText>
+          <AppText variant="metadata" tone={isAdmin ? 'body' : 'muted'} font="mono">
+            {formatShort(limitSeconds)}
+            {isAdmin ? ' · 바꾸기' : ''}
+          </AppText>
+        </Pressable>
+
         <View style={styles.readyRow}>
           <AppText variant="bodyStrong" tone="accent">
             {total}명 중 {ready}명 준비
@@ -389,6 +421,19 @@ function LeaveButton({ onPress, disabled }: { onPress: () => void; disabled?: bo
 
 const styles = StyleSheet.create({
   top: { gap: 8 },
+  limitRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    marginVertical: 6,
+    borderRadius: radii.listRow,
+    paddingVertical: 13,
+    paddingHorizontal: 16,
+    backgroundColor: hexToRgba('#FFFFFF', 0.03),
+    borderWidth: 1,
+    borderColor: colors.border.subtle,
+  },
   navRow: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -4,10 +4,12 @@ import {
   formatDateKey,
   formatDuration,
   formatPoolHeadline,
+  formatRemaining,
   formatShort,
   formatUsedPercent,
   formatSyncAge,
   formatUntilReset,
+  isFuture,
   splitDuration,
 } from './format';
 
@@ -123,5 +125,25 @@ describe('formatUsedPercent', () => {
 
   it('한도가 없으면 퍼센트가 성립하지 않는다', () => {
     expect(formatUsedPercent(100, 0)).toBe('기록 없음');
+  });
+});
+
+describe('formatRemaining', () => {
+  const now = new Date('2026-08-24T00:00:00Z');
+
+  it('남은 시간을 센다', () => {
+    expect(formatRemaining('2026-08-25T23:00:00Z', now)).toBe('47시간 남음');
+    expect(formatRemaining('2026-08-24T00:30:00Z', now)).toBe('30분 남음');
+  });
+
+  it('지난 시각은 0으로 눕힌다', () => {
+    // 만료된 변경안이 잠깐 화면에 남는 경우가 있다(판정은 조회할 때 돈다).
+    // 거기서 "-3시간 남음"이 나오면 안 된다.
+    expect(formatRemaining('2026-08-23T00:00:00Z', now)).toBe('0분 남음');
+  });
+
+  it('아직 오지 않은 시각을 가린다', () => {
+    expect(isFuture('2026-08-25T00:00:00Z', now)).toBe(true);
+    expect(isFuture('2026-08-23T00:00:00Z', now)).toBe(false);
   });
 });

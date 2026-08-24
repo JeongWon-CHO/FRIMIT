@@ -88,6 +88,22 @@ export function formatUntilReset(periodEnd: string, now: Date = new Date()): str
 }
 
 /**
+ * "47시간 남음". 마감이 있는 것에 쓴다 — 규칙 변경안의 48시간 창이 그것이다.
+ *
+ * `now`를 인자로 받는 이유는 위의 서식들과 같다. 렌더 도중 `Date.now()`를 부르면
+ * 같은 입력이 매번 다른 값을 내는 함수가 되고, 테스트에서 고정할 수도 없다.
+ */
+export function formatRemaining(iso: string, now: Date = new Date()): string {
+  const remaining = Math.max(0, Math.floor((new Date(iso).getTime() - now.getTime()) / 1000));
+  return `${formatDuration(remaining)} 남음`;
+}
+
+/** 아직 오지 않은 시각인가. */
+export function isFuture(iso: string, now: Date = new Date()): boolean {
+  return new Date(iso).getTime() > now.getTime();
+}
+
+/**
  * 디자인 표기의 시간 — `"3h 42m"`, `"48m"`, `"8h"`.
  *
  * 위의 한국어 서식과 나란히 두는 이유는 둘이 쓰이는 자리가 다르기 때문이다.

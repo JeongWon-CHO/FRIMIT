@@ -8,6 +8,7 @@ import {
   AppText,
   Avatar,
   Bloom,
+  ButtonStack,
   EmptyState,
   GradientButton,
   ProgressBar,
@@ -18,6 +19,7 @@ import {
 } from '@/components/ui';
 import { colors, gradients, radius as radii } from '@/constants/design-tokens';
 import { useGroupMembers, useGroupUsages, useMyGroups } from '@/hooks/use-groups';
+import { useCurrentProposal, useRespondToProposal, useWithdrawProposal } from '@/hooks/use-rules';
 import { useLeaveGroupPrompt } from '@/hooks/use-leave-group-prompt';
 import { useRecentDays } from '@/hooks/use-history';
 import { useNudge } from '@/hooks/use-nudge';
@@ -26,7 +28,7 @@ import { useMyProfile } from '@/hooks/use-profile';
 import { useScreenGroup } from '@/hooks/use-screen-group';
 import { useTrackingState } from '@/hooks/use-tracking';
 import { hexToRgba } from '@/lib/color';
-import { formatShort } from '@/lib/format';
+import { formatClock, formatRemaining, formatShort, isFuture } from '@/lib/format';
 import { POOL_VISUALS } from '@/lib/pool-state';
 import { isUsable } from '@/lib/tracking';
 import { buildPoolView, type RankedMember } from '@/lib/today';
@@ -174,6 +176,13 @@ export default function GroupDetailScreen() {
             </View>
           </Surface>
 
+          <RuleSlot
+            groupId={id}
+            isAdmin={group.admin_id === profile.data?.id}
+            myProfileId={profile.data?.id}
+            limitSeconds={view.limitSeconds}
+          />
+
           <View style={styles.sectionTitle}>
             <AppText variant="sectionTitle">Today&apos;s ranking</AppText>
             <AppText variant="metadata" tone="metadata">
@@ -217,6 +226,157 @@ export default function GroupDetailScreen() {
         </>
       )}
     </ScreenFrame>
+  );
+}
+
+/**
+ * 공동 시간 한 줄 — 그리고 변경안이 도는 동안의 그 자리.
+ *
+ * 자리를 하나만 쓴다. 평소에는 "지금 8h · 바꾸기"이고, 변경안이 도는 동안에는
+ * 같은 자리가 "8h → 6h, 1명 남음"이 된다. 둘을 따로 두면 변경안이 진행 중인데
+ * 그 옆에서 또 바꾸자고 할 수 있는 것처럼 보인다 — 서버는 그룹당 하나만 받는다.
+ *
+ * 조회가 만료 판정을 겸한다(`current_rule_proposal`은 volatile이다). 그래서 이
+ * 화면을 여는 것만으로 48시간이 지난 변경안이 정리된다.
+ */
+function RuleSlot({
+  groupId,
+  isAdmin,
+  myProfileId,
+  limitSeconds,
+}: {
+  groupId: string;
+  isAdmin: boolean;
+  myProfileId?: string;
+  limitSeconds: number;
+}) {
+  const current = useCurrentProposal(groupId);
+  const respond = useRespondToProposal();
+  const withdraw = useWithdrawProposal();
+
+  const snapshot = current.data;
+  const proposal = snapshot?.proposal;
+  const pending = proposal?.status === 'pending';
+
+  const scheduled =
+    proposal?.status === 'approved' &&
+    proposal.effective_from !== null &&
+    isFuture(proposal.effective_from);
+
+  const fail = (error: unknown) =>
+    Alert.alert('처리하지 못했어요', error instanceof Error ? error.message : String(error));
+
+  if (scheduled && proposal) {
+    return (
+      <Surface
+        fill={colors.surface.cardNeutral}
+        cornerRadius={22}
+        padding={16}
+        style={styles.ruleCard}>
+        <AppText variant="eyebrow" tone="cyan">
+          바뀔 예정
+        </AppText>
+        <AppText variant="bodyStrong">
+          {formatClock(proposal.effective_from as string, proposal.time_zone)}부터 공동 시간이{' '}
+          {formatShort(proposal.daily_limit_seconds)}예요
+        </AppText>
+        <AppText variant="metadata" tone="metadata">
+          오늘은 지금 규칙 그대로 흘러요.
+        </AppText>
+      </Surface>
+    );
+  }
+
+  if (pending && proposal) {
+    const mine = proposal.proposer_id === myProfileId;
+    const waiting = snapshot.pending_count;
+    const answered = snapshot.my_decision !== 'pending' && snapshot.my_decision !== null;
+
+    return (
+      <Surface
+        fill={colors.surface.cardNeutral}
+        border={hexToRgba(colors.accent.violetSoft, 0.24)}
+        cornerRadius={22}
+        padding={16}
+        style={styles.ruleCard}>
+        <AppText variant="eyebrow" tone="faint">
+          공동 시간 변경안
+        </AppText>
+
+        <View style={styles.ruleChange}>
+          <AppText variant="cardNumber" tone="muted">
+            {formatShort(snapshot.base_rule?.daily_limit_seconds ?? limitSeconds)}
+          </AppText>
+          <AppText variant="cardNumber" tone="muted">
+            →
+          </AppText>
+          <AppText variant="cardNumber">{formatShort(proposal.daily_limit_seconds)}</AppText>
+        </View>
+
+        <AppText variant="metadata" tone="metadata">
+          {waiting > 0
+            ? `${waiting}명이 아직 답하지 않았어요 · ${formatRemaining(proposal.expires_at)}`
+            : '모두 답했어요'}
+        </AppText>
+
+        {/* 한 번 답하면 바꿀 수 없다(서버 규칙). 그래서 답한 사람에게는 버튼을
+            그리지 않고 무엇을 골랐는지만 남긴다. */}
+        {answered ? (
+          <AppText variant="metadata" tone={snapshot.my_decision === 'approved' ? 'cyan' : 'over'}>
+            {snapshot.my_decision === 'approved' ? '동의했어요' : '거절했어요'}
+          </AppText>
+        ) : (
+          <ButtonStack>
+            <GradientButton
+              label="동의"
+              size="md"
+              loading={respond.isPending}
+              onPress={() =>
+                respond
+                  .mutateAsync({ proposalId: proposal.id, approve: true })
+                  .catch(fail)
+              }
+            />
+            <GradientButton
+              label="거절"
+              variant="secondary"
+              size="md"
+              onPress={() =>
+                respond
+                  .mutateAsync({ proposalId: proposal.id, approve: false })
+                  .catch(fail)
+              }
+            />
+          </ButtonStack>
+        )}
+
+        {/* 제안자가 사라지면 48시간 동안 아무도 새 변경안을 낼 수 없다. 그래서
+            관리자에게도 거두는 문을 준다(서버도 그 둘만 받는다). */}
+        {(mine || isAdmin) && (
+          <GradientButton
+            label="변경안 거두기"
+            variant="tertiary"
+            size="md"
+            loading={withdraw.isPending}
+            onPress={() =>
+              withdraw.mutateAsync({ proposalId: proposal.id }).catch(fail)
+            }
+          />
+        )}
+      </Surface>
+    );
+  }
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      onPress={() => router.push({ pathname: '/group/limit', params: { groupId } })}
+      style={styles.ruleRow}>
+      <AppText variant="bodyStrong">공동 시간</AppText>
+      <AppText variant="metadata" tone="muted" font="mono">
+        {formatShort(limitSeconds)} · 바꾸기
+      </AppText>
+    </Pressable>
   );
 }
 
@@ -436,6 +596,20 @@ function CircleButton({
 }
 
 const styles = StyleSheet.create({
+  ruleCard: { gap: 10 },
+  ruleChange: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  ruleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    borderRadius: radii.listRow,
+    paddingVertical: 13,
+    paddingHorizontal: 16,
+    backgroundColor: hexToRgba('#FFFFFF', 0.03),
+    borderWidth: 1,
+    borderColor: colors.border.subtle,
+  },
   navBar: {
     flexDirection: 'row',
     alignItems: 'center',
