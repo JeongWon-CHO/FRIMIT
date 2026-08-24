@@ -81,8 +81,9 @@ export default function CreateGroupScreen() {
           {/* 2단계의 뒤로는 화면을 떠나는 것이 아니라 이름·색으로 돌아가는 것이다. */}
           <BackButton onPress={step === 2 ? () => setStep(1) : undefined} />
           {/* 화면 안의 2단계가 아니라 **그룹 흐름 전체**를 센다. 이 화면 둘,
-              추적 하나, 준비 하나. 대기실은 내 일이 끝난 뒤라 세지 않는다. */}
-          <StepProgress total={4} current={step} />
+              추적 하나. 대기실은 세지 않는다 — 거기서 남은 일은 내 일이 아니라
+              친구가 들어오는 일이다. */}
+          <StepProgress total={3} current={step} />
         </View>
 
         {step === 1 ? (

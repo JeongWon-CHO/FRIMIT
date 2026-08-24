@@ -100,14 +100,18 @@ export default function GroupDetailScreen() {
       <View style={styles.navBar}>
         <CircleButton label="←" onPress={() => router.back()} />
         <StatusPill label={group?.name ?? '…'} dotColor={accent.dot} />
-        <CircleButton
-          label="···"
+        {/* `···`은 메뉴를 뜻하는데 하는 일은 나가기 하나뿐이었다. 이름을 쓴다. */}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="그룹 나가기"
+          hitSlop={8}
           disabled={!group || leave.isPending}
-          onPress={() =>
-            group &&
-            leave.prompt(group, members.data, profile.data?.id)
-          }
-        />
+          onPress={() => group && leave.prompt(group, members.data, profile.data?.id)}
+          style={[styles.leaveButton, (!group || leave.isPending) && styles.circleDim]}>
+          <AppText variant="metadata" tone="muted">
+            나가기
+          </AppText>
+        </Pressable>
       </View>
 
       {/*
@@ -199,7 +203,7 @@ export default function GroupDetailScreen() {
                   label="초대 코드 보기"
                   size="md"
                   onPress={() =>
-                    router.push({ pathname: '/ready', params: { groupId: id, invite: '1' } })
+                    router.push({ pathname: '/ready', params: { groupId: id } })
                   }
                 />
               }
@@ -225,6 +229,8 @@ export default function GroupDetailScreen() {
           <RecentDays days={history.data} />
         </>
       )}
+
+      {leave.sheet}
     </ScreenFrame>
   );
 }
@@ -626,6 +632,16 @@ const styles = StyleSheet.create({
     borderColor: colors.border.hairlineStrong,
   },
   circleDim: { opacity: 0.34 },
+  leaveButton: {
+    height: 38,
+    paddingHorizontal: 14,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surface.glass,
+    borderWidth: 1,
+    borderColor: colors.border.hairlineStrong,
+  },
   heroRow: { flexDirection: 'row', alignItems: 'center', gap: 16 },
   heroText: { flex: 1, gap: 4 },
   heroBar: { gap: 6, paddingTop: 4 },

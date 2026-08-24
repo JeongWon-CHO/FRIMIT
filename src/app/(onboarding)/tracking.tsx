@@ -164,7 +164,7 @@ export default function TrackingScreen() {
           <AppText variant="numericLabel" tone="faint">
             {group?.name ?? '이 그룹'}
           </AppText>
-          {!editing && <StepProgress total={4} current={3} />}
+          {!editing && <StepProgress total={3} current={3} />}
         </View>
 
         <View style={styles.center}>
@@ -228,7 +228,7 @@ export default function TrackingScreen() {
       <View style={styles.top}>
         <View style={styles.navRow}>
           {group && <StatusPill label={group.name} dotColor={colors.accent.violetSoft} />}
-          {!editing && <StepProgress total={4} current={3} />}
+          {!editing && <StepProgress total={3} current={3} />}
         </View>
 
         <AppText variant="screenTitle" style={styles.title}>

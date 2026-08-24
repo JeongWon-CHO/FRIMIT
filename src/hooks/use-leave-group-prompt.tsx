@@ -1,8 +1,9 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { Alert } from 'react-native';
 
+import { ActionSheet } from '@/components/ui';
 import { useLeaveGroup } from '@/hooks/use-groups';
 import { queryKeys } from '@/lib/query';
 import type { GroupMember, MyGroup } from '@/lib/groups';
@@ -25,10 +26,28 @@ import type { GroupMember, MyGroup } from '@/lib/groups';
  *
  * 훅으로 뺀 이유는 들어오는 문이 둘이기 때문이다. 집계 중인 그룹은 상세 화면에서,
  * 시작 전 그룹은 대기실에서 접는다(시작 전 그룹은 상세 화면으로 갈 수 없다).
+ *
+ * 확인은 시스템 알림창이 아니라 바텀시트다. 그래서 이 훅은 여는 함수만이 아니라
+ * **그릴 것**(`sheet`)도 함께 돌려준다. 부르는 쪽은 그걸 화면 어딘가에 놓는다.
  */
 export function useLeaveGroupPrompt() {
   const leave = useLeaveGroup();
   const queryClient = useQueryClient();
+
+  const [asking, setAsking] = useState<
+    | { kind: 'transfer'; group: MyGroup }
+    | { kind: 'leave'; group: MyGroup; others: GroupMember[] }
+    | null
+  >(null);
+
+  /*
+   * 무엇을 묻는지(`asking`)와 떠 있는지(`open`)를 따로 든다.
+   *
+   * 닫을 때 `asking`을 비우면 시트가 사라지는 애니메이션 도중에 그릴 내용이
+   * 없어져서 그냥 툭 없어진다. 닫는 것은 `open`만 끄고, 내용은 다음 물음이
+   * 덮어쓸 때까지 그대로 둔다.
+   */
+  const [open, setOpen] = useState(false);
 
   const prompt = useCallback(
     (group: MyGroup, members: GroupMember[] | undefined, myProfileId: string | undefined) => {
@@ -40,62 +59,74 @@ export function useLeaveGroupPrompt() {
       /*
        * 관리자는 살아남을 그룹을 두고 나갈 수 없다(서버의 `admin_must_transfer`).
        * 안내만 하고 끝내면 막다른 골목이다 — 넘길 화면으로 가는 문을 여기 붙인다.
-       * 들어오는 문이 둘(상세 화면·대기실)이라 문도 이 한 곳에 있으면 된다.
        */
-      if (isAdmin && !willVanish) {
-        Alert.alert(
-          '먼저 관리자를 넘겨 주세요',
-          '관리자가 나가면 남은 사람들이 그룹을 시작하거나 규칙을 바꿀 수 없어요. 다른 멤버에게 관리자를 넘긴 뒤에 나갈 수 있어요.',
-          [
-            { text: '나중에', style: 'cancel' },
-            {
-              text: '넘기기',
-              onPress: () =>
-                router.push({ pathname: '/group/transfer', params: { groupId: group.id } }),
-            },
-          ]
-        );
-        return;
+      setAsking(
+        isAdmin && !willVanish ? { kind: 'transfer', group } : { kind: 'leave', group, others }
+      );
+      setOpen(true);
+    },
+    []
+  );
+
+  const close = useCallback(() => setOpen(false), []);
+
+  const run = useCallback(
+    async (group: MyGroup) => {
+      try {
+        await leave.mutateAsync(group.id);
+
+        /*
+          순서가 눈에 보인다.
+
+          `replace`는 스택의 맨 위 한 장만 바꾸므로 오늘 화면이 하나 더 쌓인다.
+          `dismissTo`는 이미 있는 오늘 화면이 나올 때까지 걷어내서 상세 화면이든
+          온보딩 사슬이든 통째로 정리한다.
+
+          캐시는 그 **뒤에** 비운다. 먼저 비우면 지금 화면이 자기 그룹을 잃고 빈
+          상태로 한 번 다시 그려진다 — 떠나는 길에 낯선 화면이 번쩍이는 것이 그것이다.
+        */
+        router.dismissTo('/');
+        queryClient.invalidateQueries({ queryKey: queryKeys.allGroups });
+      } catch (caught) {
+        // 실패는 시스템 알림창으로 남긴다. 시트는 이미 닫혔고, 이건 확인이 아니라 사고다.
+        Alert.alert('접지 못했어요', caught instanceof Error ? caught.message : String(caught));
       }
-
-      const { title, body, action } = describe(group, others);
-
-      Alert.alert(title, body, [
-        { text: '취소', style: 'cancel' },
-        {
-          text: action,
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await leave.mutateAsync(group.id);
-
-              /*
-                순서가 눈에 보인다.
-
-                `replace`는 스택의 맨 위 한 장만 바꾸므로 오늘 화면이 하나 더
-                쌓인다. `dismissTo`는 이미 있는 오늘 화면이 나올 때까지 걷어내서
-                상세 화면이든 온보딩 사슬이든 통째로 정리한다.
-
-                캐시는 그 **뒤에** 비운다. 먼저 비우면 지금 화면이 자기 그룹을
-                잃고 빈 상태로 한 번 다시 그려진다 — 떠나는 길에 낯선 화면이
-                번쩍이는 것이 그것이다.
-              */
-              router.dismissTo('/');
-              queryClient.invalidateQueries({ queryKey: queryKeys.allGroups });
-            } catch (caught) {
-              Alert.alert(
-                '접지 못했어요',
-                caught instanceof Error ? caught.message : String(caught)
-              );
-            }
-          },
-        },
-      ]);
     },
     [leave, queryClient]
   );
 
-  return { prompt, isPending: leave.isPending };
+  const sheet =
+    asking?.kind === 'transfer' ? (
+      <ActionSheet
+        visible={open}
+        title="먼저 관리자를 넘겨 주세요"
+        message="관리자가 나가면 남은 사람들이 그룹을 시작하거나 규칙을 바꿀 수 없어요. 다른 멤버에게 관리자를 넘긴 뒤에 나갈 수 있어요."
+        onClose={close}
+        actions={[
+          {
+            label: '관리자 넘기기',
+            onPress: () =>
+              router.push({ pathname: '/group/transfer', params: { groupId: asking.group.id } }),
+          },
+        ]}
+      />
+    ) : asking?.kind === 'leave' ? (
+      (() => {
+        const { title, body, action } = describe(asking.group, asking.others);
+
+        return (
+          <ActionSheet
+            visible={open}
+            title={title}
+            message={body}
+            onClose={close}
+            actions={[{ label: action, danger: true, onPress: () => run(asking.group) }]}
+          />
+        );
+      })()
+    ) : null;
+
+  return { prompt, sheet, isPending: leave.isPending };
 }
 
 /** 남는 사람 수와 그룹 상태에 따라 실제로 벌어지는 일을 그대로 쓴다. */

@@ -5,20 +5,19 @@ import { Pressable, Share, StyleSheet, View } from 'react-native';
 import { OrbitSeats, SharedOrbitRing } from '@/components/orbit';
 import {
   BackButton,
-  StepProgress,
   InviteCodeCard,
   OnboardingFrame,
   ReadinessRow,
 } from '@/components/onboarding';
 import {
+  ActionSheet,
   AppText,
   ButtonStack,
   GradientButton,
-  ProgressBar,
   StatusDot,
   StatusPill,
 } from '@/components/ui';
-import { colors, gradients, radius as radii } from '@/constants/design-tokens';
+import { colors, gradients } from '@/constants/design-tokens';
 import {
   readyCount,
   useGroupMembers,
@@ -32,13 +31,12 @@ import { useMyProfile } from '@/hooks/use-profile';
 import { useScreenGroup } from '@/hooks/use-screen-group';
 import { useTrackingState } from '@/hooks/use-tracking';
 import { avatarEmoji } from '@/lib/avatars';
-import { hexToRgba } from '@/lib/color';
 import { formatShort } from '@/lib/format';
 import { READY_MEMBERS_TO_START } from '@/lib/groups';
 import { armTracking, isUsable } from '@/lib/tracking';
 
 /**
- * 13 · 준비 상태 → 14 · 대기실.
+ * 대기실 — 그룹이 시작되기 전의 유일한 화면.
  *
  * 온보딩의 마지막이면서, 오늘 화면의 시작 대기 카드가 눌렸을 때 오는 화면이기도
  * 하다(`?groupId=`). 시작 대기는 며칠 걸릴 수 있는 상태라 온보딩 안에만 두면
@@ -51,8 +49,9 @@ import { armTracking, isUsable } from '@/lib/tracking';
  * 사라진다 — 여기까지 온 사람은 혼자 할 수 있는 일을 이미 다 했고, 자리가 차는
  * 것을 보는 화면과 시작 버튼이 같은 자리에 있다.
  *
- * 그룹 상세의 "초대 코드 보기"도 원래부터 이 화면을 가리키고 있었다(`?invite=1`).
- * 정작 코드가 없어서 지키지 못하던 약속이다.
+ * 그룹 상세의 "초대 코드 보기"도 여기로 온다. 예전에는 준비 상태 화면이 앞을
+ * 막고 있어서 코드를 보려면 버튼을 한 번 더 눌러야 했고, 그걸 건너뛰려고
+ * `?invite=1`이라는 파라미터가 따로 있었다. 화면이 하나가 되면서 둘 다 사라졌다.
  *
  * 준비 완료를 켤 수 있는 조건은 클라이언트가 지킨다. 서버의 `is_ready`는 멤버가
  * 직접 UPDATE하는 유일한 컬럼이라 "권한 있고 대상을 골랐는가"를 검사하지 않는다.
@@ -63,34 +62,26 @@ import { armTracking, isUsable } from '@/lib/tracking';
  * 올라가지 않고, 권한 상태는 그 사람이 한 번이라도 올린 뒤에만 알 수 있다.
  * 그래서 칩은 내 줄에만 붙는다.
  */
-const ORBIT = 280;
+const ORBIT = 220;
 
-export default function ReadinessScreen() {
-  const params = useLocalSearchParams<{ groupId?: string; invite?: string }>();
-  /**
-   * 13에서 버튼을 눌러 14로 넘어왔는가.
-   *
-   * 집계 중인 그룹은 이 값 없이도 14를 그린다(13은 시작 전에만 의미가 있다).
-   * 그래서 이 값이 참일 때만 뒤로 가기가 13으로 돌아가고, 아니면 화면을 떠난다.
-   *
-   * `?invite=1`로 들어오면 처음부터 대기실이다. 코드를 보러 온 사람을 준비 상태
-   * 화면에 세워 두면 버튼을 한 번 더 눌러야 코드가 나온다.
-   */
-  const [inWaitingRoom, setInWaitingRoom] = useState(params.invite === '1');
+export default function WaitingRoomScreen() {
+  const params = useLocalSearchParams<{ groupId?: string }>();
 
   const profile = useMyProfile();
   const groups = useMyGroups();
   const group = useScreenGroup(groups.data, params.groupId);
 
   const members = useGroupMembers(group?.id);
-  // 대기실이 그리는 큰 숫자가 이 그룹의 실제 한도다. 서버는 시작 전 그룹에도
-  // 한도를 정상으로 준다(집계 대상만 0명이다).
+  // 링이 그리는 큰 숫자가 이 그룹의 실제 한도다. 서버는 시작 전 그룹에도 한도를
+  // 정상으로 준다(집계 대상만 0명이다).
   const usages = useGroupUsages(group ? [group] : []);
   const limitSeconds = (group && usages.byGroupId.get(group.id)?.daily_limit_seconds) ?? 28800;
+
   const tracking = useTrackingState(group?.id);
   const setReady = useSetReady(group?.id);
   const startGroup = useStartGroup();
   const leave = useLeaveGroupPrompt();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const me = members.data?.find((member) => member.profile_id === profile.data?.id);
   const ready = readyCount(members.data);
@@ -111,10 +102,6 @@ export default function ReadinessScreen() {
    * 혼자 만든 그룹은 시작할 수 없다(2명 필요). 남은 것은 친구가 들어오는 일뿐이라
    * 여기 붙잡아 둘 이유가 없다. 디자인의 복구 분기도 시작한 그룹 없이 앱을
    * 둘러볼 수 있어야 한다고 말한다(ONBOARDING_NAVIGATION의 Recovery branch).
-   *
-   * 예전에는 나가면서 `done`을 찍었다. 되짚기가 그룹을 세던 시절에는 그게 없으면
-   * 앱을 켤 때마다 이 대기실로 되돌아왔기 때문이다. 이제 되짚기는 그룹을 보지
-   * 않으므로(`resolveRouteForSignedIn`) 그냥 나가면 된다.
    */
   const browse = () => router.replace('/');
 
@@ -135,11 +122,10 @@ export default function ReadinessScreen() {
   };
 
   /*
-    그룹이 없으면 아무 분기에도 들어가지 않는다.
-    
+    그룹이 없으면 아무것도 그리지 않는다.
+
     그룹을 접으면 목록이 비는데 이 화면은 아직 물러나는 중이라 화면 위에 있다.
-    그때 `isDraft`가 false가 되면서 대기실 분기로 떨어지면, 사라지는 그룹의
-    자리에 빈 대기실이 한 번 그려진다. 여기서 조용히 멈추는 편이 맞다.
+    사라지는 그룹의 자리에 빈 대기실을 한 번 그리느니 여기서 조용히 멈춘다.
   */
   if (!group) {
     return (
@@ -153,115 +139,128 @@ export default function ReadinessScreen() {
     );
   }
 
-  // ── 14 · 대기실 ────────────────────────────────────────────────
-  if (inWaitingRoom || !isDraft) {
-    return (
-      <OnboardingFrame
-        ambient={{ color: colors.accent.violet, size: 420, opacity: 0.34, x: 169, y: 240 }}
-        footer={
-          /*
-            지금 할 수 있는 일이 언제나 primary다.
-            
-            정족수가 모자라면 시작 버튼은 눌러도 아무 일이 없으므로, 그 자리를
-            초대에 내준다. 비활성 버튼을 primary 자리에 세워 두면 "왜 안 눌리지"만
-            남고, 정작 해야 할 일(친구 부르기)이 아래로 밀린다. 관리자가 아닌
-            사람에게도 같다 — 아직 못 모였을 때 "관리자가 시작하기를 기다리는 중"은
-            사실이 아니다. 관리자도 못 누른다.
-          */
-          <ButtonStack>
-            {!isDraft ? (
-              <GradientButton label="홈으로 가기" onPress={() => router.replace('/')} />
-            ) : canStart ? (
-              <>
-                {isAdmin ? (
-                  <GradientButton
-                    label="우리 시간 시작하기"
-                    onPress={start}
-                    loading={startGroup.isPending}
-                  />
-                ) : (
-                  <AppText variant="bodyStrong" tone="muted" style={styles.waitLine}>
-                    관리자가 시작하기를 기다리는 중
-                  </AppText>
-                )}
-                <GradientButton label="초대 보내기" variant="secondary" onPress={share} />
-              </>
-            ) : (
-              <>
-                <GradientButton label="초대 보내기" onPress={share} />
+  /*
+   * 아직 준비되지 않은 사람만 목록으로 세운다.
+   *
+   * 준비된 사람은 링의 좌석에 이미 있다. 둘 다 그리면 같은 명단을 두 번 읽는
+   * 셈이고, 실제로 그것 때문에 화면이 둘로 갈려 있었다 — 목록이 있는 13과 링이
+   * 있는 14. 여기서 알고 싶은 것은 "누구를 기다리는가" 하나다.
+   */
+  const waiting = (members.data ?? []).filter((member) => !member.is_ready);
+
+  return (
+    <OnboardingFrame
+      ambient={{ color: colors.accent.violet, size: 420, opacity: 0.34, x: 169, y: 240 }}
+      footer={
+        <ButtonStack>
+          {/*
+            버튼의 우선순위는 **지금 할 수 있는 일**을 따른다.
+
+            내가 아직 준비 전이면 그것부터다. 준비를 마쳤는데 정족수가 모자라면
+            할 일은 초대뿐이고, 다 모였으면 시작이다. 관리자가 아니면 시작 버튼은
+            아예 그리지 않는다 — 누를 수 없는 버튼이 primary 자리를 차지하면
+            정작 해야 할 일(친구 부르기)이 아래로 밀린다.
+          */}
+          {isDraft && !me?.is_ready && blockedReason && (
+            <GradientButton
+              label={isUsable(tracking.permission) ? '앱 고르기' : '권한 켜기'}
+              onPress={() =>
+                router.push(
+                  isUsable(tracking.permission)
+                    ? { pathname: '/tracking', params: { groupId: group.id } }
+                    : { pathname: '/permission', params: {} }
+                )
+              }
+            />
+          )}
+
+          {isDraft && !me?.is_ready && !blockedReason && (
+            <GradientButton
+              label="준비 완료"
+              onPress={() => setReady.mutate(true)}
+              loading={setReady.isPending}
+            />
+          )}
+
+          {!isDraft ? (
+            <GradientButton label="홈으로 가기" onPress={browse} />
+          ) : (
+            <>
+              {canStart && isAdmin && (
+                <GradientButton
+                  label="시작하기"
+                  onPress={start}
+                  loading={startGroup.isPending}
+                />
+              )}
+              {canStart && !isAdmin && (
+                <AppText variant="bodyStrong" tone="muted" style={styles.waitLine}>
+                  관리자가 시작하기를 기다리는 중
+                </AppText>
+              )}
+
+              <GradientButton
+                label="초대 보내기"
+                variant={canStart || !me?.is_ready ? 'secondary' : 'primary'}
+                onPress={share}
+              />
+
+              {!canStart && (
                 <AppText variant="metadata" tone="faint" style={styles.note}>
                   {READY_MEMBERS_TO_START}명 이상 준비되면 시작할 수 있어요.
                 </AppText>
-              </>
-            )}
-            {/*
-              둘러보기는 **나갈 방법이 그것뿐일 때만** 그린다.
+              )}
 
-              하는 일이 "온보딩을 끝난 것으로 표시하고 홈으로"인데, 시작 버튼이
-              눈앞에 있는 관리자에게는 그게 두 번째 출구다. 다 모인 화면에서
-              할 일은 하나여야 한다.
+              {/* 친구는 몇 시간 뒤에 들어온다. 그 사이를 할 일 없는 화면에서
+                  보내게 하지 않는다. 시작을 누를 수 있는 사람에게는 그리지
+                  않는다 — 다 모인 화면에서 할 일은 하나여야 한다. */}
+              {!(canStart && isAdmin) && (
+                <GradientButton label="홈으로 가기" variant="tertiary" onPress={browse} />
+              )}
+            </>
+          )}
+        </ButtonStack>
+      }>
+      <View style={styles.top}>
+        <View style={styles.navRow}>
+          <BackButton />
+          <StatusPill label={group.name} dotColor={colors.accent.violetSoft} />
+          <MoreButton disabled={leave.isPending} onPress={() => setMenuOpen(true)} />
+        </View>
 
-              시작을 못 누르는 사람에게는 남긴다. 이 표시가 없으면 앱을 다시 켤
-              때마다 되짚기가 이 대기실로 돌려보낸다(`resolveRouteForSignedIn`).
-            */}
-            {isDraft && !(canStart && isAdmin) && (
-              <GradientButton label="먼저 둘러보기" variant="tertiary" onPress={browse} />
-            )}
-          </ButtonStack>
-        }>
-        <View style={styles.top}>
-          <View style={styles.navRow}>
-            {/*
-              대기실은 며칠 머무를 수 있는 자리다. 관리자가 아니고 준비 인원도
-              모자라면 누를 수 있는 버튼이 하나도 없어서, 뒤로 가기가 없으면
-              앱을 껐다 켜는 것 말고는 나갈 방법이 없다.
-            */}
-            <BackButton
-              onPress={() => {
-                if (inWaitingRoom) setInWaitingRoom(false);
-                else if (router.canGoBack()) router.back();
-                else router.replace('/');
-              }}
-            />
-            <StatusPill label={group?.name ?? '…'} dotColor={colors.accent.violetSoft} />
-            <LeaveButton
-              disabled={!group || leave.isPending}
-              onPress={() => group && leave.prompt(group, members.data, profile.data?.id)}
-            />
-          </View>
+        <AppText variant="greeting" style={styles.center}>
+          {!isDraft ? '곧 시작해요' : canStart ? '다 모였어요' : '친구를 기다리는 중'}
+        </AppText>
+      </View>
 
-          <AppText variant="greeting" style={styles.center}>
-            {canStart ? '다 모였어요' : '친구를 기다리는 중'}
+      <View style={styles.orbitBox}>
+        <SharedOrbitRing
+          size={ORBIT}
+          progress={total > 0 ? ready / total : 0}
+          gradient={gradients.sharedPool.colors}
+          showTrackDashes
+          strokeRatio={0.12}>
+          <AppText variant="heroNumberMd">{formatShort(limitSeconds)}</AppText>
+          <AppText variant="bodyStrong" tone="metadata">
+            매일 함께 쓰는 시간
           </AppText>
-        </View>
+        </SharedOrbitRing>
 
-        <View style={styles.orbitBox}>
-          <SharedOrbitRing
-            size={ORBIT}
-            progress={total > 0 ? ready / total : 0}
-            gradient={gradients.sharedPool.colors}
-            showTrackDashes
-            strokeRatio={0.12}>
-            <AppText variant="heroNumberMd">{formatShort(limitSeconds)}</AppText>
-            <AppText variant="bodyStrong" tone="metadata">
-              매일 함께 쓰는 시간
-            </AppText>
-          </SharedOrbitRing>
+        <OrbitSeats
+          seats={(members.data ?? []).map((member) => ({
+            id: member.profile_id,
+            name: member.nickname,
+            emoji: avatarEmoji(member.avatar_key),
+            pending: !member.is_ready,
+            ring: member.is_ready ? ('activity' as const) : ('none' as const),
+          }))}
+          size={ORBIT}
+          placement="outer"
+          seatSize={38}
+        />
+      </View>
 
-          <OrbitSeats
-            seats={(members.data ?? []).map((member) => ({
-              id: member.profile_id,
-              name: member.nickname,
-              emoji: avatarEmoji(member.avatar_key),
-              pending: !member.is_ready,
-              ring: member.is_ready ? ('activity' as const) : ('none' as const),
-            }))}
-            size={ORBIT}
-            placement="outer"
-            seatSize={38}
-          />
-        </View>
-
+      <View style={styles.bottom}>
         <View style={styles.status}>
           <StatusDot color={colors.accent.cyan} />
           <AppText variant="bodyStrong" tone="muted">
@@ -269,145 +268,76 @@ export default function ReadinessScreen() {
           </AppText>
         </View>
 
-        {group && <InviteCodeCard code={group.invite_code} />}
-      </OnboardingFrame>
-    );
-  }
+        {/* 기다리는 사람들. 내 줄에는 무엇이 막고 있는지도 적는다 — 남의 권한
+            상태와 앱 개수는 서버로 올라오지도 않는다. */}
+        {waiting.length > 0 && (
+          <View style={styles.rows}>
+            {waiting.map((member) => {
+              const self = member.profile_id === profile.data?.id;
 
-  // ── 13 · 준비 상태 ─────────────────────────────────────────────
-  return (
-    <OnboardingFrame
-      footer={
-        <ButtonStack>
-          {!me?.is_ready && !blockedReason && (
-            <GradientButton
-              label="준비 완료"
-              onPress={() => setReady.mutate(true)}
-              loading={setReady.isPending}
-            />
-          )}
-          {blockedReason && (
-            <GradientButton
-              label={isUsable(tracking.permission) ? '앱 고르기' : '권한 켜기'}
-              onPress={() =>
-                router.push(isUsable(tracking.permission) ? '/tracking' : '/permission')
-              }
-            />
-          )}
-
-          {/*
-            준비를 마쳤으면 다음 자리는 **언제나 대기실**이다.
-
-            예전에는 정족수가 모자랄 때 홈이 primary였다. 초대 코드를 이미
-            건넨 뒤였으므로 대기실에는 할 일이 없었기 때문이다. 지금은 초대가
-            대기실에 있어서 반대가 됐다 — 혼자 있는 사람에게 가장 중요한 다음
-            행동이 그 화면에 있다. 라벨도 그걸 그대로 말한다.
-
-            홈으로 가는 문은 남긴다. 친구가 몇 시간 뒤에 들어오는 것이 실제
-            흐름이라, 그 사이를 할 일 없는 화면에서 보내게 하면 안 된다.
-          */}
-          <GradientButton
-            label={me?.is_ready && !blockedReason && !canStart ? '친구 초대하기' : '대기실로 가기'}
-            variant={me?.is_ready && !blockedReason ? 'primary' : 'secondary'}
-            onPress={() => setInWaitingRoom(true)}
-          />
-
-          {me?.is_ready && !blockedReason && !canStart && (
-            <GradientButton label="홈으로 가기" variant="tertiary" onPress={browse} />
-          )}
-        </ButtonStack>
-      }>
-      <View style={styles.top}>
-        <View style={styles.navRow}>
-          <BackButton />
-          <StepProgress total={4} current={4} />
-          <LeaveButton
-            disabled={!group || leave.isPending}
-            onPress={() => group && leave.prompt(group, members.data, profile.data?.id)}
-          />
-        </View>
-
-        <AppText variant="screenTitle" style={styles.title}>
-          {group?.name ?? '…'}
-        </AppText>
-
-        {/*
-          이 그룹이 하루에 함께 쓸 시간.
-          
-          13에 이 숫자가 없었다. 시작 전 그룹으로 들어오면 언제나 여기에 먼저
-          떨어지는데, 정작 방금 정한 값을 확인할 자리가 없고 고칠 문도 없었다.
-          
-          사람보다 먼저 온다. 그룹의 설정이 한 덩어리이고, 그 아래 "N명 중 M명
-          준비"부터가 사람 이야기다. 목록 뒤에 두면 명단의 꼬리처럼 보인다.
-          
-          고치는 것은 관리자만이다(서버도 `update_draft_rule`을 그렇게 연다).
-          시작하고 나면 전원 동의가 필요하고, 그건 그룹 상세가 맡는다.
-        */}
-        <Pressable
-          accessibilityRole={isAdmin ? 'button' : 'text'}
-          disabled={!isAdmin || !group}
-          onPress={() =>
-            group && router.push({ pathname: '/group/limit', params: { groupId: group.id } })
-          }
-          style={styles.limitRow}>
-          <AppText variant="bodyStrong">매일 함께 쓰는 시간</AppText>
-          <AppText variant="metadata" tone={isAdmin ? 'body' : 'muted'} font="mono">
-            {formatShort(limitSeconds)}
-            {isAdmin ? ' · 바꾸기' : ''}
-          </AppText>
-        </Pressable>
-
-        <View style={styles.readyRow}>
-          <AppText variant="bodyStrong" tone="accent">
-            {total}명 중 {ready}명 준비
-          </AppText>
-          <View style={styles.bar}>
-            <ProgressBar progress={total > 0 ? ready / total : 0} height={5} />
+              return (
+                <ReadinessRow
+                  key={member.profile_id}
+                  id={member.profile_id}
+                  name={`${member.nickname}${self ? ' (나)' : ''}`}
+                  emoji={avatarEmoji(member.avatar_key)}
+                  state="pending"
+                  pendingReason={self ? (blockedReason ?? '준비 대기') : '준비 대기'}
+                />
+              );
+            })}
           </View>
-        </View>
+        )}
 
-        <View style={styles.rows}>
-          {(members.data ?? []).map((member) => {
-            const self = member.profile_id === profile.data?.id;
-
-            return (
-              <ReadinessRow
-                key={member.profile_id}
-                id={member.profile_id}
-                name={`${member.nickname}${self ? ' (나)' : ''}`}
-                emoji={avatarEmoji(member.avatar_key)}
-                state={
-                  member.is_ready ? (self ? 'self-ready' : 'ready') : 'pending'
-                }
-                // 칩은 내 줄에만. 남의 설정 내역을 늘어놓는 화면이 아니다.
-                chips={
-                  self && member.is_ready
-                    ? ['✓ Screen Time', `✓ 앱 ${tracking.selectionCount}개`]
-                    : undefined
-                }
-                pendingReason={self ? (blockedReason ?? '준비 대기') : '준비 대기'}
-              />
-            );
-          })}
-        </View>
+        <InviteCodeCard code={group.invite_code} />
       </View>
 
-      <View />
+      <ActionSheet
+        visible={menuOpen}
+        title={group.name}
+        onClose={() => setMenuOpen(false)}
+        actions={[
+          // 시작한 그룹의 한도는 전원 동의가 필요하다. 그건 그룹 상세가 맡는다.
+          ...(isDraft && isAdmin
+            ? [
+                {
+                  label: '공동 시간 바꾸기',
+                  onPress: () =>
+                    router.push({ pathname: '/group/limit' as const, params: { groupId: group.id } }),
+                },
+              ]
+            : []),
+          {
+            label: '그룹 나가기',
+            danger: true,
+            onPress: () => leave.prompt(group, members.data, profile.data?.id),
+          },
+        ]}
+      />
+
+      {leave.sheet}
     </OnboardingFrame>
   );
 }
 
 /**
- * 그룹을 접는 문.
+ * 그룹 설정 메뉴.
+ *
+ * 한동안 `···`이었다가 [나가기]가 됐다가 다시 `···`이다. 이유가 그때마다 있었다 —
+ * 하는 일이 나가기 하나뿐인 동안에는 `···`이 거짓말이었고, 공동 시간 바꾸기가
+ * 들어오면서 진짜 메뉴가 됐다.
  *
  * 시작 전 그룹은 상세 화면으로 갈 수 없어서(오늘 화면의 카드가 여기로 온다)
  * 나가는 문이 여기 없으면 만들어 본 그룹을 정리할 방법이 없다.
+ *
+ * 항목이 셋을 넘으면 `Alert`을 버려야 한다. Android는 버튼 셋까지만 받고
+ * 넷째부터는 조용히 사라진다.
  */
-function LeaveButton({ onPress, disabled }: { onPress: () => void; disabled?: boolean }) {
+function MoreButton({ onPress, disabled }: { onPress: () => void; disabled?: boolean }) {
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel="그룹 나가기"
+      accessibilityLabel="그룹 설정"
       hitSlop={8}
       disabled={disabled}
       onPress={onPress}
@@ -421,19 +351,9 @@ function LeaveButton({ onPress, disabled }: { onPress: () => void; disabled?: bo
 
 const styles = StyleSheet.create({
   top: { gap: 8 },
-  limitRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
-    marginVertical: 6,
-    borderRadius: radii.listRow,
-    paddingVertical: 13,
-    paddingHorizontal: 16,
-    backgroundColor: hexToRgba('#FFFFFF', 0.03),
-    borderWidth: 1,
-    borderColor: colors.border.subtle,
-  },
+  // 프레임이 위·가운데·아래 셋으로 나누는 리듬을 쓴다. 링이 가운데를 잡고,
+  // 기다리는 사람과 초대 코드가 아래 덩어리다.
+  bottom: { gap: 10 },
   navRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -451,10 +371,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border.hairlineStrong,
   },
   morePressed: { opacity: 0.7 },
-  title: { fontSize: 30, lineHeight: 38 },
   center: { textAlign: 'center' },
-  readyRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 4 },
-  bar: { flex: 1 },
   rows: { gap: 10, paddingTop: 6 },
   orbitBox: { width: ORBIT, height: ORBIT, alignSelf: 'center' },
   status: { flexDirection: 'row', alignItems: 'center', gap: 8, justifyContent: 'center' },

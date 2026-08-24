@@ -1,3 +1,4 @@
+export { ActionSheet, type SheetAction } from './action-sheet';
 export { AppText } from './app-text';
 export { Avatar, AvatarStack, type AvatarSize } from './avatar';
 export { Bloom } from './bloom';
