@@ -7,11 +7,15 @@
 # 없을 때 이 스크립트가 그 두 번째 사람이 된다.
 #
 # 실행:
-#   bash scripts/seed-friend.sh <초대코드> [닉네임] [오늘_사용_분]
+#   bash scripts/seed-friend.sh <초대코드> [닉네임] [오늘_사용_분] [자리]
 #
 # 예:
 #   bash scripts/seed-friend.sh 863308                # 가입 + 준비 완료
 #   bash scripts/seed-friend.sh 863308 도형 45        # 그룹 시작 뒤, 45분 사용까지
+#   bash scripts/seed-friend.sh 863308 유진 0 2       # 두 번째 친구(friend2@)
+#
+# 자리를 비우면 friend@frimit.dev 한 사람이다. 순위·좌석처럼 여럿이 있어야 보이는
+# 화면에는 자리를 2,3,4…로 늘려 부른다 — 같은 계정을 다시 부르면 이름만 바뀐다.
 #
 # ⚠️ 링크된 원격 프로젝트에 **지우지 않고** 쓴다. verify-db.sh와 달리 정리 단계가
 # 없다 — 남아 있어야 쓸모가 있기 때문이다. 계정은 friend@frimit.dev 하나이고,
@@ -28,9 +32,10 @@ command -v jq > /dev/null || { echo "❌ jq가 필요합니다" >&2; exit 1; }
 CODE="${1:-}"
 NICKNAME="${2:-도형}"
 MINUTES="${3:-0}"
+SLOT="${4:-}"
 [ -n "$CODE" ] || { echo "사용법: bash scripts/seed-friend.sh <초대코드> [닉네임] [분]" >&2; exit 1; }
 
-EMAIL="friend@frimit.dev"
+EMAIL="friend${SLOT}@frimit.dev"
 PASSWORD="${SB_TEST_PASSWORD:-frimit-test-1234}"
 
 svc() { # svc <METHOD> <경로> [본문]
