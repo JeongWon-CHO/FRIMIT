@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Alert, Linking, Pressable, StyleSheet, View } from 'react-native';
 
 import {
+  ActionSheet,
   AppText,
   Avatar,
   GradientButton,
@@ -240,6 +241,7 @@ function AccountRows() {
 function SignOutRow() {
   const queryClient = useQueryClient();
   const [busy, setBusy] = useState(false);
+  const [open, setOpen] = useState(false);
 
   const run = async () => {
     setBusy(true);
@@ -252,18 +254,27 @@ function SignOutRow() {
     }
   };
 
+  /*
+   * 확인은 바로 아래 계정 삭제와 같은 모양이어야 한다. 나란히 놓인 두 버튼이
+   * 서로 다른 창을 띄우면, 그 차이가 무슨 뜻인지 사용자가 읽으려 든다.
+   */
   return (
-    <GradientButton
-      label="로그아웃"
-      variant="secondary"
-      loading={busy}
-      onPress={() =>
-        Alert.alert('로그아웃할까요?', '다시 로그인하면 그룹과 기록이 그대로 있어요.', [
-          { text: '아니요', style: 'cancel' },
-          { text: '로그아웃', onPress: run },
-        ])
-      }
-    />
+    <>
+      <GradientButton
+        label="로그아웃"
+        variant="secondary"
+        loading={busy}
+        onPress={() => setOpen(true)}
+      />
+
+      <ActionSheet
+        visible={open}
+        title="로그아웃할까요?"
+        message="다시 로그인하면 그룹과 기록이 그대로 있어요."
+        onClose={() => setOpen(false)}
+        actions={[{ label: '로그아웃', onPress: run }]}
+      />
+    </>
   );
 }
 
@@ -280,6 +291,14 @@ function SignOutRow() {
 function DeleteAccountRow() {
   const queryClient = useQueryClient();
   const [busy, setBusy] = useState(false);
+
+  /*
+   * 두 관문. 첫 시트는 무슨 일이 벌어지는지 말하고, 둘째는 되돌릴 수 없다는
+   * 사실만 말한다. 닫는 애니메이션 도중에도 내용이 남아야 해서 단계와 열림을
+   * 따로 든다(`useLeaveGroupPrompt`와 같은 이유).
+   */
+  const [step, setStep] = useState<1 | 2>(1);
+  const [open, setOpen] = useState(false);
 
   const run = async () => {
     setBusy(true);
@@ -300,28 +319,48 @@ function DeleteAccountRow() {
     }
   };
 
-  const confirmTwice = () => {
-    Alert.alert(
-      '계정을 지울까요?',
-      '내가 관리자인 그룹은 가장 먼저 들어온 친구에게 넘어가고, 혼자인 그룹은 사라져요.\n\n' +
-        '지금까지의 공동 시간 합계는 이름 없이 남아요. 그것까지 지우면 남은 친구들의 지난 기록이 함께 무너져요.',
-      [
-        { text: '아니요', style: 'cancel' },
-        {
-          text: '계속',
-          style: 'destructive',
-          onPress: () =>
-            Alert.alert('되돌릴 수 없어요', '지우고 나면 이 계정으로 다시 들어올 수 없어요.', [
-              { text: '아니요', style: 'cancel' },
-              { text: '계정 지우기', style: 'destructive', onPress: run },
-            ]),
-        },
-      ]
-    );
-  };
-
   return (
-    <GradientButton label="계정 삭제" variant="tertiary" loading={busy} onPress={confirmTwice} />
+    <>
+      <GradientButton
+        label="계정 삭제"
+        variant="tertiary"
+        loading={busy}
+        onPress={() => {
+          setStep(1);
+          setOpen(true);
+        }}
+      />
+
+      {step === 1 ? (
+        <ActionSheet
+          visible={open}
+          title="계정을 지울까요?"
+          message={
+            '내가 관리자인 그룹은 가장 먼저 들어온 친구에게 넘어가고, 혼자인 그룹은 사라져요.\n\n' +
+            '지금까지의 공동 시간 합계는 이름 없이 남아요. 그것까지 지우면 남은 친구들의 지난 기록이 함께 무너져요.'
+          }
+          onClose={() => setOpen(false)}
+          actions={[
+            {
+              label: '계속',
+              danger: true,
+              onPress: () => {
+                setStep(2);
+                setOpen(true);
+              },
+            },
+          ]}
+        />
+      ) : (
+        <ActionSheet
+          visible={open}
+          title="되돌릴 수 없어요"
+          message="지우고 나면 이 계정으로 다시 들어올 수 없어요."
+          onClose={() => setOpen(false)}
+          actions={[{ label: '계정 지우기', danger: true, onPress: run }]}
+        />
+      )}
+    </>
   );
 }
 
