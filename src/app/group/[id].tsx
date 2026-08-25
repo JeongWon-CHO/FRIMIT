@@ -189,7 +189,17 @@ export default function GroupDetailScreen() {
                 <AppText variant="bodyStrong" tone="muted">
                   함께 남은 시간
                 </AppText>
-                <AppText variant="heroNumberMd" tone={visual.numberTone}>
+                {/*
+                  한 줄로 붙들어 둔다. `13m over`처럼 두 낱말이 되는 순간 링
+                  옆 폭(약 210)을 넘어 "13m / over"로 쪼개졌다 — 숫자와 그
+                  단위가 다른 줄에 놓이면 두 값처럼 읽힌다.
+                */}
+                <AppText
+                  variant="heroNumberMd"
+                  tone={visual.numberTone}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.6}>
                   {view.headline}
                 </AppText>
                 <AppText variant="bodyStrong" tone="muted">
