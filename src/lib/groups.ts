@@ -54,6 +54,28 @@ export type MyGroup = {
   time_zone: string;
 };
 
+/**
+ * 서버 오류를 화면에 그대로 쓸 문장으로.
+ *
+ * 두 종류를 가른다. **우리 RPC가 직접 거절한 것**에는 `hint`에 슬러그가 붙고 그
+ * `message`는 처음부터 사용자에게 보여줄 한국어다("초대 코드가 올바르지 않습니다.").
+ * 그건 그대로 내보낸다 — 사용자가 할 수 있는 일을 정확히 말해 주는 문장이다.
+ *
+ * 나머지는 PostgREST·네트워크·스키마 캐시가 올린 영어 문장이다("Could not find the
+ * function public.group_preview ... in the schema cache"). 화면에 그대로 흘리면
+ * 사용자는 자기가 뭘 잘못했는지, 뭘 하면 되는지 하나도 알 수 없는 말을 읽는다.
+ * 그 문장은 콘솔로 보내고 화면에는 우리가 쓴 문장을 준다.
+ */
+function rpcError(error: { message: string; hint?: string | null }, fallback: string): Error {
+  if (error.hint) return new Error(error.message);
+
+  console.warn(`[rpc] ${fallback} — ${error.message}`);
+  return new Error(fallback);
+}
+
+/** 우리가 원인을 모를 때 쓰는 꼬리말. 사용자가 지금 할 수 있는 유일한 일이다. */
+const RETRY = '잠시 후 다시 시도해 주세요.';
+
 /** 내가 속한 그룹. RLS가 알아서 내 것만 준다. */
 export async function listMyGroups(): Promise<MyGroup[]> {
   const { data, error } = await supabase
@@ -62,7 +84,7 @@ export async function listMyGroups(): Promise<MyGroup[]> {
     .neq('status', 'archived')
     .order('created_at', { ascending: true });
 
-  if (error) throw new Error(`그룹 목록을 읽지 못했습니다: ${error.message}`);
+  if (error) throw rpcError(error, `그룹 목록을 읽지 못했습니다. ${RETRY}`);
   return (data ?? []) as MyGroup[];
 }
 
@@ -91,7 +113,7 @@ export async function listGroupMembers(groupId: string): Promise<GroupMember[]> 
     .eq('group_id', groupId)
     .order('joined_at', { ascending: true });
 
-  if (error) throw new Error(`멤버 목록을 읽지 못했습니다: ${error.message}`);
+  if (error) throw rpcError(error, `멤버 목록을 읽지 못했습니다. ${RETRY}`);
 
   type Row = Omit<GroupMember, 'nickname' | 'avatar_key'> & {
     profiles: { nickname: string; avatar_key: string } | null;
@@ -134,21 +156,46 @@ export async function createGroup(
     ...(options.colorKey ? { color_key: options.colorKey } : {}),
     ...(options.dailyLimitSeconds ? { daily_limit_seconds: options.dailyLimitSeconds } : {}),
   });
-  if (error) throw new Error(`그룹을 만들지 못했습니다: ${error.message}`);
+  if (error) throw rpcError(error, `그룹을 만들지 못했습니다. ${RETRY}`);
   return data as GroupSnapshot;
+}
+
+
+export type GroupPreview = {
+  name: string;
+  color_key: string;
+  status: 'draft' | 'active';
+  member_count: number;
+  daily_limit_seconds: number;
+};
+
+/**
+ * 참여 전에 보는 그룹 요약.
+ *
+ * 코드가 맞는지 아는 유일한 방법이다 — RLS는 멤버에게만 그룹을 보여주므로 화면이
+ * 스스로 확인할 방법이 없고, 그래서 예전에는 아무 여섯 자리나 통과했다.
+ *
+ * 사람 이름은 오지 않는다(0825 마이그레이션). 앉은 자리와 빈 자리의 수만 그린다.
+ */
+export async function previewGroup(inviteCode: string): Promise<GroupPreview> {
+  const { data, error } = await supabase.rpc('group_preview', {
+    target_invite_code: inviteCode,
+  });
+  if (error) throw rpcError(error, `초대 코드를 확인하지 못했습니다. ${RETRY}`);
+  return data as GroupPreview;
 }
 
 export async function joinGroup(inviteCode: string): Promise<GroupSnapshot> {
   const { data, error } = await supabase.rpc('join_group', {
     target_invite_code: inviteCode,
   });
-  if (error) throw new Error(`그룹에 참여하지 못했습니다: ${error.message}`);
+  if (error) throw rpcError(error, `그룹에 참여하지 못했습니다. ${RETRY}`);
   return data as GroupSnapshot;
 }
 
 export async function startGroup(groupId: string): Promise<GroupSnapshot> {
   const { data, error } = await supabase.rpc('start_group', { target_group_id: groupId });
-  if (error) throw new Error(`그룹을 시작하지 못했습니다: ${error.message}`);
+  if (error) throw rpcError(error, `그룹을 시작하지 못했습니다. ${RETRY}`);
   return data as GroupSnapshot;
 }
 
@@ -172,7 +219,7 @@ export async function startGroup(groupId: string): Promise<GroupSnapshot> {
  */
 export async function leaveGroup(groupId: string): Promise<GroupSnapshot> {
   const { data, error } = await supabase.rpc('leave_group', { target_group_id: groupId });
-  if (error) throw new Error(`그룹에서 나가지 못했습니다: ${error.message}`);
+  if (error) throw rpcError(error, `그룹에서 나가지 못했습니다. ${RETRY}`);
   return data as GroupSnapshot;
 }
 
@@ -189,7 +236,7 @@ export async function transferAdmin(groupId: string, newAdminId: string): Promis
     target_group_id: groupId,
     new_admin_id: newAdminId,
   });
-  if (error) throw new Error(`관리자를 넘기지 못했습니다: ${error.message}`);
+  if (error) throw rpcError(error, `관리자를 넘기지 못했습니다. ${RETRY}`);
   return data as GroupSnapshot;
 }
 
@@ -210,7 +257,7 @@ export async function setReady(groupId: string, isReady: boolean): Promise<void>
     .eq('group_id', groupId)
     .eq('profile_id', profileId);
 
-  if (error) throw new Error(`준비 상태를 바꾸지 못했습니다: ${error.message}`);
+  if (error) throw rpcError(error, `준비 상태를 바꾸지 못했습니다. ${RETRY}`);
 }
 
 /**
@@ -232,7 +279,7 @@ export async function listMyMemberships(): Promise<
     .select('group_id, notifications_muted')
     .eq('profile_id', profileId);
 
-  if (error) throw new Error(`알림 설정을 읽지 못했습니다: ${error.message}`);
+  if (error) throw rpcError(error, `알림 설정을 읽지 못했습니다. ${RETRY}`);
   return data ?? [];
 }
 
@@ -256,7 +303,7 @@ export async function setMuted(groupId: string, muted: boolean): Promise<void> {
     .eq('group_id', groupId)
     .eq('profile_id', profileId);
 
-  if (error) throw new Error(`알림 설정을 바꾸지 못했습니다: ${error.message}`);
+  if (error) throw rpcError(error, `알림 설정을 바꾸지 못했습니다. ${RETRY}`);
 }
 
 /**
@@ -299,6 +346,9 @@ export const READY_MEMBERS_TO_START = 2;
  * 아니라 예의다.
  */
 export const MAX_ACTIVE_GROUPS = 5;
+
+/** 그룹 정원. 서버의 `join_group`이 같은 값으로 막는다(`group_full`). */
+export const GROUP_SEAT_LIMIT = 8;
 
 export function countReady(members: GroupMember[]): number {
   return members.filter((member) => member.is_ready).length;

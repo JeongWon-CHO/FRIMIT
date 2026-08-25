@@ -8,6 +8,7 @@ import {
   listGroupMembers,
   listMyGroups,
   listMyMemberships,
+  previewGroup,
   setMuted,
   setReady,
   startGroup,
@@ -102,6 +103,17 @@ export function useCreateGroup() {
     }) => toMyGroup(await createGroup(input.name, input)),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.allGroups }),
   });
+}
+
+/**
+ * 초대 코드 확인. 참여의 부작용은 없으므로 캐시도 건드리지 않는다.
+ *
+ * 쿼리가 아니라 뮤테이션인 이유: 코드를 타는 동안이 아니라 **버튼을 누른 순간**
+ * 한 번만 물어야 한다. 여섯 자리가 채워질 때마다 자동으로 왕복하면, 오타를 고치는
+ * 사이에 "코드가 올바르지 않습니다"가 번쩍인다.
+ */
+export function useGroupPreview() {
+  return useMutation({ mutationFn: previewGroup });
 }
 
 export function useJoinGroup() {
