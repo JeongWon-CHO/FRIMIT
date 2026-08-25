@@ -96,7 +96,7 @@ export function SharedPoolHero({ view, onPress, permissionCta, syncRow }: Shared
   }));
 
   // 동기화 줄이 들어오면 게이지 상자만 줄어든다. 나머지는 움직이지 않는다.
-  const gaugeBoxHeight = syncRow ? 166 : layout.heroGaugeBoxHeight;
+  const gaugeBoxHeight = syncRow ? layout.heroGaugeBoxHeight - 12 : layout.heroGaugeBoxHeight;
 
   return (
     <Surface
@@ -133,13 +133,12 @@ export function SharedPoolHero({ view, onPress, permissionCta, syncRow }: Shared
             <SharedOrbitRing
               size={layout.heroGaugeSize}
               /*
-                새 하루에는 아직 쓴 시간이 없지만 링을 완전히 비워 두면 "아직
-                시작 안 됨"이나 "고장"으로 읽힌다. 상태 스펙 A는 12시에 5~8°
-                틱을 남기라고 하는데, 그 자리에는 내 아바타가 앉아 있어서
-                (32px / 반지름 73.7 ≈ ±12°) 그 길이로는 통째로 가려진다.
-                아바타 뒤에서 겨우 빠져나오는 18°가 실기기에서 보이는 최소값이다.
+                0분은 0으로 그린다.
+                예전에는 새 하루에 18°짜리 최소 틱을 남겼다 — 빈 링이 "고장"으로
+                읽힐까 봐. 실제로는 반대였다: 아무것도 안 썼는데 조금 쓴 것처럼
+                보였다. 비어 있음은 회색 트랙과 `0% 사용`이 이미 말하고 있다.
               */
-              progress={view.state === 'fresh' ? Math.max(view.progress, 18 / 360) : view.progress}
+              progress={view.progress}
               variant={
                 off
                   ? 'empty'
@@ -250,13 +249,19 @@ const styles = StyleSheet.create({
     height: 30,
   },
   gaugeBox: { alignItems: 'center', justifyContent: 'center' },
-  // 162 링에서 안쪽 지름은 약 133이다. 아바타와 부딪히지 않게 그보다 좁게 잡는다.
-  center: { width: 124, alignItems: 'center' },
+  // 186 링에서 안쪽 지름은 약 152다. 아바타와 부딪히지 않게 그보다 좁게 잡는다.
+  center: { width: 142, alignItems: 'center' },
   sublabel: { textAlign: 'center' },
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    /*
+      오른쪽에 사람이 있으면 18px 아바타, 없으면 16px 글자 한 줄이라 카드
+      높이가 2px 달라진다. 대표 그룹을 바꿀 때 그 2px이 덜컹거림으로 보인다.
+      아바타가 들어갈 높이를 늘 비워 둔다.
+    */
+    minHeight: 31,
     paddingTop: 12,
     borderTopWidth: 1,
     borderTopColor: colors.border.subtle,
