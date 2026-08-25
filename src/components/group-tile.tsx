@@ -18,6 +18,8 @@ type GroupTileProps = {
   view: PoolView;
   /** 세 번째 카드는 두 칸을 차지한다. */
   wide?: boolean;
+  /** 지금 위 히어로에 올라와 있는 그룹. 강조색 테두리로 둘을 잇는다. */
+  selected?: boolean;
   onPress: () => void;
 };
 
@@ -27,7 +29,7 @@ const BLOOM_POSITION = {
   pink: { x: 90, y: 0 },
 } as const;
 
-export const GroupTile = memo(function GroupTile({ view, wide, onPress }: GroupTileProps) {
+export const GroupTile = memo(function GroupTile({ view, wide, selected, onPress }: GroupTileProps) {
   const accent = colors.groupAccent[view.accent];
   const position = BLOOM_POSITION[view.accent];
   const over = view.overSeconds > 0;
@@ -35,6 +37,7 @@ export const GroupTile = memo(function GroupTile({ view, wide, onPress }: GroupT
   return (
     <Surface
       fill={accent.surface}
+      border={selected ? colors.border[view.accent] : undefined}
       cornerRadius={radii.groupCard}
       padding={14}
       onPress={onPress}
@@ -132,10 +135,12 @@ export function AddGroupTile({ wide, onPress }: { wide?: boolean; onPress: () =>
 export function DraftTile({
   name,
   wide,
+  selected,
   onPress,
 }: {
   name: string;
   wide?: boolean;
+  selected?: boolean;
   onPress: () => void;
 }) {
   const text = (
@@ -150,6 +155,7 @@ export function DraftTile({
   return (
     <Surface
       fill={colors.surface.cardNeutral}
+      border={selected ? colors.border.violet : undefined}
       cornerRadius={radii.groupCard}
       padding={wide ? 18 : 16}
       onPress={onPress}

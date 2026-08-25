@@ -1,5 +1,6 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { AddGroupTile, DraftTile, GroupTile } from '@/components/group-tile';
@@ -48,7 +49,27 @@ export default function TodayScreen() {
   // 개발용 상태 미리보기가 켜져 있으면 그룹이 없어도 히어로를 그린다.
   const devPreview = __DEV__ && DEV_POOL_STATE ? DEV_POOL_STATE : null;
 
+  /*
+   * 위에 올릴 그룹은 카드를 눌러 고른다 — 그래서 핀 버튼이 따로 없다.
+   *
+   * 다만 그 선택은 기기에 남아야 한다. 화면 상태로만 두면 탭을 옮기거나 앱을
+   * 다시 켤 때마다 "활성인 첫 그룹"으로 돌아가고, 그러면 고른 것이 아니라
+   * 잠깐 들춰 본 것이 된다.
+   *
+   * 없는 그룹 id가 남아도 괜찮다 — `pickHeroGroup`이 기본값으로 떨어뜨린다.
+   * 그래서 그룹을 나갈 때 이 값을 지우는 코드도 두지 않는다.
+   */
   const [preferredGroupId, setPreferredGroupId] = useState<string | null>(null);
+
+  useEffect(() => {
+    AsyncStorage.getItem(HERO_KEY).then(setPreferredGroupId);
+  }, []);
+
+  const pinHero = (id: string) => {
+    setPreferredGroupId(id);
+    AsyncStorage.setItem(HERO_KEY, id);
+  };
+
   const hero = pickHeroGroup(groups.data ?? [], preferredGroupId);
   const members = useGroupMembers(hero?.id);
   const tracking = useTrackingState(hero?.id);
@@ -67,7 +88,14 @@ export default function TodayScreen() {
     [devPreview, hero, usages.byGroupId, members.data, tracking.permission, profile.data?.id]
   );
 
-  const others = (groups.data ?? []).filter((group) => group.id !== hero?.id);
+  /*
+   * 히어로에 올라온 그룹도 그리드에 남는다.
+   *
+   * 빼면 "내 그룹 2" 옆에 카드가 하나만 보인다 — 세는 수와 보이는 수가 어긋나고,
+   * 위 카드가 어느 그룹인지도 이름 없이 알 수 없다. 대신 강조색 테두리로 위
+   * 카드와 아래 카드를 잇는다.
+   */
+  const tiles = groups.data ?? [];
 
   /*
    * 그리드에 "그룹 추가" 자리를 둘지.
@@ -78,7 +106,7 @@ export default function TodayScreen() {
    */
   const groupCount = groups.data?.length ?? 0;
   const canAddGroup = groupCount > 0 && groupCount < MAX_ACTIVE_GROUPS;
-  const tileCount = others.length + (canAddGroup ? 1 : 0);
+  const tileCount = tiles.length + (canAddGroup ? 1 : 0);
 
   // 홀수 번째 마지막 카드는 두 칸을 차지한다. 그리드에 빈 칸이 남으면 화면이
   // 미완성으로 보인다.
@@ -176,33 +204,38 @@ export default function TodayScreen() {
           </View>
 
           <View style={styles.grid}>
-            {others.map((group, index) => {
+            {tiles.map((group, index) => {
               const wide = isWide(index);
+              const selected = group.id === hero?.id;
               const view = buildPoolView(group, usages.byGroupId.get(group.id), undefined, {
                 permission: true,
                 myProfileId: profile.data?.id,
               });
 
+              // 이미 위에 떠 있는 그룹을 다시 누르면 상세로 간다 — 히어로로
+              // 올리는 것은 이미 끝난 일이라 아무 일도 일어나지 않는다.
               const press = () =>
                 group.status === 'draft'
                   ? router.push({ pathname: '/ready', params: { groupId: group.id } })
-                  : setPreferredGroupId(group.id);
+                  : selected
+                    ? router.push({ pathname: '/group/[id]', params: { id: group.id } })
+                    : pinHero(group.id);
 
               return (
                 <View key={group.id} style={wide ? styles.wide : styles.half}>
                   {group.status === 'draft' || !view ? (
-                    <DraftTile name={group.name} wide={wide} onPress={press} />
+                    <DraftTile name={group.name} wide={wide} selected={selected} onPress={press} />
                   ) : (
-                    <GroupTile view={view} wide={wide} onPress={press} />
+                    <GroupTile view={view} wide={wide} selected={selected} onPress={press} />
                   )}
                 </View>
               );
             })}
 
             {canAddGroup && (
-              <View style={isWide(others.length) ? styles.wide : styles.half}>
+              <View style={isWide(tiles.length) ? styles.wide : styles.half}>
                 <AddGroupTile
-                  wide={isWide(others.length)}
+                  wide={isWide(tiles.length)}
                   onPress={() => router.push('/start')}
                 />
               </View>
@@ -213,6 +246,9 @@ export default function TodayScreen() {
     </ScreenFrame>
   );
 }
+
+/** 위에 올려 둔 그룹. 계정별로 나누지 않는다 — 남의 그룹 id는 어차피 안 맞는다. */
+const HERO_KEY = 'frimit.hero.v1';
 
 /**
  * 인사와 나.
