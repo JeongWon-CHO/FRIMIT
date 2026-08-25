@@ -35,6 +35,33 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 });
 
 /**
+ * 서버 오류를 화면에 그대로 쓸 문장으로.
+ *
+ * 두 종류를 가른다. **우리 RPC가 직접 거절한 것**에는 `hint`에 슬러그가 붙고 그
+ * `message`는 처음부터 사용자에게 보여줄 한국어다("초대 코드가 올바르지 않습니다.",
+ * "방금 찔렀어요. 30분 뒤에 다시 할 수 있어요."). 그건 그대로 내보낸다 — 사용자가
+ * 할 수 있는 일을 정확히 말해 주는 문장이다.
+ *
+ * 나머지는 PostgREST·Postgres·네트워크가 올린 영어다("numeric field overflow",
+ * "new row for relation \"goals\" violates check constraint ...", "Could not find
+ * the function ... in the schema cache"). 화면에 그대로 흘리면 사용자는 자기가 뭘
+ * 잘못했는지도, 뭘 하면 되는지도 알 수 없는 말을 읽는다. 그 문장은 콘솔로 보내고
+ * 화면에는 우리가 쓴 문장을 준다.
+ *
+ * 여기 있는 이유는 이 파일을 모두가 이미 가져다 쓰기 때문이다. 오류를 사람 말로
+ * 옮기는 자리가 파일마다 따로 있으면, 한 군데를 고쳐도 나머지가 영어를 뱉는다.
+ */
+export function rpcError(
+  error: { message: string; hint?: string | null },
+  whatFailed: string
+): Error {
+  if (error.hint) return new Error(error.message);
+
+  console.warn(`[supabase] ${whatFailed} — ${error.message}`);
+  return new Error(`${whatFailed}. 잠시 후 다시 시도해 주세요.`);
+}
+
+/**
  * 토큰 자동 갱신은 앱이 앞에 있을 때만 돌린다.
  *
  * 백그라운드에서 타이머를 돌려 봤자 OS가 재워 버리고, 깨어난 뒤 만료된 토큰으로
@@ -102,7 +129,7 @@ export async function signInAnonymouslyForDev(): Promise<string> {
 
   const { data, error } = await supabase.auth.signInAnonymously();
   if (error) {
-    throw new Error(`익명 로그인에 실패했습니다: ${error.message}`);
+    throw rpcError(error, '익명 로그인에 실패했습니다');
   }
   if (!data.session) {
     throw new Error('익명 로그인은 됐지만 세션이 없습니다.');

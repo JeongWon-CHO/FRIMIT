@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { rpcError, supabase } from './supabase';
 
 /**
  * 그룹 RPC의 클라이언트 쪽 창구.
@@ -54,28 +54,6 @@ export type MyGroup = {
   time_zone: string;
 };
 
-/**
- * 서버 오류를 화면에 그대로 쓸 문장으로.
- *
- * 두 종류를 가른다. **우리 RPC가 직접 거절한 것**에는 `hint`에 슬러그가 붙고 그
- * `message`는 처음부터 사용자에게 보여줄 한국어다("초대 코드가 올바르지 않습니다.").
- * 그건 그대로 내보낸다 — 사용자가 할 수 있는 일을 정확히 말해 주는 문장이다.
- *
- * 나머지는 PostgREST·네트워크·스키마 캐시가 올린 영어 문장이다("Could not find the
- * function public.group_preview ... in the schema cache"). 화면에 그대로 흘리면
- * 사용자는 자기가 뭘 잘못했는지, 뭘 하면 되는지 하나도 알 수 없는 말을 읽는다.
- * 그 문장은 콘솔로 보내고 화면에는 우리가 쓴 문장을 준다.
- */
-function rpcError(error: { message: string; hint?: string | null }, fallback: string): Error {
-  if (error.hint) return new Error(error.message);
-
-  console.warn(`[rpc] ${fallback} — ${error.message}`);
-  return new Error(fallback);
-}
-
-/** 우리가 원인을 모를 때 쓰는 꼬리말. 사용자가 지금 할 수 있는 유일한 일이다. */
-const RETRY = '잠시 후 다시 시도해 주세요.';
-
 /** 내가 속한 그룹. RLS가 알아서 내 것만 준다. */
 export async function listMyGroups(): Promise<MyGroup[]> {
   const { data, error } = await supabase
@@ -84,7 +62,7 @@ export async function listMyGroups(): Promise<MyGroup[]> {
     .neq('status', 'archived')
     .order('created_at', { ascending: true });
 
-  if (error) throw rpcError(error, `그룹 목록을 읽지 못했습니다. ${RETRY}`);
+  if (error) throw rpcError(error, '그룹 목록을 읽지 못했습니다');
   return (data ?? []) as MyGroup[];
 }
 
@@ -113,7 +91,7 @@ export async function listGroupMembers(groupId: string): Promise<GroupMember[]> 
     .eq('group_id', groupId)
     .order('joined_at', { ascending: true });
 
-  if (error) throw rpcError(error, `멤버 목록을 읽지 못했습니다. ${RETRY}`);
+  if (error) throw rpcError(error, '멤버 목록을 읽지 못했습니다');
 
   type Row = Omit<GroupMember, 'nickname' | 'avatar_key'> & {
     profiles: { nickname: string; avatar_key: string } | null;
@@ -156,7 +134,7 @@ export async function createGroup(
     ...(options.colorKey ? { color_key: options.colorKey } : {}),
     ...(options.dailyLimitSeconds ? { daily_limit_seconds: options.dailyLimitSeconds } : {}),
   });
-  if (error) throw rpcError(error, `그룹을 만들지 못했습니다. ${RETRY}`);
+  if (error) throw rpcError(error, '그룹을 만들지 못했습니다');
   return data as GroupSnapshot;
 }
 
@@ -181,7 +159,7 @@ export async function previewGroup(inviteCode: string): Promise<GroupPreview> {
   const { data, error } = await supabase.rpc('group_preview', {
     target_invite_code: inviteCode,
   });
-  if (error) throw rpcError(error, `초대 코드를 확인하지 못했습니다. ${RETRY}`);
+  if (error) throw rpcError(error, '초대 코드를 확인하지 못했습니다');
   return data as GroupPreview;
 }
 
@@ -189,13 +167,13 @@ export async function joinGroup(inviteCode: string): Promise<GroupSnapshot> {
   const { data, error } = await supabase.rpc('join_group', {
     target_invite_code: inviteCode,
   });
-  if (error) throw rpcError(error, `그룹에 참여하지 못했습니다. ${RETRY}`);
+  if (error) throw rpcError(error, '그룹에 참여하지 못했습니다');
   return data as GroupSnapshot;
 }
 
 export async function startGroup(groupId: string): Promise<GroupSnapshot> {
   const { data, error } = await supabase.rpc('start_group', { target_group_id: groupId });
-  if (error) throw rpcError(error, `그룹을 시작하지 못했습니다. ${RETRY}`);
+  if (error) throw rpcError(error, '그룹을 시작하지 못했습니다');
   return data as GroupSnapshot;
 }
 
@@ -219,7 +197,7 @@ export async function startGroup(groupId: string): Promise<GroupSnapshot> {
  */
 export async function leaveGroup(groupId: string): Promise<GroupSnapshot> {
   const { data, error } = await supabase.rpc('leave_group', { target_group_id: groupId });
-  if (error) throw rpcError(error, `그룹에서 나가지 못했습니다. ${RETRY}`);
+  if (error) throw rpcError(error, '그룹에서 나가지 못했습니다');
   return data as GroupSnapshot;
 }
 
@@ -236,7 +214,7 @@ export async function transferAdmin(groupId: string, newAdminId: string): Promis
     target_group_id: groupId,
     new_admin_id: newAdminId,
   });
-  if (error) throw rpcError(error, `관리자를 넘기지 못했습니다. ${RETRY}`);
+  if (error) throw rpcError(error, '관리자를 넘기지 못했습니다');
   return data as GroupSnapshot;
 }
 
@@ -257,7 +235,7 @@ export async function setReady(groupId: string, isReady: boolean): Promise<void>
     .eq('group_id', groupId)
     .eq('profile_id', profileId);
 
-  if (error) throw rpcError(error, `준비 상태를 바꾸지 못했습니다. ${RETRY}`);
+  if (error) throw rpcError(error, '준비 상태를 바꾸지 못했습니다');
 }
 
 /**
@@ -279,7 +257,7 @@ export async function listMyMemberships(): Promise<
     .select('group_id, notifications_muted')
     .eq('profile_id', profileId);
 
-  if (error) throw rpcError(error, `알림 설정을 읽지 못했습니다. ${RETRY}`);
+  if (error) throw rpcError(error, '알림 설정을 읽지 못했습니다');
   return data ?? [];
 }
 
@@ -303,7 +281,7 @@ export async function setMuted(groupId: string, muted: boolean): Promise<void> {
     .eq('group_id', groupId)
     .eq('profile_id', profileId);
 
-  if (error) throw rpcError(error, `알림 설정을 바꾸지 못했습니다. ${RETRY}`);
+  if (error) throw rpcError(error, '알림 설정을 바꾸지 못했습니다');
 }
 
 /**

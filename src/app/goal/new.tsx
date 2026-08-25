@@ -44,16 +44,19 @@ export default function CreateGoalScreen() {
     Number.isFinite(parsedAmount) &&
     parsedAmount > 0;
 
-  const submit = async () => {
+  const submit = () => {
     if (!valid || !selectedGroupId) return;
-    await create.mutateAsync({
-      groupId: selectedGroupId,
-      title: trimmedTitle,
-      targetAmount: parsedAmount,
-      unit: unit.trim(),
-      durationDays,
-    });
-    router.back();
+    // 실패하면 오류는 아래 버튼 위에 뜬다. await로 받으면 잡는 사람 없는 거절만 남는다.
+    create.mutate(
+      {
+        groupId: selectedGroupId,
+        title: trimmedTitle,
+        targetAmount: parsedAmount,
+        unit: unit.trim(),
+        durationDays,
+      },
+      { onSuccess: () => router.back() }
+    );
   };
 
   return (
@@ -122,6 +125,7 @@ export default function CreateGoalScreen() {
           keyboardType="decimal-pad"
           placeholder="5"
           placeholderTextColor={colors.text.placeholder}
+          maxLength={11}
           style={[styles.field, styles.amountField]}
           accessibilityLabel="1인 목표량"
         />

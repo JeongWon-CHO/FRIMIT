@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { rpcError, supabase } from './supabase';
 
 /**
  * 최근 며칠의 공동 풀.
@@ -24,6 +24,6 @@ export async function fetchRecentDays(groupId: string, days = 7): Promise<Recent
     day_count: days,
   });
 
-  if (error) throw new Error(`최근 기록을 읽지 못했습니다: ${error.message}`);
+  if (error) throw rpcError(error, '최근 기록을 읽지 못했습니다');
   return (data ?? []) as RecentDay[];
 }

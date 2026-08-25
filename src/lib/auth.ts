@@ -4,7 +4,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { Platform } from 'react-native';
 
 import { isCanceledCallback, parseOAuthCallback } from './oauth-callback';
-import { supabase } from './supabase';
+import { rpcError, supabase } from './supabase';
 
 /**
  * 로그인. Apple은 iOS 네이티브 시트로, Google은 브라우저로 간다.
@@ -85,7 +85,7 @@ export async function signInWithApple(): Promise<SignInOutcome> {
     provider: 'apple',
     token: identityToken,
   });
-  if (error) throw new Error(`로그인하지 못했어요: ${error.message}`);
+  if (error) throw rpcError(error, '로그인하지 못했어요');
 
   return 'signedIn';
 }
@@ -100,7 +100,7 @@ export async function signInWithGoogle(): Promise<SignInOutcome> {
       skipBrowserRedirect: true,
     },
   });
-  if (error) throw new Error(`로그인을 시작하지 못했어요: ${error.message}`);
+  if (error) throw rpcError(error, '로그인을 시작하지 못했어요');
   if (!data.url) throw new Error('로그인 주소를 받지 못했어요.');
 
   const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);

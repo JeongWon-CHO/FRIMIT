@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { rpcError, supabase } from '@/lib/supabase';
 
 /**
  * 공동 목표 RPC의 클라이언트 쪽 창구.
@@ -43,7 +43,7 @@ export type GoalSnapshot = {
 /** 그룹의 살아 있는 목표. 없으면 null — 실패가 아니라 정상적인 빈 상태다. */
 export async function fetchCurrentGoal(groupId: string): Promise<GoalSnapshot | null> {
   const { data, error } = await supabase.rpc('current_goal', { target_group_id: groupId });
-  if (error) throw new Error(`목표를 읽지 못했습니다: ${error.message}`);
+  if (error) throw rpcError(error, '목표를 읽지 못했습니다');
   return (data ?? null) as GoalSnapshot | null;
 }
 
@@ -61,7 +61,7 @@ export async function createGoal(input: {
     goal_unit: input.unit,
     duration_days: input.durationDays,
   });
-  if (error) throw new Error(`목표를 만들지 못했습니다: ${error.message}`);
+  if (error) throw rpcError(error, '목표를 만들지 못했습니다');
   return data as GoalSnapshot;
 }
 
@@ -81,19 +81,19 @@ export async function recordGoalEntry(
     entry_amount: amount,
     entry_note: note ?? null,
   });
-  if (error) throw new Error(`기록하지 못했습니다: ${error.message}`);
+  if (error) throw rpcError(error, '기록하지 못했습니다');
   return data as GoalSnapshot;
 }
 
 export async function deleteGoalEntry(goalId: string): Promise<GoalSnapshot> {
   const { data, error } = await supabase.rpc('delete_goal_entry', { target_goal_id: goalId });
-  if (error) throw new Error(`기록을 지우지 못했습니다: ${error.message}`);
+  if (error) throw rpcError(error, '기록을 지우지 못했습니다');
   return data as GoalSnapshot;
 }
 
 export async function cancelGoal(goalId: string): Promise<GoalSnapshot> {
   const { data, error } = await supabase.rpc('cancel_goal', { target_goal_id: goalId });
-  if (error) throw new Error(`목표를 취소하지 못했습니다: ${error.message}`);
+  if (error) throw rpcError(error, '목표를 취소하지 못했습니다');
   return data as GoalSnapshot;
 }
 

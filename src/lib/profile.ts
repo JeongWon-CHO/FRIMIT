@@ -1,5 +1,5 @@
 import { AVATAR_PRESETS, avatarEmoji } from './avatars';
-import { requireSession, supabase } from './supabase';
+import { requireSession, rpcError, supabase } from './supabase';
 
 /**
  * 내 프로필 읽기·쓰기.
@@ -39,7 +39,7 @@ export async function fetchMyProfile(): Promise<Profile> {
     .eq('id', profileId)
     .single();
 
-  if (error) throw new Error(`프로필을 읽지 못했습니다: ${error.message}`);
+  if (error) throw rpcError(error, '프로필을 읽지 못했습니다');
   return data as Profile;
 }
 
@@ -63,6 +63,6 @@ export async function updateMyProfile(input: {
     .select('id, nickname, avatar_key, locale')
     .single();
 
-  if (error) throw new Error(`프로필을 저장하지 못했습니다: ${error.message}`);
+  if (error) throw rpcError(error, '프로필을 저장하지 못했습니다');
   return data as Profile;
 }

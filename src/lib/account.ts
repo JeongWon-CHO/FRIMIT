@@ -1,6 +1,6 @@
 import { forgetDevice } from './device';
 import { resetProgress } from './onboarding';
-import { supabase } from './supabase';
+import { rpcError, supabase } from './supabase';
 
 /**
  * 계정 삭제. 되돌릴 수 없다.
@@ -22,7 +22,7 @@ export type DeleteAccountResult = {
 
 export async function deleteMyAccount(): Promise<DeleteAccountResult> {
   const { data, error } = await supabase.rpc('delete_my_account');
-  if (error) throw new Error(`계정을 지우지 못했습니다: ${error.message}`);
+  if (error) throw rpcError(error, '계정을 지우지 못했습니다');
 
   /*
    * 여기부터는 실패해도 되돌릴 것이 없다. 계정은 이미 서버에서 사라졌으므로,

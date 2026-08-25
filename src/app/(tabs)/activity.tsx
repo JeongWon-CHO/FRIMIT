@@ -31,6 +31,14 @@ export default function ActivityScreen() {
       onRefresh={() => activity.refetch()}>
       <TitleRow title="활동" />
 
+      {/* 반응은 칩 하나가 늘고 줄 뿐이라 실패해도 화면이 그대로다. 아무 일도
+          일어나지 않은 것과 구분이 안 되므로 한 줄로 말해 준다. */}
+      {react.error && (
+        <AppText variant="metadata" tone="stale" style={styles.notice}>
+          {react.error instanceof Error ? react.error.message : String(react.error)}
+        </AppText>
+      )}
+
       {activity.isPending ? (
         <EmptyState title="읽는 중이에요" body="최근 사건을 불러오고 있어요." />
       ) : activity.error ? (
@@ -72,5 +80,6 @@ export default function ActivityScreen() {
 
 const styles = StyleSheet.create({
   list: { gap: 4 },
+  notice: { textAlign: 'center' },
   footer: { textAlign: 'center', paddingTop: 18 },
 });

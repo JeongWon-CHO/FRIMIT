@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { rpcError, supabase } from './supabase';
 
 /**
  * 공동 규칙 변경 — 클라이언트 쪽 창구.
@@ -66,7 +66,7 @@ export async function fetchCurrentProposal(groupId: string): Promise<RuleProposa
     target_group_id: groupId,
   });
 
-  if (error) throw new Error(`변경안을 읽지 못했습니다: ${error.message}`);
+  if (error) throw rpcError(error, '변경안을 읽지 못했습니다');
   return (data as RuleProposalSnapshot | null) ?? null;
 }
 
@@ -85,7 +85,7 @@ export async function proposeDailyLimit(
     proposed_daily_limit_seconds: dailyLimitSeconds,
   });
 
-  if (error) throw new Error(`변경안을 내지 못했습니다: ${error.message}`);
+  if (error) throw rpcError(error, '변경안을 내지 못했습니다');
   return data as RuleProposalSnapshot;
 }
 
@@ -99,7 +99,7 @@ export async function respondToProposal(
     approve,
   });
 
-  if (error) throw new Error(`응답하지 못했습니다: ${error.message}`);
+  if (error) throw rpcError(error, '응답하지 못했습니다');
   return data as RuleProposalSnapshot;
 }
 
@@ -109,7 +109,7 @@ export async function withdrawProposal(proposalId: string): Promise<RuleProposal
     target_proposal_id: proposalId,
   });
 
-  if (error) throw new Error(`거두지 못했습니다: ${error.message}`);
+  if (error) throw rpcError(error, '거두지 못했습니다');
   return data as RuleProposalSnapshot;
 }
 
@@ -123,5 +123,5 @@ export async function updateDraftDailyLimit(
     new_daily_limit_seconds: dailyLimitSeconds,
   });
 
-  if (error) throw new Error(`공동 시간을 바꾸지 못했습니다: ${error.message}`);
+  if (error) throw rpcError(error, '공동 시간을 바꾸지 못했습니다');
 }

@@ -1,5 +1,5 @@
 import type { ActivityKind } from '@/lib/activity-kinds';
-import { supabase } from '@/lib/supabase';
+import { rpcError, supabase } from '@/lib/supabase';
 
 /**
  * 활동 내역을 읽는 창구.
@@ -60,7 +60,7 @@ export async function listActivity(limit = 60): Promise<ActivityEvent[]> {
     .order('created_at', { ascending: false })
     .limit(limit);
 
-  if (error) throw new Error(`활동 내역을 읽지 못했습니다: ${error.message}`);
+  if (error) throw rpcError(error, '활동 내역을 읽지 못했습니다');
 
   type Row = Omit<ActivityEvent, 'group' | 'actor' | 'reactions'> & {
     groups: { name: string; color_key: string } | null;
@@ -88,6 +88,6 @@ export async function reactToEvent(eventId: string, emoji: string): Promise<stri
     reaction_emoji: emoji,
   });
 
-  if (error) throw new Error(`반응하지 못했습니다: ${error.message}`);
+  if (error) throw rpcError(error, '반응하지 못했습니다');
   return (data as { emoji: string | null }).emoji;
 }

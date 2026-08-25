@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { rpcError, supabase } from './supabase';
 
 /**
  * 콕 찌르기.
@@ -21,8 +21,9 @@ export async function sendNudge(groupId: string, profileId: string): Promise<Nud
     target_profile_id: profileId,
   });
 
-  // 서버 문구를 그대로 올린다. "방금 찔렀어요"처럼 이미 사용자에게 하는 말이라,
-  // 앞에 "콕 찌르지 못했습니다:"를 붙이면 같은 얘기를 두 번 하게 된다.
-  if (error) throw new Error(error.message);
+  // 서버 거절은 그대로 올린다. "방금 찔렀어요"처럼 이미 사용자에게 하는 말이라
+  // 앞에 뭘 더 붙이면 같은 얘기를 두 번 하게 된다. 대신 hint가 없는 오류(네트워크
+  // 따위)는 영어로 오므로, 그 판단은 rpcError에 맡긴다.
+  if (error) throw rpcError(error, '콕 찌르지 못했습니다');
   return data as NudgeResult;
 }

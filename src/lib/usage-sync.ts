@@ -7,7 +7,7 @@ import {
   nextPeriodStartFor,
   periodStartFor,
 } from './frimit-day';
-import { requireSession, supabase } from './supabase';
+import { requireSession, rpcError, supabase } from './supabase';
 import {
   partitionSnapshots,
   summarizeSyncResults,
@@ -71,7 +71,7 @@ async function uploadSnapshots(
   });
 
   if (error) {
-    throw new Error(`사용량을 올리지 못했습니다: ${error.message}`);
+    throw rpcError(error, '사용량을 올리지 못했습니다');
   }
 
   return (data ?? []) as UsageSyncResult[];
@@ -154,7 +154,7 @@ export async function fetchGroupDailyUsage(groupId: string): Promise<GroupDailyU
   });
 
   if (error) {
-    throw new Error(`공동 풀 상태를 읽지 못했습니다: ${error.message}`);
+    throw rpcError(error, '공동 풀 상태를 읽지 못했습니다');
   }
 
   return data as GroupDailyUsage;

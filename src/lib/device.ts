@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
 import { registerPushToken } from './push';
-import { supabase } from './supabase';
+import { rpcError, supabase } from './supabase';
 import type { PermissionState } from '@modules/screen-time';
 
 /**
@@ -51,7 +51,7 @@ async function resolveDeviceId(permissionState: PermissionState): Promise<string
       .select('id')
       .maybeSingle();
 
-    if (error) throw new Error(`기기 정보를 갱신하지 못했습니다: ${error.message}`);
+    if (error) throw rpcError(error, '기기 정보를 갱신하지 못했습니다');
     if (data) return data.id;
 
     // 서버에 없는 id다. 계정을 지웠다가 다시 만든 경우이므로 새로 등록한다.
@@ -72,7 +72,7 @@ async function resolveDeviceId(permissionState: PermissionState): Promise<string
     .select('id')
     .single();
 
-  if (error) throw new Error(`기기를 등록하지 못했습니다: ${error.message}`);
+  if (error) throw rpcError(error, '기기를 등록하지 못했습니다');
 
   await AsyncStorage.setItem(DEVICE_ID_KEY, data.id);
   return data.id;

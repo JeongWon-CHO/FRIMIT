@@ -196,10 +196,11 @@ function RecordRow({ view }: { view: GoalView }) {
   const amount = Number(value);
   const valid = Number.isFinite(amount) && amount > 0;
 
-  const submit = async () => {
+  // mutateAsync를 await하면 실패했을 때 아무도 잡지 않는 거절이 남는다. 오류는
+  // 아래 줄에 이미 보여주고 있으므로 콜백으로 받는다.
+  const submit = () => {
     if (!valid) return;
-    await record.mutateAsync({ goalId: view.goalId, amount });
-    setDraft(null);
+    record.mutate({ goalId: view.goalId, amount }, { onSuccess: () => setDraft(null) });
   };
 
   return (
@@ -211,6 +212,7 @@ function RecordRow({ view }: { view: GoalView }) {
           keyboardType="decimal-pad"
           placeholder="0"
           placeholderTextColor={colors.text.placeholder}
+          maxLength={11}
           style={styles.input}
           selectionColor={colors.accent.violetSoft}
         />
