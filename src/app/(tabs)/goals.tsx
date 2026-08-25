@@ -210,7 +210,7 @@ function RecordRow({ view }: { view: GoalView }) {
           onChangeText={setDraft}
           keyboardType="decimal-pad"
           placeholder="0"
-          placeholderTextColor={colors.text.faint}
+          placeholderTextColor={colors.text.placeholder}
           style={styles.input}
           selectionColor={colors.accent.violetSoft}
         />

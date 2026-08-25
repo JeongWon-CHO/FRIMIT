@@ -244,7 +244,7 @@ export default function TrackingScreen() {
               value={query}
               onChangeText={setQuery}
               placeholder="이름으로 검색"
-              placeholderTextColor={colors.text.disabled}
+              placeholderTextColor={colors.text.placeholder}
               autoCorrect={false}
               style={styles.search}
               accessibilityLabel="앱 찾기"

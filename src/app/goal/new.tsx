@@ -105,7 +105,7 @@ export default function CreateGoalScreen() {
         value={title}
         onChangeText={setTitle}
         placeholder="이번 주 5번 운동하기"
-        placeholderTextColor={colors.text.disabled}
+        placeholderTextColor={colors.text.placeholder}
         maxLength={30}
         returnKeyType="done"
         style={styles.field}
@@ -121,7 +121,7 @@ export default function CreateGoalScreen() {
           onChangeText={setAmount}
           keyboardType="decimal-pad"
           placeholder="5"
-          placeholderTextColor={colors.text.disabled}
+          placeholderTextColor={colors.text.placeholder}
           style={[styles.field, styles.amountField]}
           accessibilityLabel="1인 목표량"
         />
@@ -129,7 +129,7 @@ export default function CreateGoalScreen() {
           value={unit}
           onChangeText={setUnit}
           placeholder="번"
-          placeholderTextColor={colors.text.disabled}
+          placeholderTextColor={colors.text.placeholder}
           maxLength={8}
           style={[styles.field, styles.unitField]}
           accessibilityLabel="단위"

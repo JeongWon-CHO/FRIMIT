@@ -38,32 +38,38 @@ export default function GroupStartedScreen() {
     <OnboardingFrame
       ambient={{ color: colors.accent.violet, size: 560, opacity: 0.5, x: 169, y: 330 }}
       footer={<GradientButton label="홈으로 가기" onPress={finish} />}>
-      <View style={styles.orbitBox}>
-        <SharedOrbitRing
-          size={ORBIT}
-          progress={usage ? Math.min(1, usage.total_seconds / limit) : 0.02}
-          gradient={gradients.sharedPool.colors}
-          strokeRatio={0.12}
-          glow="strong">
-          <AppText variant="heroNumber" style={styles.number}>
-            {formatShort(usage?.remaining_seconds ?? limit)}
-          </AppText>
-          <AppText variant="bodyStrong" tone="metadata">
-            오늘 우리 몫
-          </AppText>
-        </SharedOrbitRing>
+      {/*
+        프레임의 `space-between`은 두 블록을 위아래 끝으로 민다 — 그러면 링이
+        상태바에 붙는다. 링 쪽에 남는 공간을 다 주고 그 안에서 가운데를 잡는다.
+      */}
+      <View style={styles.orbitWrap}>
+        <View style={styles.orbitBox}>
+          <SharedOrbitRing
+            size={ORBIT}
+            progress={usage ? Math.min(1, usage.total_seconds / limit) : 0.02}
+            gradient={gradients.sharedPool.colors}
+            strokeRatio={0.12}
+            glow="strong">
+            <AppText variant="heroNumber" style={styles.number}>
+              {formatShort(usage?.remaining_seconds ?? limit)}
+            </AppText>
+            <AppText variant="bodyStrong" tone="metadata">
+              오늘 우리 몫
+            </AppText>
+          </SharedOrbitRing>
 
-        <OrbitSeats
-          seats={(members.data ?? []).map((member) => ({
-            id: member.profile_id,
-            name: member.nickname,
-            emoji: avatarEmoji(member.avatar_key),
-            ring: 'activity' as const,
-          }))}
-          size={ORBIT}
-          placement="outer"
-          seatSize={40}
-        />
+          <OrbitSeats
+            seats={(members.data ?? []).map((member) => ({
+              id: member.profile_id,
+              name: member.nickname,
+              emoji: avatarEmoji(member.avatar_key),
+              ring: 'activity' as const,
+            }))}
+            size={ORBIT}
+            placement="outer"
+            seatSize={40}
+          />
+        </View>
       </View>
 
       <View style={styles.copy}>
@@ -79,6 +85,7 @@ export default function GroupStartedScreen() {
 }
 
 const styles = StyleSheet.create({
+  orbitWrap: { flex: 1, justifyContent: 'center' },
   orbitBox: { width: ORBIT, height: ORBIT, alignSelf: 'center' },
   number: { fontSize: 52, lineHeight: 56, letterSpacing: -2.6 },
   copy: { gap: 8 },

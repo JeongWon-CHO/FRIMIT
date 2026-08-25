@@ -33,6 +33,9 @@ const TONES: Record<Tone, string> = {
   muted: colors.text.muted,
   metadata: colors.text.metadata,
   faint: colors.text.faint,
+  placeholder: colors.text.placeholder,
+  link: colors.text.link,
+  // 텍스트에는 쓰지 않는다 — 점·비활성 컨트롤 전용이라 대비 하한 아래에 있다.
   disabled: colors.text.disabled,
   onLight: colors.text.onLight,
   accent: colors.accent.violetPale,

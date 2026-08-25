@@ -45,15 +45,31 @@ export const colors = {
     pink: 'rgba(244,114,182,0.20)',
     amber: 'rgba(252,211,77,0.28)',
   },
+  /**
+   * Text ramp. Every step is `#F7F7FA` at an alpha, so the ramp keeps one hue and
+   * shifts only in lightness — the channel contrast responds to.
+   *
+   * The alphas are a floor, not a taste: measured against the lightest surface a
+   * step can land on (`#17171D`, `#16162A`, and an accent bloom over a card), each
+   * text step clears WCAG AA 4.5:1. The previous ramp (white at 0.44 / 0.34 / 0.28)
+   * measured 4.30 / 2.96 / 2.34:1 — legible only on a bright display.
+   * `design-tokens.test.ts` re-measures these on every run.
+   */
   text: {
     primary: '#F7F7FA',
-    secondary: '#8A8A99',
-    /** Opacity-based text ramp actually used in the designs, over black. */
-    body: 'rgba(255,255,255,0.90)',
-    muted: 'rgba(255,255,255,0.44)',
-    metadata: 'rgba(255,255,255,0.34)',
-    faint: 'rgba(255,255,255,0.28)',
-    disabled: '#3A3A44',
+    /** Same job as `metadata`; kept as a name older call sites still use. */
+    secondary: 'rgba(247,247,250,0.60)',
+    body: 'rgba(247,247,250,0.92)',
+    muted: 'rgba(247,247,250,0.72)',
+    metadata: 'rgba(247,247,250,0.60)',
+    faint: 'rgba(247,247,250,0.52)',
+    /** Input placeholder. Carries the field's meaning, so it is text, not decoration. */
+    placeholder: 'rgba(247,247,250,0.52)',
+    /** Inline link. `accent.blueSoft` — the stray `#3C87F7` it replaces dropped to
+     *  4.24:1 on a bloom-lifted card. */
+    link: '#60A5FA',
+    /** Non-text only — dots, inert controls. Below the text floor by design. */
+    disabled: 'rgba(247,247,250,0.40)',
     onLight: '#050507',
   },
   accent: {
@@ -98,8 +114,12 @@ export const colors = {
 export type GroupAccentKey = keyof typeof colors.groupAccent;
 
 export const gradients = {
-  /** Primary button, toggle. LinearGradient start {x:0,y:0} end {x:1,y:0.18} ≈ 100deg. */
+  /** Progress, toggles, decorative fills. Nothing legible sits on top of it. */
   violetToBlue: { colors: ['#7C4DFF', '#3B82F6'], angleDeg: 100 },
+  /** Same accent one lightness step down, for the one filled action that carries a
+   *  label. `violetToBlue` drops to 3.44:1 under `#F7F7FA` at its blue end; this
+   *  holds 4.71:1 or better across the whole span the label covers. */
+  primaryAction: { colors: ['#7C4DFF', '#2563EB'], angleDeg: 100 },
   /** Healthy progress. */
   blueToCyan: { colors: ['#3B82F6', '#22D3EE'], angleDeg: 100 },
   /** Shared pool arc / goal bar. 3 stops, conic from -90deg in the web design. */
@@ -209,8 +229,9 @@ export const borders = {
 } as const;
 
 export const opacity = {
-  /** Non-selected bottom-nav item content. */
-  navInactive: 0.34,
+  /** Non-selected bottom-nav item content. Carries a label and an icon, so it sits
+   *  at the text floor, not at "barely there" — 0.34 measured 2.83:1. */
+  navInactive: 0.52,
   /** Muted avatars (limit reached state). */
   dimmedAvatar: 0.85,
   /** Unselected accent swatch. */
@@ -278,8 +299,8 @@ export const layout = {
   screenHeight: 844,
   bottomNavHeight: 104,
   statusBarHeight: 54,
-  heroGaugeSize: 162,
-  heroGaugeBoxHeight: 178,
+  heroGaugeSize: 186,
+  heroGaugeBoxHeight: 202,
   orbitSize: 158,
   orbitAvatarSize: 28,
   groupCardHeight: 124,

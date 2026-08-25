@@ -102,7 +102,7 @@ export default function ProfileSetupScreen() {
           value={nickname}
           onChangeText={(value) => setDraft({ nickname: value, avatarKey })}
           placeholder={DEFAULT_NICKNAME}
-          placeholderTextColor={colors.text.disabled}
+          placeholderTextColor={colors.text.placeholder}
           maxLength={NICKNAME_MAX_LENGTH + 4}
           autoCorrect={false}
           returnKeyType="done"
