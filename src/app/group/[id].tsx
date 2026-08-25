@@ -1,5 +1,6 @@
+import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 
 import { OrbitSeats, SharedOrbitRing } from '@/components/orbit';
@@ -12,6 +13,7 @@ import {
   EmptyState,
   GradientButton,
   ProgressBar,
+  ActionSheet,
   ScreenFrame,
   StatusDot,
   StatusPill,
@@ -55,6 +57,19 @@ export default function GroupDetailScreen() {
   const leave = useLeaveGroupPrompt();
   const nudge = useNudge();
 
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  /*
+   * 찌른 사람들 — 값은 **다시 찌를 수 있는 시각**이다.
+   *
+   * 서버가 성공 응답에 `next_allowed_at`을 담아 준다. 그걸 그대로 들고 있으면
+   * 쿨다운을 여기서 다시 셀 필요가 없다(30분이라는 숫자가 화면에 박히지 않는다).
+   *
+   * 째깍거리지 않는다. 30분짜리 타이머를 멤버 수만큼 돌릴 값이 아니고, 다시
+   * 그려지는 순간(당겨서 새로고침, 화면 재진입) 저절로 맞는다.
+   */
+  const [poked, setPoked] = useState<Record<string, string>>({});
+
   /*
    * 당겨서 새로고침.
    *
@@ -73,8 +88,20 @@ export default function GroupDetailScreen() {
    */
   const poke = (memberId: string) => {
     if (!group) return;
+
+    /*
+     * 손끝의 '콕'. 성공을 기다리지 않고 누른 순간에 친다 — 이건 결과 통보가
+     * 아니라 눌렸다는 대답이라서, 왕복 뒤에 오면 이미 늦다.
+     *
+     * 저전력 모드나 탭틱 엔진을 끈 기기에서는 조용히 아무 일도 없다. 그래서
+     * 이것 말고 화면 쪽 표시(버튼이 '29분 남음'으로 바뀌는 것)가 따로 있다.
+     */
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     nudge
       .mutateAsync({ groupId: group.id, profileId: memberId })
+      .then((result) =>
+        setPoked((current) => ({ ...current, [memberId]: result.next_allowed_at }))
+      )
       .catch((error: unknown) =>
         Alert.alert('지금은 못 찔러요', error instanceof Error ? error.message : String(error))
       );
@@ -100,18 +127,16 @@ export default function GroupDetailScreen() {
       <View style={styles.navBar}>
         <CircleButton label="←" onPress={() => router.back()} />
         <StatusPill label={group?.name ?? '…'} dotColor={accent.dot} />
-        {/* `···`은 메뉴를 뜻하는데 하는 일은 나가기 하나뿐이었다. 이름을 쓴다. */}
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="그룹 나가기"
-          hitSlop={8}
+        {/*
+          이 그룹에 대해 할 수 있는 일이 둘(공동 시간 바꾸기·나가기)인데 하나는
+          본문 한가운데 줄로, 하나는 여기 버튼으로 흩어져 있었다. 한 자리로 모은다.
+        */}
+        <CircleButton
+          label="⚙"
+          accessibilityLabel="그룹 설정"
           disabled={!group || leave.isPending}
-          onPress={() => group && leave.prompt(group, members.data, profile.data?.id)}
-          style={[styles.leaveButton, (!group || leave.isPending) && styles.circleDim]}>
-          <AppText variant="metadata" tone="muted">
-            나가기
-          </AppText>
-        </Pressable>
+          onPress={() => setMenuOpen(true)}
+        />
       </View>
 
       {/*
@@ -210,13 +235,20 @@ export default function GroupDetailScreen() {
             />
           ) : (
             <>
-              {rankOne && <RankOneCard member={rankOne} onNudge={() => poke(rankOne.id)} />}
+              {rankOne && (
+                <RankOneCard
+                  member={rankOne}
+                  nextNudgeAt={poked[rankOne.id]}
+                  onNudge={() => poke(rankOne.id)}
+                />
+              )}
               <View style={styles.rankList}>
                 {rest.map((member, index) => (
                   <RankingItem
                     key={member.id}
                     rank={index + 2}
                     member={member}
+                    nextNudgeAt={poked[member.id]}
                     onNudge={() => poke(member.id)}
                   />
                 ))}
@@ -229,6 +261,23 @@ export default function GroupDetailScreen() {
           <RecentDays days={history.data} />
         </>
       )}
+
+      <ActionSheet
+        visible={menuOpen}
+        title={group?.name}
+        onClose={() => setMenuOpen(false)}
+        actions={[
+          {
+            label: `공동 시간 바꾸기${view ? ` · 지금 ${formatShort(view.limitSeconds)}` : ''}`,
+            onPress: () => router.push({ pathname: '/group/limit', params: { groupId: id } }),
+          },
+          {
+            label: '그룹 나가기',
+            danger: true,
+            onPress: () => group && leave.prompt(group, members.data, profile.data?.id),
+          },
+        ]}
+      />
 
       {leave.sheet}
     </ScreenFrame>
@@ -373,17 +422,14 @@ function RuleSlot({
     );
   }
 
-  return (
-    <Pressable
-      accessibilityRole="button"
-      onPress={() => router.push({ pathname: '/group/limit', params: { groupId } })}
-      style={styles.ruleRow}>
-      <AppText variant="bodyStrong">공동 시간</AppText>
-      <AppText variant="metadata" tone="muted" font="mono">
-        {formatShort(limitSeconds)} · 바꾸기
-      </AppText>
-    </Pressable>
-  );
+  /*
+   * 평소에는 아무것도 그리지 않는다 — 바꾸는 문은 오른쪽 위 설정으로 옮겼다.
+   * 지금 한도는 히어로가 이미 "우리 시간 8h 중"으로 말하고 있다.
+   *
+   * 변경안이 도는 동안만 위의 카드가 이 자리를 차지한다. 그건 읽고 답해야 하는
+   * 것이라 메뉴 안에 숨기면 안 된다.
+   */
+  return null;
 }
 
 /**
@@ -402,7 +448,15 @@ function RuleSlot({
  *
  * 꼴찌에게는 여전히 아무 표시도 붙지 않는다.
  */
-function RankOneCard({ member, onNudge }: { member: RankedMember; onNudge: () => void }) {
+function RankOneCard({
+  member,
+  nextNudgeAt,
+  onNudge,
+}: {
+  member: RankedMember;
+  nextNudgeAt?: string;
+  onNudge: () => void;
+}) {
   return (
     <Surface
       fill={['#161029', '#0B0B12']}
@@ -431,14 +485,9 @@ function RankOneCard({ member, onNudge }: { member: RankedMember; onNudge: () =>
         <SyncLine member={member} />
       </View>
 
-      <View style={styles.memberRight}>
-        <AppText variant="cardNumber">{member.usageLabel}</AppText>
-        <AppText variant="badge" tone="achievement" font="display">
-          오늘 가장 적게
-        </AppText>
-      </View>
+      <AppText variant="cardNumber">{member.usageLabel}</AppText>
 
-      <NudgeButton member={member} onPress={onNudge} />
+      <NudgeButton member={member} nextNudgeAt={nextNudgeAt} onPress={onNudge} />
     </Surface>
   );
 }
@@ -447,10 +496,12 @@ function RankOneCard({ member, onNudge }: { member: RankedMember; onNudge: () =>
 function RankingItem({
   rank,
   member,
+  nextNudgeAt,
   onNudge,
 }: {
   rank: number;
   member: RankedMember;
+  nextNudgeAt?: string;
   onNudge: () => void;
 }) {
   return (
@@ -477,7 +528,7 @@ function RankingItem({
 
       <AppText variant="memberNumber">{member.usageLabel}</AppText>
 
-      <NudgeButton member={member} onPress={onNudge} />
+      <NudgeButton member={member} nextNudgeAt={nextNudgeAt} onPress={onNudge} />
     </View>
   );
 }
@@ -488,20 +539,46 @@ function RankingItem({
  * 나에게는 나타나지 않는다. 자리를 비워 두지도 않는다 — 내 줄에만 빈 칸이 생기면
  * 그게 더 눈에 띈다.
  *
- * 아이콘은 눈(👀)이다. 손가락이나 종은 "재촉"으로 읽히는데, 이 제품에서 콕
- * 찌르기는 채근이 아니라 "보고 있어"에 가깝다.
+ * 예전에는 눈(👀) 하나였다. "보고 있어"라는 뜻이었는데 그 뜻이 아이콘만으로는
+ * 전해지지 않았다 — 누르기 전에는 무엇이 일어날지, 누른 뒤에는 일어났는지
+ * 알 수 없었다. 이름을 쓰고, 찌른 뒤에는 그 자리에서 그렇게 말한다.
+ *
+ * 방금 찌른 사람에게는 **언제 다시 찌를 수 있는지**를 쓴다. 잠긴 버튼이 이유를
+ * 말하지 않으면 고장으로 읽히고, 그때 사용자가 하는 일은 계속 눌러 보는 것이다.
+ * 남은 시간은 서버가 준 시각에서 나온다 — 30분이라는 숫자를 화면이 알 필요는 없다.
  */
-function NudgeButton({ member, onPress }: { member: RankedMember; onPress: () => void }) {
+function NudgeButton({
+  member,
+  nextNudgeAt,
+  onPress,
+}: {
+  member: RankedMember;
+  nextNudgeAt?: string;
+  onPress: () => void;
+}) {
   if (member.isMe) return null;
+
+  // 변경안 카드와 같은 서식을 쓴다 — 한 화면에서 남은 시간을 두 가지로 쓰지 않는다.
+  const waiting = nextNudgeAt && isFuture(nextNudgeAt) ? formatRemaining(nextNudgeAt) : null;
+  const label = waiting ?? '콕 찌르기';
 
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`${member.name} 콕 찌르기`}
+      accessibilityLabel={
+        waiting ? `${member.name} 콕 찌르기, ${waiting} 다시 가능` : `${member.name} 콕 찌르기`
+      }
+      disabled={!!waiting}
       onPress={onPress}
       hitSlop={8}
-      style={({ pressed }) => [styles.nudge, pressed && { opacity: 0.5 }]}>
-      <AppText variant="body">👀</AppText>
+      style={({ pressed }) => [
+        styles.nudge,
+        waiting && styles.nudgeDone,
+        pressed && { opacity: 0.5 },
+      ]}>
+      <AppText variant="metadata" tone={waiting ? 'metadata' : 'body'}>
+        {label}
+      </AppText>
     </Pressable>
   );
 }
@@ -581,16 +658,19 @@ function MyShareCard({
 
 function CircleButton({
   label,
+  accessibilityLabel,
   onPress,
   disabled,
 }: {
   label: string;
+  accessibilityLabel?: string;
   onPress?: () => void;
   disabled?: boolean;
 }) {
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
       disabled={disabled}
       onPress={onPress}
       style={[styles.circle, disabled && styles.circleDim]}>
@@ -604,18 +684,6 @@ function CircleButton({
 const styles = StyleSheet.create({
   ruleCard: { gap: 10 },
   ruleChange: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  ruleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
-    borderRadius: radii.listRow,
-    paddingVertical: 13,
-    paddingHorizontal: 16,
-    backgroundColor: hexToRgba('#FFFFFF', 0.03),
-    borderWidth: 1,
-    borderColor: colors.border.subtle,
-  },
   navBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -632,16 +700,6 @@ const styles = StyleSheet.create({
     borderColor: colors.border.hairlineStrong,
   },
   circleDim: { opacity: 0.34 },
-  leaveButton: {
-    height: 38,
-    paddingHorizontal: 14,
-    borderRadius: 19,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.surface.glass,
-    borderWidth: 1,
-    borderColor: colors.border.hairlineStrong,
-  },
   heroRow: { flexDirection: 'row', alignItems: 'center', gap: 16 },
   heroText: { flex: 1, gap: 4 },
   heroBar: { gap: 6, paddingTop: 4 },
@@ -653,7 +711,6 @@ const styles = StyleSheet.create({
   },
   memberCard: { flexDirection: 'row', alignItems: 'center', gap: 13 },
   memberText: { flex: 1, gap: 2 },
-  memberRight: { alignItems: 'flex-end', gap: 3 },
   rankList: { gap: 7 },
   rankRow: {
     flexDirection: 'row',
@@ -668,16 +725,18 @@ const styles = StyleSheet.create({
   },
   rankNumeral: { width: 22 },
   nudge: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    height: 32,
+    paddingHorizontal: 12,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.surface.glass,
     borderWidth: 1,
     borderColor: colors.border.hairline,
-    marginLeft: 10,
+    marginLeft: 8,
   },
+  // 기다리는 동안에는 표면을 지운다 — 지금 누를 자리로 보이면 안 된다.
+  nudgeDone: { backgroundColor: 'transparent', borderColor: colors.border.subtle },
   syncLine: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   myShare: { gap: 9, marginTop: 2 },
   myShareTop: {
