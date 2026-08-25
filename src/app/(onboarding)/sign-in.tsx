@@ -187,7 +187,8 @@ const styles = StyleSheet.create({
     minHeight: 44,
   },
   dim: { opacity: 0.9 },
-  appleLabel: { color: '#050507' },
+  appleLabel: { color: colors.text.onLight },
+  // Google 브랜드 가이드가 지정한 라벨 색. 우리 램프가 아니라 그쪽 규정이다.
   googleLabel: { color: '#1F1F1F' },
   legal: { textAlign: 'center', lineHeight: 17, paddingTop: 6 },
 });

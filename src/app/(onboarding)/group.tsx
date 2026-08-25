@@ -95,7 +95,7 @@ export default function CreateGroupScreen() {
               value={name}
               onChangeText={setName}
               placeholder="밤샘 금지단"
-              placeholderTextColor={colors.text.disabled}
+              placeholderTextColor={colors.text.placeholder}
               maxLength={20}
               autoCorrect={false}
               returnKeyType="done"

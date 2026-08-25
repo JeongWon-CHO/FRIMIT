@@ -73,7 +73,7 @@ export function GradientButton({
       ]}>
       {variant === 'primary' && (
         <LinearGradient
-          colors={gradients.violetToBlue.colors as [string, string]}
+          colors={gradients.primaryAction.colors as [string, string]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0.18 }}
           style={StyleSheet.absoluteFill}
