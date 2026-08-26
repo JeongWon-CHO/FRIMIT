@@ -92,6 +92,32 @@ describe('buildGoalView', () => {
     expect(view.members[0].countLabel).toBe('5 / 5번');
   });
 
+  it('끝난 목표는 결과만 남는다 — 기록칸도 남은 날도 없다', () => {
+    // 서버가 끝난 뒤 7일 동안 계속 준다. 마지막 날 오후와 헷갈리면 안 된다.
+    const view = buildGoalView(
+      group,
+      snapshot({ goal: { ...snapshot().goal, ends_at: '2026-08-18T21:00:00.000Z' } }),
+      'me',
+      NOW
+    )!;
+    expect(view.ended).toBe(true);
+    expect(view.canRecord).toBe(false);
+    expect(view.deadlineLabel).toBe('끝났어요');
+    // 결과는 그대로 보여준다. 78%로 끝났으면 78%다.
+    expect(view.percentLabel).toBe('50%');
+  });
+
+  it('마지막 날 오후는 아직 끝난 것이 아니다', () => {
+    const view = buildGoalView(
+      group,
+      snapshot({ goal: { ...snapshot().goal, ends_at: '2026-08-19T12:00:00.000Z' } }),
+      'me',
+      NOW
+    )!;
+    expect(view.ended).toBe(false);
+    expect(view.canRecord).toBe(true);
+  });
+
   it('목표가 없으면 null. 빈 상태는 실패가 아니다', () => {
     expect(buildGoalView(group, null, 'me', NOW)).toBeNull();
   });
@@ -123,6 +149,20 @@ describe('pickHeroGoal', () => {
 
   it('아직 시작하지 않은 목표는 더 급해 보여도 뒤로 간다', () => {
     expect(pickHeroGoal([scheduled, later])?.goalId).toBe('goal-2');
+  });
+
+  it('끝난 목표는 맨 뒤 — 오늘 적을 수 있는 것이 위다', () => {
+    const done = buildGoalView(
+      { ...group, id: 'group-4' },
+      snapshot({
+        goal: { ...snapshot().goal, id: 'goal-4', group_id: 'group-4', ends_at: '2026-08-18T21:00:00.000Z' },
+      }),
+      'me',
+      NOW
+    )!;
+    // 남은 날로만 세우면 0일인 끝난 목표가 1등이 된다.
+    expect(pickHeroGoal([done, later])?.goalId).toBe('goal-2');
+    expect(pickHeroGoal([done, scheduled])?.goalId).toBe('goal-3');
   });
 
   it('사용자가 지목한 그룹이 항상 이긴다', () => {

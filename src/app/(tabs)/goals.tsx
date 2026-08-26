@@ -60,6 +60,8 @@ export default function GoalsScreen() {
   );
   const canCancel =
     hero &&
+    // 끝난 목표는 그만둘 것이 없다. 이미 끝났다.
+    !hero.ended &&
     (hero.createdBy === profile.data?.id ||
       heroGroup?.admin_id === profile.data?.id);
 
@@ -178,6 +180,22 @@ function RecordRow({ view }: { view: GoalView }) {
   const record = useRecordGoalEntry();
   const remove = useDeleteGoalEntry();
   const [draft, setDraft] = useState<string | null>(null);
+
+  // 끝난 목표. 7일 동안 결과만 남고, 다음 걸음은 새 목표다.
+  if (view.ended) {
+    return (
+      <View style={styles.footer}>
+        <AppText variant="metadata" tone="faint" style={styles.center}>
+          이 목표는 끝났어요. 결과는 일주일 동안 여기 남아 있어요.
+        </AppText>
+        <GradientButton
+          label="새 목표 걸기"
+          size="md"
+          onPress={() => router.push("/goal/new")}
+        />
+      </View>
+    );
+  }
 
   if (!view.canRecord) {
     return (

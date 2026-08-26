@@ -29,6 +29,8 @@ export type GoalView = {
   /** 남은 날. 히어로를 고르는 정렬 키다. */
   daysLeft: number;
   started: boolean;
+  /** 끝난 목표다. 기록칸 대신 결과와 '새 목표 걸기'가 온다. */
+  ended: boolean;
   members: {
     id: string;
     name: string;
@@ -75,6 +77,11 @@ export function buildGoalView(
   const { goal } = snapshot;
   const left = daysLeft(goal.ends_at, now);
 
+  // 서버가 끝난 목표를 7일 동안 계속 준다(0825 마이그레이션). 살아 있는 것과
+  // 생김새가 같으므로 여기서 갈라 준다 — `daysLeft`가 0인 것만으로는 마지막 날
+  // 오후와 구분되지 않는다.
+  const ended = new Date(goal.ends_at).getTime() <= now.getTime();
+
   return {
     goalId: goal.id,
     groupId: goal.group_id,
@@ -87,9 +94,10 @@ export function buildGoalView(
     // 방법이 없으므로 여기서도 분명히 해 둔다.
     progress: snapshot.started ? clamp01(snapshot.group_progress) : 0,
     percentLabel: `${Math.round(clamp01(snapshot.group_progress) * 100)}%`,
-    deadlineLabel: snapshot.started ? `${left}일 남음` : '내일 6시 시작',
+    deadlineLabel: ended ? '끝났어요' : snapshot.started ? `${left}일 남음` : '내일 6시 시작',
     daysLeft: left,
     started: snapshot.started,
+    ended,
     members: snapshot.participants.map((participant) => ({
       id: participant.profile_id,
       name: participant.nickname,
@@ -102,6 +110,7 @@ export function buildGoalView(
     createdBy: goal.created_by,
     canRecord:
       snapshot.started &&
+      !ended &&
       Boolean(myProfileId) &&
       snapshot.participants.some((participant) => participant.profile_id === myProfileId),
   };
@@ -120,6 +129,8 @@ export function pickHeroGoal(views: GoalView[], preferredGroupId?: string | null
   if (preferred) return preferred;
 
   return [...views].sort((a, b) => {
+    // 끝난 목표는 맨 뒤다. 오늘 적을 수 있는 목표가 하나라도 있으면 그것이 위다.
+    if (a.ended !== b.ended) return a.ended ? 1 : -1;
     // 시작한 목표가 먼저다. 내일 시작할 목표는 오늘 할 일이 없다.
     if (a.started !== b.started) return a.started ? -1 : 1;
     return a.daysLeft - b.daysLeft;
