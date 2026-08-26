@@ -4,12 +4,11 @@
     "slug": "frimit",
     "version": "0.1.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/frimit-appicon-1024.png",
     "scheme": "frimit",
     "userInterfaceStyle": "dark",
     "primaryColor": "#7C4DFF",
     "ios": {
-      "icon": "./assets/expo.icon",
       "bundleIdentifier": "com.frimit.app",
       "supportsTablet": false,
       "usesAppleSignIn": true
@@ -17,10 +16,8 @@
     "android": {
       "package": "com.frimit.app",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "backgroundColor": "#050507",
+        "foregroundImage": "./assets/images/android-icon-foreground.png"
       },
       "predictiveBackGestureEnabled": false
     },
@@ -29,9 +26,14 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#050507",
+          "backgroundColor": "#07070A",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "imageWidth": 177,
+          "ios": {
+            "image": "./assets/frimit-splash.png",
+            "enableFullScreenImage_legacy": true,
+            "resizeMode": "cover"
+          }
         }
       ],
       [
