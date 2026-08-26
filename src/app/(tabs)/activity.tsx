@@ -71,7 +71,7 @@ export default function ActivityScreen() {
 
       {days.length > 0 && (
         <AppText variant="metadata" tone="faint" style={styles.footer}>
-          활동 내역은 90일 동안 남아요.
+          활동 내역은 2주 동안 남아요.
         </AppText>
       )}
     </ScreenFrame>
