@@ -23,6 +23,7 @@ import { deleteMyAccount } from '@/lib/account';
 import { signOut } from '@/lib/auth';
 import { ensureDevice } from '@/lib/device';
 import { resetProgress } from '@/lib/onboarding';
+import { queryKeys } from '@/lib/query';
 import { readPushPermission, registerPushToken, requestPushPermission, type PushPermission } from '@/lib/push';
 import { underLimitStreak, weeklyAverage } from '@/lib/history-view';
 import { groupAccent, pickHeroGroup } from '@/lib/today';
@@ -49,6 +50,7 @@ export default function MyScreen() {
   const groups = useMyGroups();
   const usages = useGroupUsages(groups.data);
   const memberships = useMyMemberships();
+  const queryClient = useQueryClient();
   const setMuted = useSetMuted();
   const tracking = useTrackingState(groups.data?.[0]?.id);
 
@@ -67,7 +69,18 @@ export default function MyScreen() {
 
   return (
     <ScreenFrame
-      ambient={{ color: colors.accent.violetSoft, size: 380, opacity: 0.24, x: 195, y: 60 }}>
+      ambient={{ color: colors.accent.violetSoft, size: 380, opacity: 0.24, x: 195, y: 60 }}
+      /*
+       * 이 화면의 값은 세 곳에서 온다 — 프로필, 그룹 접두사 아래의 것들(그룹 수·
+       * 사용량·최근 기록·음소거), 그리고 기기의 권한이다. 앞의 둘은 캐시를 비우면
+       * 되고, 권한은 캐시가 아니라 시스템 설정이라 다시 읽어야 한다. 설정에서
+       * 권한을 켜고 돌아온 사람이 가장 먼저 하는 동작이 당겨 보는 것이다.
+       */
+      onRefresh={() => {
+        tracking.refresh();
+        queryClient.invalidateQueries({ queryKey: queryKeys.profile });
+        return queryClient.invalidateQueries({ queryKey: queryKeys.allGroups });
+      }}>
       <View style={styles.profile}>
         <Avatar
           id={profile.data?.id ?? 'me'}
