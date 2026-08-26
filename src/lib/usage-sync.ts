@@ -74,7 +74,34 @@ async function uploadSnapshots(
     throw rpcError(error, '사용량을 올리지 못했습니다');
   }
 
-  return (data ?? []) as UsageSyncResult[];
+  const results = (data ?? []) as UsageSyncResult[];
+  for (const result of results) {
+    applyShieldBudget(result.group_id, result.remaining_seconds);
+  }
+  return results;
+}
+
+/**
+ * 서버가 알려준 잔여를 기기의 차단선으로 옮겨 심는다.
+ *
+ * 여기가 차단이 시작되는 유일한 지점이다. 심고 나면 그 뒤로는 기기 혼자
+ * 판정한다 — 백그라운드 임계값 콜백이 누적을 올릴 때마다 선을 넘었는지 보고,
+ * 넘었으면 네트워크 없이도 잠근다.
+ *
+ * **던지지 않는다.** 차단은 사용량 집계 위에 얹힌 겹이고, 잠그지 못했다고 해서
+ * 방금 올린 사용량까지 실패로 돌릴 이유가 없다. Android에서는 아예 없는 기능이라
+ * 네이티브 쪽에서 조용히 물러난다.
+ */
+function applyShieldBudget(groupId: string, remainingSeconds: number | undefined): void {
+  // 모르는 것과 0은 다르다. 서버가 잔여를 알려주지 않은 건(거절된 그룹)은
+  // 차단선을 건드리지 않고 그대로 둔다.
+  if (typeof remainingSeconds !== 'number') return;
+
+  try {
+    ScreenTime.applyShieldBudget(groupId, remainingSeconds);
+  } catch {
+    // 다음 동기화에서 다시 심는다. 앱이 앞으로 나올 때마다 도는 경로다.
+  }
 }
 
 /** 방금 새 구간으로 넘긴 그룹만 다시 읽어 올린다. */
@@ -127,8 +154,8 @@ async function rollTrackingPeriods(snapshots: UsageSnapshot[]): Promise<string[]
 /**
  * 그룹의 현재 공동 풀 상태. 오늘 화면이 이 값을 그대로 그린다.
  *
- * 잔여시간은 0에서 멈추고 초과분이 따로 오른다 — 한도를 넘겨도 차단하지 않는다는
- * 제품 규칙이 서버 쪽 계산에 이미 들어 있다.
+ * 잔여시간은 0에서 멈추고 초과분이 따로 오른다. 차단은 잔여가 0이 되는 순간
+ * 걸리지만 초과분은 계속 쌓인다 — 다른 사람이 마저 쓰기 때문이다.
  */
 export type GroupDailyUsage = {
   group_id: string;
@@ -157,5 +184,12 @@ export async function fetchGroupDailyUsage(groupId: string): Promise<GroupDailyU
     throw rpcError(error, '공동 풀 상태를 읽지 못했습니다');
   }
 
-  return data as GroupDailyUsage;
+  const usage = data as GroupDailyUsage;
+
+  // 화면을 그리려고 읽은 값이지만 차단선도 여기서 다시 심는다. 동기화보다 자주
+  // 도는 경로라, 내가 앱을 보고 있는 동안 남이 풀을 태워 버린 경우를 여기서
+  // 잡는다 — 내 사용량은 그대로인데 잔여만 줄어드는 상황이다.
+  applyShieldBudget(usage.group_id, usage.remaining_seconds);
+
+  return usage;
 }

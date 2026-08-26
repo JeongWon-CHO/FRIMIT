@@ -1,4 +1,6 @@
+import FamilyControls
 import Foundation
+import ManagedSettings
 
 /// 호스트 앱과 DeviceActivity extension이 **App Group을 통해 공유하는** 저장소.
 ///
@@ -37,6 +39,20 @@ enum FrimitSharedStore {
   /// 현재 집계 구간의 시작 (epoch ms). 구간이 바뀌면 누적값을 0으로 되돌린다.
   static func periodStartKey(_ groupId: String) -> String {
     "frimit.usage.periodStart.\(groupId)"
+  }
+
+  /// 차단선. **내 누적**이 이 초를 넘으면 그룹의 선택 앱을 잠근다.
+  ///
+  /// 값이 없으면 차단하지 않는다. 서버만이 공동 풀의 잔여를 알기 때문에, 호스트
+  /// 앱이 동기화할 때마다 `내 누적 + 그룹 잔여`로 다시 적어 준다. 여기(extension)는
+  /// 그 값을 읽기만 한다.
+  static func shieldAtKey(_ groupId: String) -> String {
+    "frimit.shield.at.\(groupId)"
+  }
+
+  /// 그룹별 추적 대상. 호스트 앱의 `FrimitStore`가 쓰고 여기서는 차단용으로 읽는다.
+  static func selectionKey(_ groupId: String) -> String {
+    "frimit.selection.\(groupId)"
   }
 
   // MARK: - DeviceActivity 이름 규약
@@ -84,5 +100,71 @@ enum FrimitSharedStore {
     defaults.set(0, forKey: thresholdSecondsKey(groupId))
     defaults.set(periodStartMs, forKey: periodStartKey(groupId))
     defaults.set(Date().timeIntervalSince1970 * 1000, forKey: updatedAtKey(groupId))
+  }
+
+  // MARK: - 차단 (ManagedSettings)
+
+  /// 차단선. 아직 서버 값을 받지 못했으면 nil이고, 그때는 차단하지 않는다.
+  ///
+  /// `integer(forKey:)`를 쓰지 않는 이유: 값이 없을 때도 0을 돌려주는데, 0은
+  /// "잔여가 0이라 지금 당장 잠가야 한다"는 뜻이라 구분이 되지 않는다.
+  static func shieldAtSeconds(groupId: String) -> Int? {
+    defaults.object(forKey: shieldAtKey(groupId)) as? Int
+  }
+
+  /// 차단선을 지우고 잠금도 푼다. 새 구간이 시작될 때 부른다.
+  static func clearShieldBudget(groupId: String) {
+    defaults.removeObject(forKey: shieldAtKey(groupId))
+    setShield(groupId: groupId, on: false)
+  }
+
+  static func loadSelection(groupId: String) -> FamilyActivitySelection? {
+    guard let data = defaults.data(forKey: selectionKey(groupId)) else { return nil }
+    return try? JSONDecoder().decode(FamilyActivitySelection.self, from: data)
+  }
+
+  /// 그룹마다 store를 따로 둔다.
+  ///
+  /// 하나로 합치면 A 그룹의 한도가 다 차서 잠글 때 B 그룹의 선택까지 덮어쓰게 된다.
+  /// 따로 두면 iOS가 알아서 합집합으로 적용한다 — 어느 한 그룹에서라도 잠긴 앱은
+  /// 잠긴 상태가 된다. 이름 있는 store는 앱과 extension이 함께 본다.
+  static func shieldStore(groupId: String) -> ManagedSettingsStore {
+    ManagedSettingsStore(named: ManagedSettingsStore.Name("frimit.\(groupId)"))
+  }
+
+  /// 지금 누적값을 차단선과 견주어 잠그거나 푼다. 잠근 상태면 true.
+  @discardableResult
+  static func evaluateShield(groupId: String) -> Bool {
+    guard let limit = shieldAtSeconds(groupId: groupId) else {
+      setShield(groupId: groupId, on: false)
+      return false
+    }
+
+    let used = defaults.integer(forKey: thresholdSecondsKey(groupId))
+    let shouldShield = used >= limit
+    setShield(groupId: groupId, on: shouldShield)
+    return shouldShield
+  }
+
+  /// 이 그룹이 고른 대상을 잠그거나 푼다.
+  ///
+  /// 빈 컬렉션이 아니라 `nil`로 지워야 한다. 빈 값을 넣으면 "아무것도 아닌 것을
+  /// 잠근" 설정이 남아 시스템의 차단 목록에 계속 실린다.
+  static func setShield(groupId: String, on: Bool) {
+    let store = shieldStore(groupId: groupId)
+
+    guard on, let selection = loadSelection(groupId: groupId) else {
+      store.shield.applications = nil
+      store.shield.applicationCategories = nil
+      store.shield.webDomains = nil
+      return
+    }
+
+    store.shield.applications =
+      selection.applicationTokens.isEmpty ? nil : selection.applicationTokens
+    store.shield.applicationCategories =
+      selection.categoryTokens.isEmpty ? nil : .specific(selection.categoryTokens)
+    store.shield.webDomains =
+      selection.webDomainTokens.isEmpty ? nil : selection.webDomainTokens
   }
 }

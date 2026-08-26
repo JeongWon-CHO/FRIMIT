@@ -8,7 +8,8 @@ import Foundation
 /// 이벤트 이름에서 분을 되읽어 "적어도 이만큼은 썼다"를 계단식으로 쌓는다.
 ///
 /// 이 프로세스는 짧게만 살아 있으므로 여기서는 App Group에 값을 쓰는 일만 하고,
-/// 서버 업로드는 호스트 앱이 깨어날 때 처리한다.
+/// 서버 업로드는 호스트 앱이 깨어날 때 처리한다. 예외가 차단이다 — 잠그는 일은
+/// 네트워크 없이 이 자리에서 즉시 해야 뜻이 있다.
 class FrimitActivityMonitor: DeviceActivityMonitor {
   override func intervalDidStart(for activity: DeviceActivityName) {
     super.intervalDidStart(for: activity)
@@ -22,6 +23,12 @@ class FrimitActivityMonitor: DeviceActivityMonitor {
       groupId: groupId,
       periodStartMs: Date().timeIntervalSince1970 * 1000
     )
+
+    // 어제의 차단선은 어제의 풀에서 나온 값이다. 오늘 몫이 얼마인지는 서버만
+    // 알고, 그 값은 호스트 앱이 다음 동기화에서 다시 적어 준다. 그때까지는
+    // 잠그지 않는다 — 새 하루를 잠긴 채로 시작하는 것보다 몇 분 늦게 잠기는
+    // 편이 낫다.
+    FrimitSharedStore.clearShieldBudget(groupId: groupId)
   }
 
   override func eventDidReachThreshold(
@@ -38,6 +45,13 @@ class FrimitActivityMonitor: DeviceActivityMonitor {
     }
 
     FrimitSharedStore.recordThreshold(groupId: groupId, minutes: minutes)
+
+    // 누적이 오른 바로 그 자리에서 차단선과 견준다. 앱이 꺼져 있어도, 비행기
+    // 모드여도 여기는 실행된다 — 차단이 네트워크에 기대지 않는 유일한 경로다.
+    //
+    // 늦어질 수 있는 폭은 임계값 그물의 간격이 정한다
+    // (`FrimitScheduler.thresholdMinutes`: 초반 1분, 2시간까지 5분, 그 뒤 15~30분).
+    FrimitSharedStore.evaluateShield(groupId: groupId)
   }
 
   override func intervalDidEnd(for activity: DeviceActivityName) {

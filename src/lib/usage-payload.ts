@@ -36,6 +36,12 @@ export type UsageSyncResult = {
   accepted_seconds?: number;
   /** 이번 동기화로 확정값이 오른 초. 0이면 아무것도 바뀌지 않았다. */
   gained_seconds?: number;
+  /**
+   * 방금 올린 값까지 반영한 공동 풀 잔여. 기기는 이 값으로 차단선을 다시 심는다.
+   *
+   * 거절된 건에는 없다 — 모르는 것과 0은 다르고, 없으면 차단선을 건드리지 않는다.
+   */
+  remaining_seconds?: number;
   hint?: string;
   message?: string;
 };

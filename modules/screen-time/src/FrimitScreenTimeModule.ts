@@ -77,6 +77,9 @@ declare class FrimitScreenTimeModule extends NativeModule<FrimitScreenTimeModule
     thresholdSeconds: number;
     /** extension이 그 값을 기록한 시각 (epoch ms). 한 번도 없으면 null */
     lastUpdatedAt: number | null;
+    /** 계단값이 이 초를 넘으면 잠긴다. 아직 심지 않았으면 null */
+    shieldAtSeconds: number | null;
+    shielded: boolean;
   };
 
   /** 스파이크 진단용. iOS 전용이며 App Group 연결과 동시 감시 개수를 확인한다 */
@@ -84,6 +87,8 @@ declare class FrimitScreenTimeModule extends NativeModule<FrimitScreenTimeModule
     appGroupConfigured: boolean;
     appGroupIdentifier: string | null;
     activeMonitorCount: number;
+    /** 지금 실제로 잠겨 있는 그룹 */
+    shieldedGroupIds: string[];
     thresholdEventCount: number;
   };
 
@@ -91,6 +96,20 @@ declare class FrimitScreenTimeModule extends NativeModule<FrimitScreenTimeModule
 
   /** 시스템 `FamilyActivityPicker`를 띄운다. 앱의 정체는 JS로 넘어오지 않는다 */
   presentSelectionAsync(groupId: string): Promise<SelectionSummary>;
+
+  /**
+   * 서버가 알려준 그룹 잔여 시간을 차단선으로 심는다. 지금 잠겼으면 true.
+   *
+   * 잠글지 말지는 기기가 판정한다 — 여기서는 "내 누적이 얼마를 넘으면"이라는
+   * 선만 정해 주고, 실제 판정은 백그라운드 임계값 콜백에서 일어난다. 그래서
+   * 네트워크가 끊긴 뒤에도 차단이 계속 동작한다.
+   */
+  applyShieldBudget(groupId: string, remainingSeconds: number): boolean;
+
+  /** 차단선을 지우고 잠금도 푼다 */
+  clearShield(groupId: string): void;
+
+  isShielded(groupId: string): boolean;
 
   // --- Android 전용 ---
 

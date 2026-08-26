@@ -124,8 +124,9 @@ export function formatShort(seconds: number): string {
 /**
  * 히어로의 큰 숫자.
  *
- * 잔여는 0에서 멈추고 초과분이 따로 오른다 — 한도를 넘겨도 차단하지 않는다는
- * 규칙이 서버 계산에 이미 들어 있고, 화면은 그 두 값을 다르게 부른다.
+ * 잔여는 0에서 멈추고 초과분이 따로 오른다. 잔여가 0이 되는 순간 앱이 잠기지만
+ * 초과분은 계속 오른다 — 다른 사람이 마저 쓰기 때문이다. 화면은 그 두 값을
+ * 다르게 부른다.
  */
 export function formatPoolHeadline(remainingSeconds: number, overSeconds: number): string {
   if (overSeconds > 0) return `${formatShort(overSeconds)} over`;

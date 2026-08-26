@@ -79,6 +79,28 @@ export const ScreenTime = {
     return natives.map(toSnapshot);
   },
 
+  /**
+   * 서버가 알려준 그룹 잔여 시간을 차단선으로 심는다. 지금 잠겼으면 true.
+   *
+   * iOS 전용이지만 **던지지 않는다.** 동기화는 두 플랫폼에서 같은 코드로 도는데,
+   * 차단은 iOS에만 있다. 여기서 던지면 Android의 동기화가 사용량을 다 올려 놓고
+   * 마지막에 실패로 끝난다 — 없는 기능 때문에 있는 기능이 무너진다.
+   */
+  applyShieldBudget: (groupId: string, remainingSeconds: number): boolean => {
+    if (Platform.OS !== 'ios') return false;
+    return Native.applyShieldBudget(groupId, Math.max(0, Math.floor(remainingSeconds)));
+  },
+
+  /** 차단선을 지우고 잠금도 푼다. iOS가 아니면 아무 일도 하지 않는다 */
+  clearShield: (groupId: string): void => {
+    if (Platform.OS !== 'ios') return;
+    Native.clearShield(groupId);
+  },
+
+  /** 지금 이 그룹의 앱이 잠겨 있는가. iOS가 아니면 항상 false */
+  isShielded: (groupId: string): boolean =>
+    Platform.OS === 'ios' && Native.isShielded(groupId),
+
   /** iOS 전용: 시스템 FamilyActivityPicker */
   presentSelection: (groupId: string): Promise<SelectionSummary> => {
     assertPlatform('ios', 'presentSelection');

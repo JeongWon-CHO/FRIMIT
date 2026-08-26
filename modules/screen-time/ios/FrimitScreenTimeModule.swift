@@ -18,9 +18,22 @@ public class FrimitScreenTimeModule: Module {
         .removeDuplicates()
         .receive(on: DispatchQueue.main)
         .sink { [weak self] status in
-          self?.sendEvent("onPermissionChange", [
-            "permissionState": FrimitAuthorization.state(from: status),
-          ])
+          let state = FrimitAuthorization.state(from: status)
+
+          // 권한이 사라지면 잠금부터 푼다. 사용자가 스크린타임 승인을 거두는 것은
+          // "이 앱에 더는 맡기지 않겠다"는 뜻이고, 그 상태로 잠금만 남으면 풀
+          // 방법이 마땅치 않다.
+          //
+          // `denied`만 본다. 앱이 막 뜬 순간에는 실제 상태가 아직 안 실려서
+          // `notDetermined`로 읽히는데(위 주석), 거기서 함께 풀면 켤 때마다
+          // 잠금이 저절로 사라진다.
+          if state == "denied" {
+            for groupId in FrimitStore.knownGroupIds() {
+              FrimitShield.clearBudget(groupId: groupId)
+            }
+          }
+
+          self?.sendEvent("onPermissionChange", ["permissionState": state])
         }
         .store(in: &self.cancellables)
     }
@@ -86,6 +99,9 @@ public class FrimitScreenTimeModule: Module {
     Function("clearSelection") { (groupId: String) in
       FrimitScheduler.stop(groupId: groupId)
       FrimitUsageBridge.clear(groupId: groupId)
+      // 선택이 사라지기 전에 푼다. 선택을 지운 뒤에는 무엇을 잠갔는지 알 수 없어
+      // 잠금을 풀 방법이 남지 않는다.
+      FrimitShield.clearBudget(groupId: groupId)
       FrimitStore.clearSelection(groupId: groupId)
     }
 
@@ -102,6 +118,23 @@ public class FrimitScreenTimeModule: Module {
 
     AsyncFunction("stopTrackingAsync") { (groupId: String) in
       FrimitScheduler.stop(groupId: groupId)
+      FrimitShield.clearBudget(groupId: groupId)
+    }
+
+    /// 서버가 알려준 그룹 잔여 시간을 차단선으로 심는다. 지금 잠겼으면 true.
+    ///
+    /// 동기화가 돌아올 때마다 부른다. 이 값이 있어야 Monitor extension이 오프라인
+    /// 상태에서도 스스로 잠글 수 있다.
+    Function("applyShieldBudget") { (groupId: String, remainingSeconds: Int) -> Bool in
+      FrimitShield.setBudget(groupId: groupId, remainingSeconds: remainingSeconds)
+    }
+
+    Function("clearShield") { (groupId: String) in
+      FrimitShield.clearBudget(groupId: groupId)
+    }
+
+    Function("isShielded") { (groupId: String) -> Bool in
+      FrimitShield.isShielded(groupId: groupId)
     }
 
     AsyncFunction("getSnapshotAsync") { (groupId: String) -> [String: Any?]? in
@@ -118,6 +151,7 @@ public class FrimitScreenTimeModule: Module {
         "appGroupConfigured": FrimitStore.isAppGroupConfigured,
         "appGroupIdentifier": FrimitStore.appGroupIdentifier,
         "activeMonitorCount": FrimitScheduler.activeCount(),
+        "shieldedGroupIds": FrimitStore.knownGroupIds().filter { FrimitShield.isShielded(groupId: $0) },
         "thresholdEventCount": FrimitScheduler.thresholdMinutes.count,
       ]
     }
@@ -131,6 +165,10 @@ public class FrimitScreenTimeModule: Module {
       [
         "thresholdSeconds": FrimitUsageBridge.cumulativeSeconds(groupId: groupId),
         "lastUpdatedAt": FrimitUsageBridge.lastUpdatedAt(groupId: groupId),
+        // 차단선과 계단값을 나란히 봐야 "아직 안 넘었다"와 "넘었는데 안 잠겼다"를
+        // 구분할 수 있다. 후자만 결함이다.
+        "shieldAtSeconds": FrimitShield.shieldAtSeconds(groupId: groupId),
+        "shielded": FrimitShield.isShielded(groupId: groupId),
       ]
     }
   }

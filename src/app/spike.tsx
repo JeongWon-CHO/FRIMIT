@@ -275,6 +275,11 @@ export default function SpikeScreen() {
       const info = ScreenTime.getDiagnostics();
       append(`App Group: ${info.appGroupConfigured ? info.appGroupIdentifier : '연결 안 됨'}`);
       append(`감시 중 ${info.activeMonitorCount}개 / 임계값 ${info.thresholdEventCount}개`);
+      append(
+        info.shieldedGroupIds.length > 0
+          ? `차단 중 ${info.shieldedGroupIds.length}개 그룹`
+          : '차단 없음'
+      );
 
       // 계단값이 멈춘 것인지, 화면이 안 읽은 것인지를 구분하려면
       // extension이 마지막으로 기록한 시각까지 봐야 한다.
@@ -286,6 +291,47 @@ export default function SpikeScreen() {
             : '없음'
         }`
       );
+
+      // 차단선과 계단값을 나란히 본다. 넘었는데 안 잠겼을 때만 결함이다.
+      append(
+        detail.shieldAtSeconds === null
+          ? `차단선 없음 · ${detail.shielded ? '잠김' : '안 잠김'}`
+          : `차단선 ${detail.shieldAtSeconds}초 (${
+              detail.thresholdSeconds - detail.shieldAtSeconds
+            }초 넘음) · ${detail.shielded ? '잠김' : '안 잠김'}`
+      );
+    });
+
+  /**
+   * 차단이 실제로 걸리는지 보려면 공동 풀이 다 차기를 기다려야 하는데, 그건
+   * 스파이크에서 재현하기 어렵다. 잔여를 0으로 심어 같은 자리를 직접 밟는다 —
+   * 서버가 잔여 0을 알려온 상황과 기기 입장에서 완전히 같다.
+   */
+  const onShieldNow = () =>
+    run('차단 심기', async () => {
+      const shielded = ScreenTime.applyShieldBudget(requireGroup(), 0);
+      append(shielded ? '잠갔다. 선택한 앱을 열어 볼 것' : '차단선은 심었지만 아직 잠기지 않았다');
+    });
+
+  /**
+   * I16 — 선을 **넘겨서** 저절로 잠기는지 본다.
+   *
+   * 잔여 0은 심는 즉시 잠기므로 그 경로를 밟지 못한다. 2분을 남겨 두고 그 앱을
+   * 계속 쓰면, 임계값 콜백이 선을 넘긴 것을 보고 extension이 혼자 잠근다. 그
+   * 사이가 차단이 실제로 얼마나 늦는지의 실측치다.
+   */
+  const onShieldIn2Min = () =>
+    run('차단선 2분 뒤', async () => {
+      ScreenTime.applyShieldBudget(requireGroup(), 120);
+      const detail = ScreenTime.getUsageDetail(requireGroup());
+      append(`차단선 ${detail.shieldAtSeconds}초 · 지금 계단값 ${detail.thresholdSeconds}초`);
+      append('고른 앱을 2분 넘게 계속 쓸 것. 앱을 닫아도 된다');
+    });
+
+  const onUnshield = () =>
+    run('차단 해제', async () => {
+      ScreenTime.clearShield(requireGroup());
+      append('차단선을 지우고 잠금을 풀었다');
     });
 
   const permissionTone =
@@ -351,6 +397,13 @@ export default function SpikeScreen() {
             />
             <Action label="6. 새로고침" onPress={() => run('새로고침', refresh)} disabled={busy} />
             <Action label="집계 중지" onPress={onStopTracking} disabled={busy || !tracking} />
+            {Platform.OS === 'ios' ? (
+              <>
+                <Action label="지금 차단 (잔여 0)" onPress={onShieldNow} disabled={busy || !group} />
+                <Action label="차단선 2분 뒤" onPress={onShieldIn2Min} disabled={busy || !group} />
+                <Action label="차단 해제" onPress={onUnshield} disabled={busy || !group} />
+              </>
+            ) : null}
             {Platform.OS === 'ios' && (
               <Action label="진단 정보" onPress={onDiagnostics} disabled={busy} />
             )}
