@@ -101,8 +101,10 @@ export function ScreenFrame({
       contentContainerStyle={[padding, styles.content, fill && styles.grow]}
       showsVerticalScrollIndicator={false}
       // 내용이 화면 안에 들어가는 화면에서 고무줄처럼 튀면 스크롤할 것이 있는
-      // 줄 알고 계속 당겨 보게 된다.
-      alwaysBounceVertical={!fill}
+      // 줄 알고 계속 당겨 보게 된다. 다만 **당겨서 새로고침이 있으면 튀어야 한다** —
+      // `fill` 화면(온보딩·대기실)은 내용이 화면을 꽉 채워서, 튐을 막으면 당김
+      // 자체가 걸리지 않아 스피너를 볼 방법이 없다.
+      alwaysBounceVertical={onRefresh ? true : !fill}
       keyboardShouldPersistTaps="handled"
       refreshControl={
         onRefresh ? (

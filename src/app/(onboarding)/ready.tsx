@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, Share, StyleSheet, View } from 'react-native';
@@ -33,6 +34,7 @@ import { useTrackingState } from '@/hooks/use-tracking';
 import { avatarEmoji } from '@/lib/avatars';
 import { formatShort } from '@/lib/format';
 import { READY_MEMBERS_TO_START } from '@/lib/groups';
+import { queryKeys } from '@/lib/query';
 import { armTracking, isUsable } from '@/lib/tracking';
 
 /**
@@ -81,6 +83,7 @@ export default function WaitingRoomScreen() {
   const setReady = useSetReady(group?.id);
   const startGroup = useStartGroup();
   const leave = useLeaveGroupPrompt();
+  const queryClient = useQueryClient();
   const [menuOpen, setMenuOpen] = useState(false);
 
   const me = members.data?.find((member) => member.profile_id === profile.data?.id);
@@ -194,6 +197,12 @@ export default function WaitingRoomScreen() {
   return (
     <OnboardingFrame
       ambient={{ color: colors.accent.violet, size: 420, opacity: 0.34, x: 169, y: 240 }}
+      /*
+       * 이 화면이 기다리는 것은 전부 남의 손에 있다 — 친구가 들어왔는지, 준비를
+       * 눌렀는지. 앱을 다시 켜야만 알 수 있으면 대기실이 아니라 정지 화면이다.
+       * 멤버·그룹·한도가 모두 그룹 접두사 아래라 한 번에 비운다.
+       */
+      onRefresh={() => queryClient.invalidateQueries({ queryKey: queryKeys.allGroups })}
       footer={
         <ButtonStack>
           {/*

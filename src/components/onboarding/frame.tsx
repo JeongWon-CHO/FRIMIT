@@ -18,11 +18,14 @@ export function OnboardingFrame({
   footer,
   texture = 'screen',
   ambient = null,
+  onRefresh,
 }: {
   children: ReactNode;
   footer?: ReactNode;
   texture?: 'screen' | 'calm' | 'none';
   ambient?: { color: string; size: number; opacity: number; x: number; y: number } | null;
+  /** 남을 기다리는 화면(대기실)에만 있다. 나머지는 내 손 안의 값만 그린다. */
+  onRefresh?: () => void | Promise<unknown>;
 }) {
   return (
     <KeyboardAvoidingView
@@ -37,7 +40,8 @@ export function OnboardingFrame({
         texture={texture}
         ambient={ambient}
         fill
-        footer={footer}>
+        footer={footer}
+        onRefresh={onRefresh}>
         <View style={styles.body}>{children}</View>
       </ScreenFrame>
     </KeyboardAvoidingView>
