@@ -88,9 +88,14 @@ function MiniOrbit() {
 
 const styles = StyleSheet.create({
   // 제목은 프레임의 공통 헤더가 아니라 이 화면이 직접 그리는 블록이다.
-  // 카드가 가운데를 차지하므로 제목은 그 위에서 조금 내려와 앉는다.
-  top: { gap: 9, paddingTop: 12 },
-  title: { fontSize: 30, lineHeight: 38 },
+  //
+  // 뒤로가기는 프레임이 주는 위 여백(28 + 안전 영역)에 바로 붙인다. 여기에 더
+  // 얹으면 시스템 뒤로가기가 있을 자리보다 한참 아래에 떠서, 화면을 벗어나는
+  // 버튼이 아니라 내용의 일부처럼 읽힌다.
+  top: { gap: 9 },
+  // 뒤로가기와 제목 사이만 벌린다. `gap`을 키우면 제목과 부제 사이도 같이
+  // 벌어져서 한 덩어리로 읽히던 두 줄이 갈라진다.
+  title: { fontSize: 30, lineHeight: 38, marginTop: 13 },
   // 제목 바로 아래에 붙인다. `center`로 두면 카드가 화면 한가운데로 내려가서
   // 제목과 갈라지고, 고를 것 둘이 저 아래 따로 떠 있는 것처럼 보인다.
   cards: { gap: 14, flex: 1, paddingBottom: 8 },
