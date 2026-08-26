@@ -55,7 +55,8 @@ export default function GoalsScreen() {
   );
 
   const hero = pickHeroGoal(views, preferredGroupId);
-  const others = views.filter((view) => view.goalId !== hero?.goalId);
+  const live = views.filter((view) => !view.ended);
+  const past = views.filter((view) => view.ended);
 
   const heroGroup = (groups.data ?? []).find(
     (group) => group.id === hero?.groupId,
@@ -143,18 +144,34 @@ export default function GoalsScreen() {
             />
           )}
 
-          {others.length > 0 && (
-            <View style={styles.grid}>
-              {others.map((view) => (
-                <View key={view.goalId} style={styles.half}>
-                  <GoalTile
-                    view={view}
-                    onPress={() => setPreferredGroupId(view.groupId)}
-                  />
-                </View>
-              ))}
-            </View>
-          )}
+          {/*
+            히어로에 올라온 목표도 그리드에 남는다. 오늘 화면이 그룹 카드를 다루는
+            방식과 같다 — **목록은 고정이고 강조만 움직인다.**
+
+            빼면 카드를 누르는 순간 그 카드가 목록에서 사라지고 그 자리에 방금 위에
+            있던 것이 나타난다. 손가락 밑에서 목록이 재배치되는 셈이라, 무엇을
+            눌렀는지도 몇 개를 가졌는지도 알 수 없게 된다. 위아래는 강조색 테두리로
+            잇는다.
+
+            다만 홈과 다른 점이 하나 있다 — **그룹은 끝나지 않지만 목표는 끝난다.**
+            끝난 목표를 진행 중인 것과 같은 줄에 두면 "지금 적을 수 있는 것"이
+            무엇인지 한눈에 안 들어온다. 그래서 아래로 따로 뺀다.
+
+            '완료'라고 부르지 않는다. 78%로 끝난 것도 여기 오고, 이 앱은 달성과
+            미달성을 판정하지 않는다(plan.md의 어투). 시간만 말한다.
+          */}
+          <GoalSection
+            title="내 목표"
+            views={live}
+            heroId={hero.goalId}
+            onPick={setPreferredGroupId}
+          />
+          <GoalSection
+            title="지난 목표"
+            views={past}
+            heroId={hero.goalId}
+            onPick={setPreferredGroupId}
+          />
 
           {/*
             확인은 시스템 알림창이 아니라 바텀시트다(`ActionSheet`의 규칙, 그룹
@@ -194,6 +211,44 @@ export default function GoalsScreen() {
         </AppText>
       )}
     </ScreenFrame>
+  );
+}
+
+/** 제목 한 줄과 그 아래 카드들. 비어 있으면 제목도 그리지 않는다. */
+function GoalSection({
+  title,
+  views,
+  heroId,
+  onPick,
+}: {
+  title: string;
+  views: GoalView[];
+  heroId: string;
+  onPick: (groupId: string) => void;
+}) {
+  if (views.length === 0) return null;
+
+  return (
+    <>
+      <View style={styles.sectionTitle}>
+        <AppText variant="sectionTitle">{title}</AppText>
+        <AppText variant="metadata" tone="metadata">
+          {views.length}
+        </AppText>
+      </View>
+
+      <View style={styles.grid}>
+        {views.map((view) => (
+          <View key={view.goalId} style={styles.half}>
+            <GoalTile
+              view={view}
+              selected={view.goalId === heroId}
+              onPress={() => onPick(view.groupId)}
+            />
+          </View>
+        ))}
+      </View>
+    </>
   );
 }
 
@@ -312,6 +367,13 @@ function AddButton({ onPress }: { onPress: () => void }) {
 }
 
 const styles = StyleSheet.create({
+  sectionTitle: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 6,
+    paddingTop: 2,
+  },
   grid: { flexDirection: "row", flexWrap: "wrap", gap: spacing.gridGap },
   half: { width: "48%", flexGrow: 1 },
   center: { textAlign: "center" },

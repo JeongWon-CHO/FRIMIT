@@ -20,6 +20,8 @@ type GoalCardProps = {
   onPress?: () => void;
   /** 히어로 아래에 붙는 기록 입력줄. 히어로에만 온다. */
   footer?: React.ReactNode;
+  /** 지금 위에 떠 있는 목표. 테두리로 위 카드와 이 카드를 잇는다(그리드 전용). */
+  selected?: boolean;
 };
 
 export const GoalHeroCard = memo(function GoalHeroCard({ view, footer }: GoalCardProps) {
@@ -92,12 +94,13 @@ export const GoalHeroCard = memo(function GoalHeroCard({ view, footer }: GoalCar
  * 미니 링을 쓰지 않는다 — 목록 안의 SVG는 그룹이 늘수록 스크롤을 무너뜨린다
  * (RN_IMPLEMENTATION_NOTES). 퍼센트 숫자와 5px 막대면 같은 것을 말한다.
  */
-export const GoalTile = memo(function GoalTile({ view, onPress }: GoalCardProps) {
+export const GoalTile = memo(function GoalTile({ view, onPress, selected }: GoalCardProps) {
   const accent = colors.groupAccent[view.accent];
 
   return (
     <Surface
       fill={accent.surface}
+      border={selected ? colors.border[view.accent] : undefined}
       cornerRadius={radii.groupCard}
       padding={16}
       onPress={onPress}
