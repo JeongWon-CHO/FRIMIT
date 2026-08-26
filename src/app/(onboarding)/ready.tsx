@@ -86,6 +86,7 @@ export default function WaitingRoomScreen() {
   const me = members.data?.find((member) => member.profile_id === profile.data?.id);
   const ready = readyCount(members.data);
   const total = members.data?.length ?? 1;
+
   const canStart = ready >= READY_MEMBERS_TO_START;
   const isAdmin = group?.admin_id === profile.data?.id;
   const isDraft = group?.status === 'draft';
@@ -148,6 +149,33 @@ export default function WaitingRoomScreen() {
    */
   const waiting = (members.data ?? []).filter((member) => !member.is_ready);
 
+  /*
+   * 내 차례에 남은 일 하나.
+   *
+   * 권한이 없으면 권한, 앱을 안 골랐으면 앱, 둘 다 됐으면 준비다. 셋은 같은
+   * 자리를 두고 갈리는 하나이므로 버튼 셋이 아니라 값 하나로 만든다 — 푸터가
+   * 이걸 초대와 한 줄에 세워야 해서, 어느 쪽이 그려질지 JSX가 다시 따지면
+   * 같은 조건이 네 번 반복된다.
+   */
+  const myAction =
+    isDraft && !me?.is_ready
+      ? blockedReason
+        ? {
+            label: isUsable(tracking.permission) ? '앱 고르기' : '권한 켜기',
+            onPress: () =>
+              router.push(
+                isUsable(tracking.permission)
+                  ? { pathname: '/tracking' as const, params: { groupId: group.id } }
+                  : { pathname: '/permission' as const, params: {} }
+              ),
+          }
+        : {
+            label: '준비 완료',
+            onPress: () => setReady.mutate(true),
+            loading: setReady.isPending,
+          }
+      : null;
+
   return (
     <OnboardingFrame
       ambient={{ color: colors.accent.violet, size: 420, opacity: 0.34, x: 169, y: 240 }}
@@ -161,27 +189,6 @@ export default function WaitingRoomScreen() {
             아예 그리지 않는다 — 누를 수 없는 버튼이 primary 자리를 차지하면
             정작 해야 할 일(친구 부르기)이 아래로 밀린다.
           */}
-          {isDraft && !me?.is_ready && blockedReason && (
-            <GradientButton
-              label={isUsable(tracking.permission) ? '앱 고르기' : '권한 켜기'}
-              onPress={() =>
-                router.push(
-                  isUsable(tracking.permission)
-                    ? { pathname: '/tracking', params: { groupId: group.id } }
-                    : { pathname: '/permission', params: {} }
-                )
-              }
-            />
-          )}
-
-          {isDraft && !me?.is_ready && !blockedReason && (
-            <GradientButton
-              label="준비 완료"
-              onPress={() => setReady.mutate(true)}
-              loading={setReady.isPending}
-            />
-          )}
-
           {!isDraft ? (
             <GradientButton label="홈으로 가기" onPress={browse} />
           ) : (
@@ -199,22 +206,49 @@ export default function WaitingRoomScreen() {
                 </AppText>
               )}
 
-              <GradientButton
-                label="초대 보내기"
-                variant={canStart || !me?.is_ready ? 'secondary' : 'primary'}
-                onPress={share}
-              />
+              {/*
+                내 차례가 남아 있으면 그것과 초대를 **한 줄에 나란히** 세운다.
+                세로로 쌓으면 이 자리만 118px이라 링(220)에 맞먹고, 푸터가 화면의
+                3할을 먹는다. 둘은 서로를 기다리지 않는 일이라 순서가 아니라
+                선택이고, 그래서 위아래보다 좌우가 맞다.
 
-              {!canStart && (
-                <AppText variant="metadata" tone="faint" style={styles.note}>
-                  {READY_MEMBERS_TO_START}명 이상 준비되면 시작할 수 있어요.
-                </AppText>
+                위계는 자리가 아니라 채움이 진다 — 내 차례만 그라데이션을 갖고
+                초대는 유리다. 나란히 놓아도 어느 쪽이 먼저인지 흐려지지 않는다.
+
+                다 모인 뒤의 [시작하기]는 짝을 두지 않는다. 그 화면에서 할 일은
+                하나여야 한다.
+              */}
+              {myAction ? (
+                <View style={styles.pair}>
+                  <GradientButton {...myAction} style={styles.half} />
+                  <GradientButton
+                    label="초대 보내기"
+                    variant="secondary"
+                    onPress={share}
+                    style={styles.half}
+                  />
+                </View>
+              ) : (
+                <GradientButton
+                  label="초대 보내기"
+                  variant={canStart ? 'secondary' : 'primary'}
+                  onPress={share}
+                />
               )}
 
-              {/* 친구는 몇 시간 뒤에 들어온다. 그 사이를 할 일 없는 화면에서
-                  보내게 하지 않는다. 시작을 누를 수 있는 사람에게는 그리지
-                  않는다 — 다 모인 화면에서 할 일은 하나여야 한다. */}
-              {!(canStart && isAdmin) && (
+              {/*
+                친구는 몇 시간 뒤에 들어온다. 그 사이를 할 일 없는 화면에서
+                보내게 하지 않는다 — 그래서 나가는 문이 여기 있다.
+
+                다만 **할 일이 없어진 다음에** 있어야 한다. 내가 아직 준비를
+                누르지 않았으면 할 일이 있고, 그때 문을 함께 그리면 푸터가
+                화면의 3할을 먹으면서 정작 눌러야 할 [준비 완료]와 자리를
+                다툰다. 급하면 좌상단 뒤로가 이미 있다.
+
+                시작을 누를 수 있는 사람에게도 그리지 않는다 — 다 모인 화면에서
+                할 일은 하나여야 한다.
+              */}
+              {me?.is_ready && !(canStart && isAdmin) && (
                 <GradientButton label="홈으로 가기" variant="tertiary" onPress={browse} />
               )}
             </>
@@ -376,5 +410,15 @@ const styles = StyleSheet.create({
   orbitBox: { width: ORBIT, height: ORBIT, alignSelf: 'center' },
   status: { flexDirection: 'row', alignItems: 'center', gap: 8, justifyContent: 'center' },
   waitLine: { textAlign: 'center', paddingVertical: 14 },
-  note: { textAlign: 'center' },
+  pair: { flexDirection: 'row', gap: 10 },
+  /*
+   * 좌우 패딩을 32에서 12로 줄인다. 그 값은 화면 폭을 다 쓰는 버튼에서 글자를
+   * 가장자리에서 떼어 놓으려고 있던 것인데, 반폭에서는 떼어 놓을 가장자리가
+   * 없고 글자 자리만 먹는다. 32면 라벨에 101px이 남아 "초대 보내기"(약 84px)가
+   * 큰 글자 설정에서 바로 두 줄이 된다. 12면 141px이라 여유가 생긴다.
+   *
+   * `flex: 1`은 감싸는 View가 아니라 버튼이 직접 받아야 한다 — View에 주면
+   * Pressable이 제 내용만큼만 자라서 한쪽이 두 줄이 될 때 키가 어긋난다.
+   */
+  half: { flex: 1, paddingHorizontal: 12 },
 });

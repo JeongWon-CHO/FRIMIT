@@ -1,5 +1,13 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { ActivityIndicator, Platform, Pressable, StyleSheet, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Platform,
+  Pressable,
+  StyleSheet,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 
 import { AppText } from '@/components/ui/app-text';
 import { colors, gradients, radius as radii } from '@/constants/design-tokens';
@@ -23,6 +31,12 @@ type ButtonProps = {
   loading?: boolean;
   /** 온보딩 CTA는 16, 화면 안쪽 버튼은 14 */
   size?: 'md' | 'lg';
+  /**
+   * 바깥에서 정하는 자리. 나란히 두 개를 세울 때 `flex: 1`을 주는 곳이다 —
+   * 감싸는 View에 주면 Pressable은 제 내용만큼만 자라서, 한쪽 라벨이 두 줄로
+   * 넘어가는 순간 두 버튼의 키가 어긋난다.
+   */
+  style?: StyleProp<ViewStyle>;
 };
 
 export function GradientButton({
@@ -32,6 +46,7 @@ export function GradientButton({
   disabled,
   loading,
   size = 'lg',
+  style,
 }: ButtonProps) {
   const inactive = disabled || loading;
   // md는 12가 바닥이다. 글자 lineHeight가 20이라 12+20+12 = 44 — 아래의 minHeight와
@@ -50,7 +65,7 @@ export function GradientButton({
         accessibilityState={{ disabled: Boolean(inactive) }}
         disabled={inactive}
         onPress={onPress}
-        style={({ pressed }) => [styles.tertiary, pressed && styles.dim]}>
+        style={({ pressed }) => [styles.tertiary, style, pressed && styles.dim]}>
         <AppText variant="button" tone="muted">
           {label}
         </AppText>
@@ -68,6 +83,7 @@ export function GradientButton({
         styles.box,
         { paddingVertical: padding, paddingHorizontal: padding + 16, borderRadius: corner },
         variant === 'primary' ? styles.primaryHalo : styles.secondary,
+        style,
         pressed && styles.dim,
         inactive && styles.disabled,
       ]}>
