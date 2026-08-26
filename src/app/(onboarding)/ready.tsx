@@ -87,7 +87,22 @@ export default function WaitingRoomScreen() {
   const ready = readyCount(members.data);
   const total = members.data?.length ?? 1;
 
-  const canStart = ready >= READY_MEMBERS_TO_START;
+  /*
+   * 정족수와 **내 차례**는 다른 것이다.
+   *
+   * 서버는 준비된 멤버가 2명이면 시작을 받아 준다(plan.md 33행). 그래서 내가
+   * 준비를 누르지 않았어도 남 셋이 준비하면 시작 버튼이 살아 있었고, 실제로
+   * 눌리기까지 했다.
+   *
+   * 준비는 "권한이 있고 잴 앱을 골랐는가"다. 그걸 건너뛰고 시작하면 나는 첫날부터
+   * 공동 풀의 분모에 들어가면서 아무것도 올리지 못한다 — 이 파일 머리말이 준비
+   * 버튼에 대해 경고한 그 상태가, 시작 버튼으로 그대로 재현된다.
+   *
+   * 그래서 화면 제목은 정족수를 보고, 시작 버튼은 내 차례까지 본다. 다 모였는데
+   * 내가 안 됐으면 [준비 완료]가 그 자리를 대신 가져간다.
+   */
+  const enoughReady = ready >= READY_MEMBERS_TO_START;
+  const canStart = enoughReady && Boolean(me?.is_ready);
   const isAdmin = group?.admin_id === profile.data?.id;
   const isDraft = group?.status === 'draft';
 
@@ -263,7 +278,7 @@ export default function WaitingRoomScreen() {
         </View>
 
         <AppText variant="greeting" style={styles.center}>
-          {!isDraft ? '곧 시작해요' : canStart ? '다 모였어요' : '친구를 기다리는 중'}
+          {!isDraft ? '곧 시작해요' : enoughReady ? '다 모였어요' : '친구를 기다리는 중'}
         </AppText>
       </View>
 
