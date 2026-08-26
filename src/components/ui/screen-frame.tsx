@@ -1,3 +1,4 @@
+import * as Haptics from 'expo-haptics';
 import { useCallback, useState, type ReactNode } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -64,6 +65,17 @@ export function ScreenFrame({
   const pull = useCallback(async () => {
     if (!onRefresh) return;
 
+    /*
+     * 당김이 걸린 순간에 한 번. 다 됐을 때가 아니다 — 이건 "받았다"는 대답이고,
+     * 끝났다는 말은 스피너가 멈추는 것으로 이미 한다. 두 번 치면 무슨 뜻인지
+     * 흐려진다.
+     *
+     * 기다리지 않는다. 왕복 뒤에 오는 진동은 손을 뗀 지 한참 지나서 오므로
+     * 내 동작의 대답으로 읽히지 않는다. 저전력 모드나 탭틱 엔진이 꺼진 기기,
+     * 웹에서는 조용히 아무 일도 없다 — 스피너가 그 자리를 대신한다.
+     */
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+
     setPulling(true);
     try {
       await onRefresh();
@@ -72,8 +84,11 @@ export function ScreenFrame({
     }
   }, [onRefresh]);
 
+  /** 내용이 시작하는 높이. 스크롤 패딩과 새로고침 스피너가 같이 쓴다. */
+  const contentTop = insets.top + topSpace;
+
   const padding = {
-    paddingTop: insets.top + topSpace,
+    paddingTop: contentTop,
     paddingHorizontal: horizontal,
     paddingBottom: bottomInset + (footer ? 0 : insets.bottom),
   };
@@ -95,6 +110,16 @@ export function ScreenFrame({
             refreshing={pulling}
             onRefresh={pull}
             tintColor={colors.text.secondary}
+            /*
+             * 스피너는 `contentContainerStyle`의 패딩을 모른다 — ScrollView 프레임
+             * 기준으로 자리를 잡는다. 이 프레임은 y=0부터, 즉 상태바 뒤부터
+             * 시작하므로 그냥 두면 시계 옆에서 돈다. 실기기에서 "스피너가 아예
+             * 없다"고 보인 것이 이것이었다.
+             *
+             * 그래서 내용의 시작점과 같은 값을 쓴다. 둘이 갈라지면 스피너만
+             * 혼자 뜨므로 `contentTop` 하나에서 같이 나온다.
+             */
+            progressViewOffset={contentTop}
           />
         ) : undefined
       }>
