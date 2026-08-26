@@ -1,0 +1,5 @@
+# GitHub Pages는 docs/ 전체를 서빙한다. 방침 말고는 내보내지 않는다.
+exclude:
+  - design
+  - spike-protocol.md
+  - auth-setup.md
