@@ -66,6 +66,16 @@ export function formatAmount(amount: number): string {
   return Number.isInteger(amount) ? String(amount) : String(Number(amount.toFixed(2)));
 }
 
+/**
+ * 끝난 목표인가.
+ *
+ * 서버가 끝난 목표를 7일 동안 계속 주므로(0825 마이그레이션) 살아 있는 것과
+ * 생김새가 같다. `daysLeft`가 0인 것만으로는 마지막 날 오후와 구분되지 않는다.
+ */
+export function isEnded(endsAt: string, now: Date = new Date()): boolean {
+  return new Date(endsAt).getTime() <= now.getTime();
+}
+
 export function buildGoalView(
   group: MyGroup,
   snapshot: GoalSnapshot | null | undefined,
@@ -77,10 +87,7 @@ export function buildGoalView(
   const { goal } = snapshot;
   const left = daysLeft(goal.ends_at, now);
 
-  // 서버가 끝난 목표를 7일 동안 계속 준다(0825 마이그레이션). 살아 있는 것과
-  // 생김새가 같으므로 여기서 갈라 준다 — `daysLeft`가 0인 것만으로는 마지막 날
-  // 오후와 구분되지 않는다.
-  const ended = new Date(goal.ends_at).getTime() <= now.getTime();
+  const ended = isEnded(goal.ends_at, now);
 
   return {
     goalId: goal.id,

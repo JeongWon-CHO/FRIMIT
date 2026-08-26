@@ -4,9 +4,10 @@ import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { AppText, GradientButton, ScreenFrame, StatusPill } from '@/components/ui';
 import { colors, radius as radii } from '@/constants/design-tokens';
-import { useCreateGoal } from '@/hooks/use-goals';
+import { useCreateGoal, useGroupGoals } from '@/hooks/use-goals';
 import { useMyGroups } from '@/hooks/use-groups';
 import { hexToRgba } from '@/lib/color';
+import { isEnded } from '@/lib/goal-view';
 import { DURATION_CHOICES, type DurationDays } from '@/lib/goals';
 import { groupAccent } from '@/lib/today';
 
@@ -28,13 +29,25 @@ export default function CreateGoalScreen() {
 
   const startedGroups = (groups.data ?? []).filter((group) => group.status === 'active');
 
+  // 이미 목표가 돌고 있는 그룹은 고를 수 없다(plan.md 42행, 서버의 `goal_already_exists`).
+  // 화면이 이미 아는 거절을 서버까지 보내지 않는다 — 목록은 목표 탭이 방금 읽어
+  // 캐시에 있으므로 왕복도 대개 없다. **끝난 목표는 막지 않는다.** 결과 카드가
+  // 일주일 남아 있을 뿐, 그 그룹은 새 목표를 걸 수 있는 상태다.
+  const goals = useGroupGoals(startedGroups);
+  const taken = new Set(
+    [...goals.byGroupId.values()]
+      .filter((snapshot) => !isEnded(snapshot.goal.ends_at))
+      .map((snapshot) => snapshot.goal.group_id)
+  );
+  const openGroups = startedGroups.filter((group) => !taken.has(group.id));
+
   const [groupId, setGroupId] = useState<string | null>(null);
   const [title, setTitle] = useState('');
   const [amount, setAmount] = useState('');
   const [unit, setUnit] = useState('번');
   const [durationDays, setDurationDays] = useState<DurationDays>(7);
 
-  const selectedGroupId = groupId ?? startedGroups[0]?.id ?? null;
+  const selectedGroupId = groupId ?? openGroups[0]?.id ?? null;
   const trimmedTitle = title.trim();
   const parsedAmount = Number(amount);
   const valid =
@@ -96,14 +109,16 @@ export default function CreateGoalScreen() {
       <View style={styles.groupRow}>
         {startedGroups.map((group) => {
           const selected = group.id === selectedGroupId;
+          const busy = taken.has(group.id);
           return (
             <Pressable
               key={group.id}
               accessibilityRole="button"
-              accessibilityState={{ selected }}
+              accessibilityState={{ selected, disabled: busy }}
+              disabled={busy}
               onPress={() => setGroupId(group.id)}
               style={({ pressed }) => [
-                !selected && styles.groupDim,
+                busy ? styles.groupBusy : !selected && styles.groupDim,
                 pressed && styles.groupPressed,
               ]}>
               <StatusPill
@@ -115,6 +130,14 @@ export default function CreateGoalScreen() {
           );
         })}
       </View>
+
+      {taken.size > 0 && (
+        <AppText variant="metadata" tone="faint">
+          {openGroups.length === 0
+            ? '모든 그룹에 이미 목표가 있어요. 하나가 끝나거나 그만두면 새로 걸 수 있어요.'
+            : '흐린 그룹은 이미 목표가 돌고 있어요. 그룹당 하나예요.'}
+        </AppText>
+      )}
 
       <AppText variant="eyebrow" tone="faint" style={styles.label}>
         GOAL
@@ -193,6 +216,8 @@ const styles = StyleSheet.create({
   label: { marginTop: 10 },
   groupRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   groupDim: { opacity: 0.42 },
+  // 고를 수 없는 것은 고를 수 있는데 안 고른 것보다 더 물러나 있어야 한다.
+  groupBusy: { opacity: 0.22 },
   groupPressed: { opacity: 0.65 },
   field: {
     borderRadius: radii.button,
