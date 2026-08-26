@@ -1,6 +1,7 @@
 import * as Haptics from 'expo-haptics';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 
 import { OrbitSeats, SharedOrbitRing } from '@/components/orbit';
@@ -132,7 +133,7 @@ export default function GroupDetailScreen() {
           본문 한가운데 줄로, 하나는 여기 버튼으로 흩어져 있었다. 한 자리로 모은다.
         */}
         <CircleButton
-          label="⚙"
+          label={<Ionicons name="settings-outline" size={19} color={colors.text.body} />}
           accessibilityLabel="그룹 설정"
           disabled={!group || leave.isPending}
           onPress={() => setMenuOpen(true)}
@@ -666,13 +667,20 @@ function MyShareCard({
   );
 }
 
+/**
+ * 38px 원형 버튼.
+ *
+ * 글자(`←`)와 아이콘을 둘 다 받는다. 이모지를 쓰면 안 되는 자리다 — 컬러 이모지는
+ * 색이 자기 것이라 이 화면의 회색조 위에서 혼자 튀고, 기기와 OS 버전마다 그림도
+ * 다르다. 설정은 `Ionicons`(이미 있는 의존)의 단색 글리프를 쓴다.
+ */
 function CircleButton({
   label,
   accessibilityLabel,
   onPress,
   disabled,
 }: {
-  label: string;
+  label: ReactNode;
   accessibilityLabel?: string;
   onPress?: () => void;
   disabled?: boolean;
@@ -684,9 +692,13 @@ function CircleButton({
       disabled={disabled}
       onPress={onPress}
       style={[styles.circle, disabled && styles.circleDim]}>
-      <AppText variant="bodyStrong" tone="body">
-        {label}
-      </AppText>
+      {typeof label === 'string' ? (
+        <AppText variant="bodyStrong" tone="body">
+          {label}
+        </AppText>
+      ) : (
+        label
+      )}
     </Pressable>
   );
 }
