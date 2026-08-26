@@ -6,6 +6,7 @@ import { Alert, Pressable, StyleSheet, TextInput, View } from "react-native";
 import { GoalHeroCard, GoalTile } from "@/components/goal-card";
 import { TitleRow } from "@/components/title-row";
 import {
+  ActionSheet,
   AppText,
   EmptyState,
   GradientButton,
@@ -41,6 +42,7 @@ export default function GoalsScreen() {
   const queryClient = useQueryClient();
 
   const [preferredGroupId, setPreferredGroupId] = useState<string | null>(null);
+  const [confirmingCancel, setConfirmingCancel] = useState(false);
 
   const views = useMemo(
     () =>
@@ -69,6 +71,11 @@ export default function GoalsScreen() {
     (group) => group.status === "active",
   );
   const cancel = useCancelGoal();
+
+  // 버튼이 어느 목표의 것인지 이름으로 말한다. 30자까지 오는 제목을 버튼에 통째로
+  // 실으면 두 줄이 되므로 여기서 끊는다 — 확인 시트에는 온전한 제목이 나온다.
+  const heroLabel =
+    hero && (hero.title.length > 14 ? `${hero.title.slice(0, 13)}…` : hero.title);
 
   return (
     <ScreenFrame
@@ -123,6 +130,19 @@ export default function GoalsScreen() {
         <>
           <GoalHeroCard view={hero} footer={<RecordRow view={hero} />} />
 
+          {/*
+            그만두기는 **히어로 바로 아래**다. 예전에는 그리드 밑에 있었는데, 그
+            자리에서는 방금 지나온 작은 카드들 중 무엇을 그만두는지 알 수 없었다.
+            지우는 버튼은 지워질 것에 붙어 있어야 한다.
+          */}
+          {canCancel && (
+            <GradientButton
+              label={`'${heroLabel}' 그만두기`}
+              variant="tertiary"
+              onPress={() => setConfirmingCancel(true)}
+            />
+          )}
+
           {others.length > 0 && (
             <View style={styles.grid}>
               {others.map((view) => (
@@ -136,26 +156,33 @@ export default function GoalsScreen() {
             </View>
           )}
 
-          {canCancel && (
-            <GradientButton
-              label="이 목표 그만두기"
-              variant="tertiary"
-              onPress={() =>
-                Alert.alert(
-                  "목표를 그만둘까요?",
-                  "지금까지의 기록이 함께 사라져요. 그룹은 그대로예요.",
-                  [
-                    { text: "아니요", style: "cancel" },
-                    {
-                      text: "그만두기",
-                      style: "destructive",
-                      onPress: () => cancel.mutate(hero.goalId),
-                    },
-                  ],
-                )
-              }
-            />
-          )}
+          {/*
+            확인은 시스템 알림창이 아니라 바텀시트다(`ActionSheet`의 규칙, 그룹
+            나가기와 같다). 제목에 목표 이름을 그대로 넣는 것이 여기서 가장 중요한
+            한 줄이다 — 조사(을/를)를 붙이지 않아도 되도록 제목 자리에 둔다.
+          */}
+          <ActionSheet
+            visible={confirmingCancel}
+            title={`'${hero.title}' 그만둘까요?`}
+            message="지금까지의 기록이 함께 사라지고 되돌릴 수 없어요. 그룹은 그대로예요."
+            onClose={() => setConfirmingCancel(false)}
+            actions={[
+              {
+                label: "그만두기",
+                danger: true,
+                onPress: () =>
+                  cancel.mutate(hero.goalId, {
+                    // 실패는 알림창으로 남긴다. 시트는 이미 닫혔고, 이건 확인이
+                    // 아니라 사고다.
+                    onError: (error) =>
+                      Alert.alert(
+                        "그만두지 못했어요",
+                        error instanceof Error ? error.message : String(error),
+                      ),
+                  }),
+              },
+            ]}
+          />
         </>
       )}
 
