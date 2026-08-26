@@ -82,7 +82,14 @@ export default function CreateGoalScreen() {
         새 목표
       </AppText>
 
-      {/* 그룹이 하나뿐이면 고를 것이 없다. 알약 하나로 어디에 거는지만 말한다. */}
+      {/*
+        그룹이 하나뿐이면 고를 것이 없다. 알약 하나로 어디에 거는지만 말한다.
+
+        여럿일 때는 **고를 수 있다는 것부터 보여야 한다.** 예전에는 고른 것이
+        보라 알약(12%), 나머지가 유리 알약(7%)이었는데 근-검정 배경에서 그 둘은
+        같은 색으로 보였다. 누른 티도 안 나서, 첫 그룹이 고정된 라벨처럼 읽혔다.
+        고르지 않은 것을 흐리게 두면 한눈에 "이 중 하나"가 된다.
+      */}
       <AppText variant="eyebrow" tone="faint">
         GROUP
       </AppText>
@@ -90,7 +97,15 @@ export default function CreateGoalScreen() {
         {startedGroups.map((group) => {
           const selected = group.id === selectedGroupId;
           return (
-            <Pressable key={group.id} onPress={() => setGroupId(group.id)}>
+            <Pressable
+              key={group.id}
+              accessibilityRole="button"
+              accessibilityState={{ selected }}
+              onPress={() => setGroupId(group.id)}
+              style={({ pressed }) => [
+                !selected && styles.groupDim,
+                pressed && styles.groupPressed,
+              ]}>
               <StatusPill
                 label={group.name}
                 dotColor={colors.groupAccent[groupAccent(group)].dot}
@@ -177,6 +192,8 @@ const styles = StyleSheet.create({
   title: { marginBottom: 8 },
   label: { marginTop: 10 },
   groupRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  groupDim: { opacity: 0.42 },
+  groupPressed: { opacity: 0.65 },
   field: {
     borderRadius: radii.button,
     paddingVertical: 15,
