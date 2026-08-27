@@ -33,11 +33,21 @@ TestFlight 배포를 막을 요소는 이 항목에서 더 없다.
 | 호스트 앱 | `com.frimit.app` |
 | Monitor extension | `com.frimit.app.activitymonitor` |
 | Notification Service extension | `com.frimit.app.notificationservice` |
+| Shield Configuration extension | `com.frimit.app.shieldconfiguration` |
 | ~~Report extension~~ (폐기) | ~~`com.frimit.app.activityreport`~~ |
 
-⚠️ **Notification Service extension은 아직 포털에 App ID가 없다.** 잠그려면 이
-타깃에도 Family Controls capability가 필요하다. 만들지 않으면 자동 서명이
-실패하거나, 서명은 되는데 잠금만 조용히 안 걸린다.
+App ID는 Xcode가 자동 서명 중에 만들고 capability까지 켜 준다. 배포 빌드는
+`extra.eas.build.experimental.ios.appExtensions`에 선언된 타깃만 EAS가 프로파일을
+만들어 **호스트와 같은 인증서로** 서명한다. 선언이 빠지면 extension만 개발
+인증서로 서명돼 이렇게 죽는다:
+
+```
+Embedded binary is not signed with the same certificate as the parent app.
+```
+
+로컬 `expo run:ios`에서는 부모도 개발 인증서라 드러나지 않는다. 타깃을 더할 때는
+`plugins/withActivityExtensions.js`의 `EXTENSIONS`만 고치면 되고, 선언과 검증
+스크립트가 그 목록에서 나온다.
 
 두 값은 `plugins/withActivityExtensions.js`가 호스트 bundle ID로부터 자동 생성하는 이름과 일치한다.
 호스트 bundle ID를 바꾸면 포털의 App ID도 함께 만들어야 한다.
@@ -633,3 +643,23 @@ Expo Go에 묶여 있다는 뜻이고, 그러면 알림은 오는데 `FrimitNoti
 
 PostgREST 질의에 타임스탬프를 넣을 때는 `+`를 `%2B`로 바꿔야 한다. 본문(JSON)으로
 보낼 때는 해당 없다.
+
+### 차단 화면 (I21) — 미측정
+
+`FrimitShieldConfiguration`이 iOS 기본 "제한됨" 화면을 대신 그린다. 기본 화면은
+왜 막혔는지도, 누가 막았는지도, 언제 열리는지도 말하지 않는다.
+
+| # | 확인할 것 | 기록할 값 | 왜 중요한가 |
+|---|---|---|---|
+| I21 | 잠긴 앱을 열면 **그룹 이름**이 제목으로 뜨는가 | 뜬 문구 그대로 | 그룹이 여럿일 때 어느 약속 때문에 막혔는지가 이 화면 말고는 알 방법이 없다 |
+
+한 사람이 그룹 5개까지 들어가고 겹치는 앱을 골랐다면 **그중 한 그룹의 풀만
+터져도** 잠긴다 — iOS가 store들의 차단을 합집합으로 적용하기 때문이다. 나머지
+그룹에 시간이 남아 있는 사람에게 기본 화면은 "왜 막혔지"만 남긴다.
+
+그룹 이름은 `listMyGroups`가 App Group에 베껴 둔 값을 읽는다. 그룹 목록을 한
+번도 읽지 않은 채 잠기면 이름이 없고, 그때는 제목이 `Frimit`으로 떨어진다.
+**제목이 `Frimit`으로 나온다면 그 경로를 의심할 것** — 차단 자체는 정상이다.
+
+"오전 6시에 다시 열려요"는 저장된 구간 시작에서 하루 뒤로 계산한다. 서머타임이
+있는 시간대에서는 한 시간 어긋나지만 베타는 `Asia/Seoul` 한 곳이다.

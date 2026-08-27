@@ -97,6 +97,17 @@ export const ScreenTime = {
     Native.clearShield(groupId);
   },
 
+  /**
+   * 그룹 이름을 기기에 베껴 둔다. 차단 화면이 이 값을 읽는다.
+   *
+   * iOS 전용이고 던지지 않는다 — 그룹 목록을 읽는 평범한 경로에서 불리므로,
+   * 여기서 실패하면 목록이 통째로 안 그려진다.
+   */
+  setGroupLabel: (groupId: string, name: string): void => {
+    if (Platform.OS !== 'ios') return;
+    Native.setGroupLabel(groupId, name);
+  },
+
   /** 지금 이 그룹의 앱이 잠겨 있는가. iOS가 아니면 항상 false */
   isShielded: (groupId: string): boolean =>
     Platform.OS === 'ios' && Native.isShielded(groupId),

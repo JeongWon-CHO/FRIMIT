@@ -1,3 +1,5 @@
+import { ScreenTime } from '@modules/screen-time';
+
 import { rpcError, supabase } from './supabase';
 
 /**
@@ -74,7 +76,17 @@ export async function listMyGroups(): Promise<MyGroup[]> {
     .order('created_at', { ascending: true });
 
   if (error) throw rpcError(error, '그룹 목록을 읽지 못했습니다');
-  return (data ?? []) as MyGroup[];
+
+  const groups = (data ?? []) as MyGroup[];
+
+  // 차단 화면은 네트워크를 쓸 수 없다. 잠긴 앱을 열 때마다 아주 짧게 실행되고
+  // 끝나므로, "어느 그룹 때문에 막혔는지"를 말하려면 이름이 미리 기기에 있어야
+  // 한다. 목록을 읽는 김에 베껴 둔다 — 이름이 바뀌어도 여기서 따라간다.
+  for (const group of groups) {
+    ScreenTime.setGroupLabel(group.id, group.name);
+  }
+
+  return groups;
 }
 
 export type GroupMember = {

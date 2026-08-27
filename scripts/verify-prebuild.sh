@@ -14,8 +14,12 @@ PBXPROJ="ios/Frimit.xcodeproj/project.pbxproj"
 ENTITLEMENTS="ios/Frimit/Frimit.entitlements"
 # extension 타깃 이름과 그 타깃의 extension point. 하나가 늘 때마다 여기에 한 줄
 # 추가한다 — 목록이 어긋나면 새 타깃은 검사 없이 지나간다.
-EXT_NAMES=(FrimitActivityMonitor FrimitNotificationService)
-EXT_POINTS=(com.apple.deviceactivity.monitor-extension com.apple.usernotifications.service)
+EXT_NAMES=(FrimitActivityMonitor FrimitNotificationService FrimitShieldConfiguration)
+EXT_POINTS=(
+  com.apple.deviceactivity.monitor-extension
+  com.apple.usernotifications.service
+  com.apple.ManagedSettings.shield-configuration-service
+)
 # 폐기한 타깃. 되살아나지 않는지 함께 확인한다 (전략 A, 2026-08-13 폐기).
 RETIRED_NAME="FrimitActivityReport"
 

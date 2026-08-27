@@ -55,6 +55,22 @@ enum FrimitSharedStore {
     "frimit.selection.\(groupId)"
   }
 
+  /// 그룹 이름. 차단 화면이 "어느 그룹 때문에 막혔는지"를 말하는 데 쓴다.
+  static func groupNameKey(_ groupId: String) -> String {
+    "frimit.group.name.\(groupId)"
+  }
+
+  /// 선택이 저장된 그룹 목록. 호스트 앱의 `FrimitStore`가 관리한다.
+  static let knownGroupsKey = "frimit.groups"
+
+  static func knownGroupIds() -> [String] {
+    defaults.stringArray(forKey: knownGroupsKey) ?? []
+  }
+
+  static func groupName(groupId: String) -> String? {
+    defaults.string(forKey: groupNameKey(groupId))
+  }
+
   // MARK: - DeviceActivity 이름 규약
 
   /// DeviceActivityName은 그룹당 하나. `frimit.<groupId>` 형태.
@@ -155,6 +171,23 @@ enum FrimitSharedStore {
     let shouldShield = used >= limit
     setShield(groupId: groupId, on: shouldShield)
     return shouldShield
+  }
+
+  /// 지금 잠겨 있는가. 차단 화면이 범인을 찾을 때 쓴다.
+  static func isShielded(groupId: String) -> Bool {
+    guard let limit = shieldAtSeconds(groupId: groupId) else { return false }
+    return defaults.integer(forKey: thresholdSecondsKey(groupId)) >= limit
+  }
+
+  /// 잠금이 풀리는 시각. 저장된 구간 시작에서 하루 뒤다.
+  ///
+  /// ponytail: 하루를 24시간으로 본다. 서머타임이 있는 시간대에서는 한 시간
+  /// 어긋나지만 베타는 `Asia/Seoul` 한 곳이고 거기엔 서머타임이 없다. 시간대가
+  /// 늘어나면 구간의 끝을 서버에서 받아 따로 저장할 것.
+  static func shieldEndsAt(groupId: String) -> Date? {
+    let ms = defaults.double(forKey: periodStartKey(groupId))
+    guard ms > 0 else { return nil }
+    return Date(timeIntervalSince1970: ms / 1000 + 24 * 60 * 60)
   }
 
   /// 이 그룹이 고른 대상을 잠그거나 푼다.

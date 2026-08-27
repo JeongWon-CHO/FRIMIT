@@ -13,6 +13,7 @@ const { withDangerousMod, withXcodeProject } = require('expo/config-plugins');
  * 만드는 타깃:
  * - `<앱>ActivityMonitor`     : 백그라운드 임계값 감시 (전략 B)
  * - `<앱>NotificationService` : 한도 소진 알림을 받아 그 자리에서 앱을 잠근다
+ * - `<앱>ShieldConfiguration` : 잠긴 앱을 열었을 때 뜨는 화면을 그린다
  *
  * 한때 `<앱>ActivityReport`(전략 A, 앱이 열려 있을 때 정밀 합계 계산)도 함께
  * 만들었지만 실기기 3차 측정까지 한 번도 실행되지 않아 2026-08-13에 폐기했다.
@@ -51,6 +52,13 @@ const EXTENSIONS = [
     sources: ['FrimitNotificationService.swift'],
     extensionPointIdentifier: 'com.apple.usernotifications.service',
     principalClass: 'FrimitNotificationService',
+  },
+  {
+    name: 'FrimitShieldConfiguration',
+    dir: 'shield',
+    sources: ['FrimitShieldConfiguration.swift'],
+    extensionPointIdentifier: 'com.apple.ManagedSettings.shield-configuration-service',
+    principalClass: 'FrimitShieldConfiguration',
   },
 ];
 

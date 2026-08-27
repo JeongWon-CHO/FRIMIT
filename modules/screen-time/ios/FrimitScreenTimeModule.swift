@@ -92,6 +92,11 @@ public class FrimitScreenTimeModule: Module {
     }
     .runOnQueue(.main)
 
+    /// 그룹 이름을 기기에 베껴 둔다. 차단 화면이 이 값을 읽는다.
+    Function("setGroupLabel") { (groupId: String, name: String) in
+      FrimitStore.setGroupName(name, groupId: groupId)
+    }
+
     Function("getSelectionSummary") { (groupId: String) in
       FrimitStore.selectionSummary(groupId: groupId)
     }

@@ -111,6 +111,15 @@ declare class FrimitScreenTimeModule extends NativeModule<FrimitScreenTimeModule
 
   isShielded(groupId: string): boolean;
 
+  /**
+   * 그룹 이름을 기기에 베껴 둔다.
+   *
+   * 차단 화면을 그리는 extension은 네트워크를 쓸 수 없다 — 잠긴 앱을 열 때마다
+   * 아주 짧게 실행되고 끝난다. 그래서 이름을 미리 기기에 둬야 "어느 그룹 때문에
+   * 막혔는지"를 말할 수 있다.
+   */
+  setGroupLabel(groupId: string, name: string): void;
+
   // --- Android 전용 ---
 
   /** 런처에 보이는 설치 앱 목록. 선택 화면 렌더링에만 쓴다 */

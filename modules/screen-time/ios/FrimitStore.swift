@@ -44,6 +44,17 @@ enum FrimitStore {
     "frimit.sequence.\(groupId)"
   }
 
+  /// 그룹 이름. 차단 화면이 "어느 그룹 때문에 막혔는지"를 말하려면 이게 필요하다.
+  ///
+  /// 이름은 서버에 있고 기기에는 id만 있었다. 그런데 차단 화면을 그리는
+  /// extension은 네트워크를 쓸 수 없다 — 잠긴 앱을 열 때마다 아주 짧게 실행되고
+  /// 끝난다. 그래서 그룹 목록을 읽을 때마다 여기에 베껴 둔다.
+  ///
+  /// ⚠️ plugins/extensions/shared/FrimitSharedStore.swift 의 키와 같아야 한다.
+  private static func groupNameKey(_ groupId: String) -> String {
+    "frimit.group.name.\(groupId)"
+  }
+
   // MARK: - Sequence
 
   /// 같은 (기기, 그룹, 구간) 안에서 단조 증가하는 순번을 하나 소비한다.
@@ -52,6 +63,12 @@ enum FrimitStore {
     let next = defaults.integer(forKey: sequenceKey(groupId)) + 1
     defaults.set(next, forKey: sequenceKey(groupId))
     return next
+  }
+
+  // MARK: - 이름
+
+  static func setGroupName(_ name: String, groupId: String) {
+    defaults.set(name, forKey: groupNameKey(groupId))
   }
 
   // MARK: - Known groups
@@ -97,6 +114,7 @@ enum FrimitStore {
     defaults.removeObject(forKey: selectionKey(groupId))
     defaults.removeObject(forKey: selectionUpdatedAtKey(groupId))
     defaults.removeObject(forKey: sequenceKey(groupId))
+    defaults.removeObject(forKey: groupNameKey(groupId))
     forgetGroup(groupId)
   }
 
