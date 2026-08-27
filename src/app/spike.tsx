@@ -87,9 +87,13 @@ export default function SpikeScreen() {
   const refresh = useCallback(async () => {
     if (!group) return;
     try {
+      // 스냅샷을 먼저 기다린 뒤 셋을 함께 넣는다. 앞의 둘을 즉시 넣으면 새 권한과
+      // 옛 스냅샷이 한 프레임 같이 그려지고, effect에서 부를 때는 그 프레임이
+      // 렌더를 한 번 더 돌게 만든다.
+      const fresh = await ScreenTime.getSnapshot(group.id);
       setPermission(ScreenTime.getPermissionState());
       setSelection(ScreenTime.getSelectionSummary(group.id));
-      setSnapshot(await ScreenTime.getSnapshot(group.id));
+      setSnapshot(fresh);
     } catch (error) {
       append(`갱신 실패: ${String(error)}`);
     }
@@ -142,7 +146,13 @@ export default function SpikeScreen() {
   }, [append, refresh]);
 
   // 그룹 확보는 앱을 켤 때 한 번이면 된다.
+  //
+  // `set-state-in-effect`를 끄는 이유: 이 규칙은 부르는 함수가 상태를 바꾸는지만
+  // 보고 **그게 await 뒤인지는 보지 않는다.** 여기서 상태가 바뀌는 것은 로그인과
+  // 그룹 조회가 끝난 다음이라 effect가 도는 프레임에는 아무 일도 일어나지 않는다.
+  // 규칙이 막으려는 연쇄 렌더가 애초에 없다.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     ensureServerGroup();
   }, [ensureServerGroup]);
 
@@ -172,8 +182,10 @@ export default function SpikeScreen() {
   }, [append]);
 
   // 그룹이 정해진 뒤에 한 번 읽고 올린다. 그 전에는 올려 봐야 올릴 그룹이 없다.
+  // 위와 같은 이유로 규칙을 끈다 — 둘 다 네이티브나 서버를 먼저 기다린다.
   useEffect(() => {
     if (!group) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     refresh();
     syncToServer();
   }, [group, refresh, syncToServer]);
