@@ -49,6 +49,26 @@ Embedded binary is not signed with the same certificate as the parent app.
 `plugins/withActivityExtensions.js`의 `EXTENSIONS`만 고치면 되고, 선언과 검증
 스크립트가 그 목록에서 나온다.
 
+#### 새 extension 타깃의 첫 빌드
+
+`expo run:ios`는 `-allowProvisioningUpdates`를 붙이지 않는다. 이미 있는 프로파일만
+쓰므로, 번들 id가 처음 생긴 날에는 이렇게 멈춘다.
+
+```
+No profiles for 'com.frimit.app.shieldconfiguration' were found
+```
+
+App ID가 포털에 아직 없다는 뜻이다. 한 번만 만들어 주면 그다음부터는 `run:ios`가
+그대로 된다.
+
+```sh
+xcodebuild -workspace ios/Frimit.xcworkspace -scheme Frimit \
+  -configuration Debug -destination "id=<기기 UDID>" \
+  -allowProvisioningUpdates build
+```
+
+Xcode를 열어 한 번 빌드해도 같다. **타깃을 더할 때마다 한 번씩** 필요하다.
+
 두 값은 `plugins/withActivityExtensions.js`가 호스트 bundle ID로부터 자동 생성하는 이름과 일치한다.
 호스트 bundle ID를 바꾸면 포털의 App ID도 함께 만들어야 한다.
 
