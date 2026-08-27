@@ -1,5 +1,6 @@
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
+import * as WebBrowser from 'expo-web-browser';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { SharedOrbitRing } from '@/components/orbit';
@@ -9,6 +10,9 @@ import { colors, gradients, radius as radii } from '@/constants/design-tokens';
 import { isAppleSignInAvailable, signInWithApple, signInWithGoogle } from '@/lib/auth';
 import { resolveRouteAfterSignIn } from '@/lib/onboarding';
 import { queryClient } from '@/lib/query';
+
+/** 심사 제출 시 App Store Connect·Play Console에 넣는 것과 같은 주소여야 한다. */
+const PRIVACY_URL = 'https://jeongwon-cho.github.io/FRIMIT/privacy.html';
 
 /**
  * 02 · 로그인.
@@ -109,7 +113,15 @@ export default function SignInScreen() {
             google
           />
           <AppText variant="metadata" tone="faint" style={styles.legal}>
-            계속하면 서비스 약관과 개인정보 처리방침에 동의하게 돼요.
+            계속하면 서비스 약관과{' '}
+            <AppText
+              variant="metadata"
+              tone="link"
+              style={styles.legalLink}
+              onPress={() => WebBrowser.openBrowserAsync(PRIVACY_URL)}>
+              개인정보 처리방침
+            </AppText>
+            에 동의하게 돼요.
           </AppText>
         </View>
       }>
@@ -191,4 +203,5 @@ const styles = StyleSheet.create({
   // Google 브랜드 가이드가 지정한 라벨 색. 우리 램프가 아니라 그쪽 규정이다.
   googleLabel: { color: '#1F1F1F' },
   legal: { textAlign: 'center', lineHeight: 17, paddingTop: 6 },
+  legalLink: { textDecorationLine: 'underline' },
 });
