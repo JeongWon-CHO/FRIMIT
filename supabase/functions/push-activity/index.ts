@@ -24,6 +24,7 @@ const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
 
 type Claimed = {
   event_id: string;
+  group_id: string;
   kind: 'pool_threshold' | 'pool_over' | 'nudge';
   payload: {
     threshold?: number;
@@ -71,6 +72,20 @@ function body(event: Claimed): string {
   return remaining > 0 ? `${used} · ${formatDuration(remaining)} 남았어요` : used;
 }
 
+/**
+ * 이 알림을 받은 기기가 그 자리에서 앱을 잠가야 하는가.
+ *
+ * 한도를 다 썼다는 사건 둘만 해당한다. 75%·90%는 아직 잠글 때가 아니고,
+ * 콕 찌르기는 그룹 사건이 아니다.
+ *
+ * 이 판단이 서버에 있는 이유: 잠글 그룹 id가 실려 있느냐 없느냐가 곧
+ * 지시가 되도록 두면, 알림을 받는 extension 쪽에 규칙이 하나도 없어도 된다.
+ * 규칙이 두 곳에 흩어지면 한쪽만 고치는 날이 온다.
+ */
+function shouldShield(event: Claimed): boolean {
+  return event.kind === 'pool_over' || event.payload.threshold === 100;
+}
+
 Deno.serve(async (request) => {
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
   const url = Deno.env.get('SUPABASE_URL') ?? '';
@@ -101,16 +116,38 @@ Deno.serve(async (request) => {
     });
   }
 
-  const messages = claimed.map((event) => ({
-    to: event.tokens,
-    title: event.group_name,
-    body: body(event),
-    // 소리 없이. 스크린타임을 줄이자는 앱이 소리로 사람을 부르지는 않는다.
-    sound: null,
-    priority: 'normal',
-    channelId: 'default',
-    data: { eventId: event.event_id, kind: event.kind },
-  }));
+  const messages = claimed.map((event) => {
+    const shield = shouldShield(event);
+
+    return {
+      to: event.tokens,
+      title: event.group_name,
+      body: body(event),
+      // 소리 없이. 스크린타임을 줄이자는 앱이 소리로 사람을 부르지는 않는다.
+      sound: null,
+      // 잠가야 하는 알림은 늦게 도착하면 뜻이 없다. 나머지는 그대로 둔다 —
+      // 75%를 알리자고 남의 기기를 깨울 이유가 없다.
+      priority: shield ? 'high' : 'normal',
+      channelId: 'default',
+      /*
+       * `mutableContent`가 iOS의 알림 extension을 깨운다. 화면에 뜨기 **전에**
+       * 실행되므로, 사용자가 알림을 보기도 전에 앱이 잠겨 있다.
+       *
+       * silent push가 아니라 이 방식인 이유: 앱이 강제 종료돼 있으면 silent
+       * push는 아예 배달되지 않지만, 눈에 보이는 알림은 배달된다. 그리고 하필
+       * 그 상태가 "다른 앱을 보느라 Frimit을 안 쓰는 중"이다.
+       *
+       * Android에는 대응하는 장치가 없다. 이 필드는 그쪽에서 무시된다.
+       */
+      mutableContent: shield,
+      data: {
+        eventId: event.event_id,
+        kind: event.kind,
+        // 이 값이 있으면 잠근다. 없으면 평범한 알림이다.
+        ...(shield ? { shieldGroupId: event.group_id } : {}),
+      },
+    };
+  });
 
   let tickets: { status: string; details?: { error?: string } }[] = [];
 

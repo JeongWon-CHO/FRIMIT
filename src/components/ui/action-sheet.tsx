@@ -1,3 +1,4 @@
+import { type ReactNode } from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { SlideInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -35,6 +36,7 @@ export function ActionSheet({
   visible,
   title,
   message,
+  children,
   actions,
   onClose,
 }: {
@@ -42,6 +44,11 @@ export function ActionSheet({
   title?: string;
   /** 무슨 일이 벌어지는지. 되돌릴 수 없는 확인에서는 이게 본문이다. */
   message?: string;
+  /**
+   * 항목 위에 놓을 것. 글로 적기보다 **보여 주는 편이 나은 값**을 위한 자리다
+   * (초대 코드가 그렇다 — 여섯 자리를 작은 회색 글씨로 적으면 읽어 주기 어렵다).
+   */
+  children?: ReactNode;
   actions: SheetAction[];
   onClose: () => void;
 }) {
@@ -99,6 +106,8 @@ export function ActionSheet({
           </View>
         )}
 
+        {children && <View style={styles.slot}>{children}</View>}
+
         {actions.map((action) => (
           <Pressable
             key={action.label}
@@ -138,6 +147,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   head: { gap: 8, paddingHorizontal: 8, paddingTop: 6, paddingBottom: 10 },
+  slot: { paddingHorizontal: 4, paddingBottom: 4 },
   title: { textAlign: 'center' },
   message: { lineHeight: 20 },
   row: {

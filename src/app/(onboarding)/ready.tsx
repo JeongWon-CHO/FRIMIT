@@ -33,7 +33,7 @@ import { useScreenGroup } from '@/hooks/use-screen-group';
 import { useTrackingState } from '@/hooks/use-tracking';
 import { avatarEmoji } from '@/lib/avatars';
 import { formatShort } from '@/lib/format';
-import { READY_MEMBERS_TO_START } from '@/lib/groups';
+import { inviteMessage, READY_MEMBERS_TO_START } from '@/lib/groups';
 import { queryKeys } from '@/lib/query';
 import { armTracking, isUsable } from '@/lib/tracking';
 
@@ -126,9 +126,7 @@ export default function WaitingRoomScreen() {
 
   const share = async () => {
     if (!group) return;
-    await Share.share({
-      message: `${group.name}에 초대할게요. Frimit에서 코드 ${group.invite_code}로 참여해 주세요.`,
-    });
+    await Share.share({ message: inviteMessage(group) });
   };
 
   const start = async () => {

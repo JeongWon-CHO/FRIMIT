@@ -11,7 +11,8 @@ const { withDangerousMod, withXcodeProject } = require('expo/config-plugins');
  * 바로 이 파일의 존재 이유다.
  *
  * 만드는 타깃:
- * - `<앱>ActivityMonitor` : 백그라운드 임계값 감시 (전략 B)
+ * - `<앱>ActivityMonitor`     : 백그라운드 임계값 감시 (전략 B)
+ * - `<앱>NotificationService` : 한도 소진 알림을 받아 그 자리에서 앱을 잠근다
  *
  * 한때 `<앱>ActivityReport`(전략 A, 앱이 열려 있을 때 정밀 합계 계산)도 함께
  * 만들었지만 실기기 3차 측정까지 한 번도 실행되지 않아 2026-08-13에 폐기했다.
@@ -28,8 +29,8 @@ const SHARED_SOURCE = 'FrimitSharedStore.swift';
  * 통째로 깨진다. Swift는 파일명과 타입명이 일치할 필요가 없으므로, 내용은 그대로 두고
  * 이름만 타깃별로 달리한다.
  *
- * 지금은 extension 타깃이 하나뿐이라 충돌할 상대가 없지만, 규약은 그대로 둔다.
- * 타깃이 다시 늘어날 때 같은 곳에서 또 깨지지 않게 하기 위해서다.
+ * 타깃이 둘이 되면서 이 규약이 실제로 일하기 시작했다. 둘 다 같은 공유 소스를
+ * 쓰므로, 이름을 나누지 않으면 여기서 pod install이 통째로 깨진다.
  */
 function sharedSourceNameFor(target) {
   return `${target.name}SharedStore.swift`;
@@ -43,6 +44,13 @@ const EXTENSIONS = [
     sources: ['FrimitActivityMonitor.swift'],
     extensionPointIdentifier: 'com.apple.deviceactivity.monitor-extension',
     principalClass: 'FrimitActivityMonitor',
+  },
+  {
+    name: 'FrimitNotificationService',
+    dir: 'notification',
+    sources: ['FrimitNotificationService.swift'],
+    extensionPointIdentifier: 'com.apple.usernotifications.service',
+    principalClass: 'FrimitNotificationService',
   },
 ];
 

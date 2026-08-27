@@ -54,6 +54,17 @@ export type MyGroup = {
   time_zone: string;
 };
 
+/**
+ * 초대할 때 보내는 한 줄.
+ *
+ * 대기실과 그룹 상세 두 곳에서 보낸다. 문장을 각자 들고 있으면 한쪽만 고치는
+ * 날이 오고, 그때 틀리는 것은 **코드의 모양**이다 — 받는 쪽 입력칸은 숫자
+ * 여섯 자리만 받으므로 `FRM-` 접두사가 섞여 들어가면 그대로 막힌다.
+ */
+export function inviteMessage(group: Pick<MyGroup, 'name' | 'invite_code'>): string {
+  return `${group.name}에 초대할게요. Frimit에서 코드 ${group.invite_code}로 참여해 주세요.`;
+}
+
 /** 내가 속한 그룹. RLS가 알아서 내 것만 준다. */
 export async function listMyGroups(): Promise<MyGroup[]> {
   const { data, error } = await supabase

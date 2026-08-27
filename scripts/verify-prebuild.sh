@@ -12,7 +12,10 @@ cd "$(dirname "$0")/.."
 
 PBXPROJ="ios/Frimit.xcodeproj/project.pbxproj"
 ENTITLEMENTS="ios/Frimit/Frimit.entitlements"
-EXT_NAME="FrimitActivityMonitor"
+# extension 타깃 이름과 그 타깃의 extension point. 하나가 늘 때마다 여기에 한 줄
+# 추가한다 — 목록이 어긋나면 새 타깃은 검사 없이 지나간다.
+EXT_NAMES=(FrimitActivityMonitor FrimitNotificationService)
+EXT_POINTS=(com.apple.deviceactivity.monitor-extension com.apple.usernotifications.service)
 # 폐기한 타깃. 되살아나지 않는지 함께 확인한다 (전략 A, 2026-08-13 폐기).
 RETIRED_NAME="FrimitActivityReport"
 
@@ -24,15 +27,20 @@ fail() {
 check() {
   local label="$1"
 
-  # extension 타깃이 정확히 하나
-  local target_count
-  target_count=$(grep -c "/\* ${EXT_NAME} \*/ = {" "$PBXPROJ" || true)
-  [ "$target_count" -ge 1 ] || fail "[$label] ${EXT_NAME} 타깃이 없습니다"
+  # 타깃마다 정확히 하나씩 있는가. 반복 prebuild에서 늘어나는 것이 이 검사의 표적이다.
+  local index
+  for index in "${!EXT_NAMES[@]}"; do
+    local name="${EXT_NAMES[$index]}"
 
-  local native_target_count
-  native_target_count=$(grep -A 1 "isa = PBXNativeTarget;" "$PBXPROJ" | grep -c "$EXT_NAME" || true)
-  [ "$native_target_count" -eq 1 ] \
-    || fail "[$label] ${EXT_NAME} 네이티브 타깃이 ${native_target_count}개입니다 (1개여야 함)"
+    local target_count
+    target_count=$(grep -c "/\* ${name} \*/ = {" "$PBXPROJ" || true)
+    [ "$target_count" -ge 1 ] || fail "[$label] ${name} 타깃이 없습니다"
+
+    local native_target_count
+    native_target_count=$(grep -A 1 "isa = PBXNativeTarget;" "$PBXPROJ" | grep -c "$name" || true)
+    [ "$native_target_count" -eq 1 ] \
+      || fail "[$label] ${name} 네이티브 타깃이 ${native_target_count}개입니다 (1개여야 함)"
+  done
 
   # 호스트 앱이 extension에 의존하는가 (없으면 빌드도 탑재도 안 된다)
   grep -q "PBXTargetDependency" "$PBXPROJ" \
@@ -64,22 +72,30 @@ check() {
     || fail "[$label] Apple 로그인 entitlement가 없습니다"
 
   # extension 쪽 파일들
-  [ -f "ios/${EXT_NAME}/${EXT_NAME}.entitlements" ] || fail "[$label] extension entitlement 없음"
-  [ -f "ios/${EXT_NAME}/Info.plist" ] || fail "[$label] extension Info.plist 없음"
-  [ -f "ios/${EXT_NAME}/${EXT_NAME}.swift" ] || fail "[$label] extension 소스 없음"
-  [ -f "ios/${EXT_NAME}/${EXT_NAME}SharedStore.swift" ] || fail "[$label] 공유 저장소 소스 없음"
+  for index in "${!EXT_NAMES[@]}"; do
+    local name="${EXT_NAMES[$index]}"
 
-  grep -q "com.apple.deviceactivity.monitor-extension" "ios/${EXT_NAME}/Info.plist" \
-    || fail "[$label] extension point identifier가 없습니다"
+    [ -f "ios/${name}/${name}.entitlements" ] || fail "[$label] ${name} entitlement 없음"
+    [ -f "ios/${name}/Info.plist" ] || fail "[$label] ${name} Info.plist 없음"
+    [ -f "ios/${name}/${name}.swift" ] || fail "[$label] ${name} 소스 없음"
+    [ -f "ios/${name}/${name}SharedStore.swift" ] || fail "[$label] ${name} 공유 저장소 소스 없음"
+
+    grep -q "${EXT_POINTS[$index]}" "ios/${name}/Info.plist" \
+      || fail "[$label] ${name}의 extension point identifier가 없습니다"
+
+    # 잠그려면 두 extension 모두 Family Controls가 필요하다.
+    grep -q "com.apple.developer.family-controls" "ios/${name}/${name}.entitlements" \
+      || fail "[$label] ${name}에 Family Controls entitlement가 없습니다"
+
+    # 공유 소스는 타깃마다 다른 이름이어야 한다. 같은 이름이면 pod install이 깨진다.
+    [ ! -f "ios/${name}/FrimitSharedStore.swift" ] \
+      || fail "[$label] ${name}의 공유 소스가 타깃별 이름으로 분리되지 않았습니다"
+  done
 
   # 폐기한 Report extension이 파일로도 타깃으로도 남아 있지 않아야 한다
   [ ! -d "ios/${RETIRED_NAME}" ] || fail "[$label] 폐기한 ${RETIRED_NAME} 디렉터리가 남아 있습니다"
   ! grep -q "$RETIRED_NAME" "$PBXPROJ" \
     || fail "[$label] 폐기한 ${RETIRED_NAME} 타깃이 pbxproj에 남아 있습니다"
-
-  # 공유 소스는 타깃마다 다른 이름이어야 한다. 같은 이름이면 pod install이 깨진다.
-  [ ! -f "ios/${EXT_NAME}/FrimitSharedStore.swift" ] \
-    || fail "[$label] 공유 소스가 타깃별 이름으로 분리되지 않았습니다"
 
   # 호스트가 App Group 식별자를 읽을 수 있는가
   /usr/libexec/PlistBuddy -c "Print :FrimitAppGroupIdentifier" ios/Frimit/Info.plist > /dev/null 2>&1 \

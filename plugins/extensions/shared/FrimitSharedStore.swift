@@ -112,6 +112,17 @@ enum FrimitSharedStore {
     defaults.object(forKey: shieldAtKey(groupId)) as? Int
   }
 
+  /// 서버가 알려준 잔여를 차단선으로 옮겨 적고 즉시 판정한다.
+  ///
+  /// 호스트 앱의 `FrimitShield.setBudget`과 같은 일을 한다. 알림 extension이
+  /// 호스트를 거치지 않고 잠글 수 있어야 해서 여기에도 둔다.
+  @discardableResult
+  static func setShieldBudget(groupId: String, remainingSeconds: Int) -> Bool {
+    let used = defaults.integer(forKey: thresholdSecondsKey(groupId))
+    defaults.set(max(0, used + remainingSeconds), forKey: shieldAtKey(groupId))
+    return evaluateShield(groupId: groupId)
+  }
+
   /// 차단선을 지우고 잠금도 푼다. 새 구간이 시작될 때 부른다.
   static func clearShieldBudget(groupId: String) {
     defaults.removeObject(forKey: shieldAtKey(groupId))

@@ -2,8 +2,9 @@ import * as Haptics from 'expo-haptics';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState, type ReactNode } from 'react';
-import { Alert, Pressable, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, Share, StyleSheet, View } from 'react-native';
 
+import { InviteCodeCard } from '@/components/onboarding';
 import { OrbitSeats, SharedOrbitRing } from '@/components/orbit';
 import { RecentDays } from '@/components/recent-days';
 import {
@@ -22,6 +23,7 @@ import {
 } from '@/components/ui';
 import { colors, gradients, radius as radii } from '@/constants/design-tokens';
 import { useGroupMembers, useGroupUsages, useMyGroups } from '@/hooks/use-groups';
+import { inviteMessage } from '@/lib/groups';
 import { useCurrentProposal, useRespondToProposal, useWithdrawProposal } from '@/hooks/use-rules';
 import { useLeaveGroupPrompt } from '@/hooks/use-leave-group-prompt';
 import { useRecentDays } from '@/hooks/use-history';
@@ -59,6 +61,19 @@ export default function GroupDetailScreen() {
   const nudge = useNudge();
 
   const [menuOpen, setMenuOpen] = useState(false);
+
+  /*
+   * 초대는 시작 뒤에도 필요하다.
+   *
+   * 코드가 대기실에만 있었다. 시작하는 순간 대기실은 지나간 화면이 되고, 그와
+   * 함께 코드로 가는 길이 통째로 사라졌다 — 그런데 가입은 시작 뒤에도 열려
+   * 있다(plan.md 35행, 다음 오전 6시에 반영). 들어올 수는 있는데 부를 방법이
+   * 없는 상태였다.
+   *
+   * 대기실로 되돌려 보내지 않는다. 그 화면은 정족수와 시작 버튼이 본문이라
+   * 이미 돌아가는 그룹에 대고 그리면 거짓말이 된다.
+   */
+  const [inviteOpen, setInviteOpen] = useState(false);
 
   /*
    * 찌른 사람들 — 값은 **다시 찌를 수 있는 시각**이다.
@@ -238,9 +253,7 @@ export default function GroupDetailScreen() {
                 <GradientButton
                   label="초대 코드 보기"
                   size="md"
-                  onPress={() =>
-                    router.push({ pathname: '/ready', params: { groupId: id } })
-                  }
+                  onPress={() => setInviteOpen(true)}
                 />
               }
             />
@@ -279,6 +292,10 @@ export default function GroupDetailScreen() {
         onClose={() => setMenuOpen(false)}
         actions={[
           {
+            label: '친구 초대하기',
+            onPress: () => setInviteOpen(true),
+          },
+          {
             label: `공동 시간 바꾸기${view ? ` · 지금 ${formatShort(view.limitSeconds)}` : ''}`,
             onPress: () => router.push({ pathname: '/group/limit', params: { groupId: id } }),
           },
@@ -289,6 +306,24 @@ export default function GroupDetailScreen() {
           },
         ]}
       />
+
+      {/*
+        코드를 글로 적지 않고 카드로 보여 준다. 여섯 자리는 옆 사람에게 읽어
+        주는 값이기도 해서, 눌러 복사되는 것만으로는 모자란다.
+      */}
+      <ActionSheet
+        visible={inviteOpen}
+        title="친구 초대하기"
+        message="새로 들어온 친구는 다음 오전 6시부터 함께 집계돼요."
+        onClose={() => setInviteOpen(false)}
+        actions={[
+          {
+            label: '초대 보내기',
+            onPress: () => group && Share.share({ message: inviteMessage(group) }),
+          },
+        ]}>
+        {group && <InviteCodeCard code={group.invite_code} />}
+      </ActionSheet>
 
       {leave.sheet}
     </ScreenFrame>
