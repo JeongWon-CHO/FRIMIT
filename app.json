@@ -11,7 +11,11 @@
     "ios": {
       "bundleIdentifier": "com.frimit.app",
       "supportsTablet": false,
-      "usesAppleSignIn": true
+      "usesAppleSignIn": true,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "buildNumber": "3"
     },
     "android": {
       "package": "com.frimit.app",

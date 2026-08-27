@@ -166,6 +166,50 @@ const withExtensionFiles = (config, { appGroup }) =>
     },
   ]);
 
+/** 타깃 이름에서 번들 id를 만든다. Xcode 타깃 생성과 EAS 선언이 같은 값을 써야 한다. */
+function bundleIdFor(target, hostBundleId) {
+  return `${hostBundleId}.${target.name.replace(/^Frimit/, '').toLowerCase()}`;
+}
+
+/**
+ * EAS에게 extension 타깃의 존재를 알린다.
+ *
+ * 이게 없으면 EAS는 앱 타깃 하나만 배포 프로파일로 수동 서명하고, extension은
+ * 우리가 걸어 둔 `CODE_SIGN_STYLE = Automatic` 때문에 개발 인증서를 잡는다.
+ * 부모와 자식의 인증서가 달라져서 빌드가 이렇게 끝난다:
+ *
+ *   Embedded binary is not signed with the same certificate as the parent app.
+ *
+ * 로컬 `expo run:ios`에서는 자동 서명이 알아서 되니 개발 중에는 드러나지 않는다.
+ * 처음 배포 빌드를 돌리는 날에야 나온다.
+ *
+ * `EXTENSIONS`에서 값을 만들어 넣기 때문에 타깃을 더해도 여기는 손댈 필요가 없다.
+ * 목록이 하나면 어긋날 수가 없다.
+ */
+function withEasAppExtensions(config, { appGroup }) {
+  const hostBundleId = config.ios?.bundleIdentifier;
+  if (!hostBundleId) return config;
+
+  const extra = config.extra ?? (config.extra = {});
+  const eas = extra.eas ?? (extra.eas = {});
+  const build = eas.build ?? (eas.build = {});
+  const experimental = build.experimental ?? (build.experimental = {});
+  const ios = experimental.ios ?? (experimental.ios = {});
+
+  ios.appExtensions = EXTENSIONS.map((target) => ({
+    targetName: target.name,
+    bundleIdentifier: bundleIdFor(target, hostBundleId),
+    // App ID에 어떤 capability를 켜야 하는지를 EAS가 이걸 보고 판단한다.
+    // ios/<타깃>.entitlements 에 쓰는 것과 같은 내용이어야 한다.
+    entitlements: {
+      'com.apple.developer.family-controls': true,
+      'com.apple.security.application-groups': [appGroup],
+    },
+  }));
+
+  return config;
+}
+
 /** 새 타깃의 Debug/Release 빌드 설정을 한꺼번에 덮어쓴다. */
 function applyBuildSettings(project, targetUuid, settings) {
   const nativeTarget = project.pbxNativeTargetSection()[targetUuid];
@@ -252,7 +296,7 @@ const withExtensionTargets = (config, { appleTeamId }) =>
         target.name,
         'app_extension',
         target.name,
-        `${hostBundleId}.${target.name.replace(/^Frimit/, '').toLowerCase()}`
+        bundleIdFor(target, hostBundleId)
       );
 
       // 4. 빌드 페이즈. Swift 파일만 컴파일하고 리소스는 없다.
@@ -278,6 +322,7 @@ const withExtensionTargets = (config, { appleTeamId }) =>
 
 /** @type {import('expo/config-plugins').ConfigPlugin<{ appGroup: string, appleTeamId?: string }>} */
 const withActivityExtensions = (config, props) => {
+  config = withEasAppExtensions(config, props);
   config = withExtensionFiles(config, props);
   config = withExtensionTargets(config, props);
   return config;

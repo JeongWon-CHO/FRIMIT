@@ -48,3 +48,8 @@ modules/*/android/build/
 modules/*/android/.gradle/
 modules/*/android/.cxx/
 modules/*/ios/build/
+
+# 로컬 빌드 산출물. `eas build --local`이 저장소 루트에 떨어뜨린다.
+*.ipa
+*.aab
+*.apk
